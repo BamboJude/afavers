@@ -2,7 +2,7 @@ import { useAuthStore } from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
 
 export const DashboardPage = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, isMockMode } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -12,6 +12,15 @@ export const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Mock Mode Banner */}
+      {isMockMode && (
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 text-center">
+          <p className="text-sm font-medium">
+            🎨 <strong>Mock Mode Active</strong> - You're exploring the UI without a backend. Set up your database to use real data!
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -89,18 +98,38 @@ export const DashboardPage = () => {
         </div>
 
         {/* Info Card */}
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-lg p-8 text-white">
-          <h3 className="text-2xl font-bold mb-4">🚀 Backend is Ready!</h3>
-          <p className="text-blue-100 mb-4">
-            Your authentication system is working perfectly. Next steps:
+        <div className={`rounded-lg shadow-lg p-8 text-white ${
+          isMockMode
+            ? 'bg-gradient-to-r from-purple-500 to-pink-600'
+            : 'bg-gradient-to-r from-blue-500 to-indigo-600'
+        }`}>
+          <h3 className="text-2xl font-bold mb-4">
+            {isMockMode ? '🎨 Mock Mode Active!' : '🚀 Backend is Ready!'}
+          </h3>
+          <p className={isMockMode ? 'text-purple-100 mb-4' : 'text-blue-100 mb-4'}>
+            {isMockMode
+              ? "You're exploring the UI without a backend connection. To enable full functionality:"
+              : "Your authentication system is working perfectly. Next steps:"
+            }
           </p>
-          <ul className="space-y-2 text-blue-50">
-            <li>✓ Backend API running on http://localhost:3000</li>
-            <li>✓ Frontend connected and authenticated</li>
-            <li>⏳ Job fetching services (coming next)</li>
-            <li>⏳ Job management features</li>
-            <li>⏳ Kanban board for applications</li>
-            <li>⏳ Analytics dashboard</li>
+          <ul className={`space-y-2 ${isMockMode ? 'text-purple-50' : 'text-blue-50'}`}>
+            {isMockMode ? (
+              <>
+                <li>📦 Sign up for Supabase (free PostgreSQL database)</li>
+                <li>🔑 Add DATABASE_URL to server/.env</li>
+                <li>▶️ Start backend server: cd server && npm run dev</li>
+                <li>✅ Login with real credentials on the login page</li>
+              </>
+            ) : (
+              <>
+                <li>✓ Backend API running on http://localhost:3000</li>
+                <li>✓ Frontend connected and authenticated</li>
+                <li>⏳ Job fetching services (coming next)</li>
+                <li>⏳ Job management features</li>
+                <li>⏳ Kanban board for applications</li>
+                <li>⏳ Analytics dashboard</li>
+              </>
+            )}
           </ul>
         </div>
       </main>

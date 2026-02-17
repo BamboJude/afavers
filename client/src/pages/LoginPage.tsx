@@ -11,19 +11,23 @@ export const LoginPage = () => {
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, useMock = false) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(email, password, useMock);
       navigate('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid email or password');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMockLogin = (e: React.FormEvent) => {
+    handleSubmit(e, true);
   };
 
   return (
@@ -88,13 +92,32 @@ export const LoginPage = () => {
             </button>
           </form>
 
-          {/* Default Credentials Info */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-xs text-blue-800 font-medium mb-1">Default Credentials:</p>
-            <p className="text-xs text-blue-600">
-              Email: admin@example.com<br />
-              Password: changeme123
-            </p>
+          {/* Mock Mode Button */}
+          <div className="mt-4">
+            <button
+              onClick={handleMockLogin}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
+            >
+              🎨 Try Mock Mode (No Backend Required)
+            </button>
+          </div>
+
+          {/* Info Cards */}
+          <div className="mt-6 space-y-3">
+            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <p className="text-xs text-purple-800 font-medium mb-1">🎨 Mock Mode:</p>
+              <p className="text-xs text-purple-600">
+                Explore the UI without database setup. Any credentials work!
+              </p>
+            </div>
+
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-800 font-medium mb-1">🔐 Real Mode (Default Credentials):</p>
+              <p className="text-xs text-blue-600">
+                Email: admin@example.com<br />
+                Password: changeme123
+              </p>
+            </div>
           </div>
         </div>
       </div>
