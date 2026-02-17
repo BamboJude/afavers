@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeoConvert |Kai</title>
+    <meta
+      name="description"
+      content="Free online coordinate converter. Convert between Decimal Degrees, DMS, UTM, and MGRS formats instantly."
+    />
+    <link rel="stylesheet" href="css/style.css?v=20260121b" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.min.js"
+      defer
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+      defer
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+      defer
+    ></script>
+    <script src="js/converter.js?v=20260127b" defer></script>
+  </head>
+  <body>
+    <!-- Raven Chat Widget -->
+    <!-- Raven Chat Widget -->
+    <script>
+      window.RAVEN_CONFIG = {
+        businessId: "551b5318-707a-4f0e-afac-c8ac9b31d5c3",
+        apiUrl: "https://raven-production-980b.up.railway.app",
+      };
+    </script>
+    <script src="https://raven-production-980b.up.railway.app/static/raven-widget.js"></script>
+    <nav class="navbar">
+      <div class="nav-container">
+        <a href="/" class="logo">
+          <span class="logo-text">GeoConvert</span>
+        </a>
+      </div>
+    </nav>
+
+    <main>
+      <section class="hero">
+        <h1 class="hero-title">Coordinate Kai</h1>
+        <p class="hero-subtitle">
+          Convert coordinates between formats instantly
+        </p>
+      </section>
+
+      <section class="converter-section">
+        <div class="input-card">
+          <div class="input-header">
+            <label for="coordinate-input">Enter Coordinates</label>
+            <span class="format-detected" id="format-detected"
+              >Auto-detecting format...</span
+            >
+          </div>
+          <textarea
+            id="coordinate-input"
+            placeholder="Examples:
+52.5200, 13.4050
+52°31'12&quot;N, 13°24'18&quot;E
+33U 385590 5819671"
+            rows="3"
+          ></textarea>
+          <button class="btn btn-primary convert-btn" id="convert-btn">
+            Convert
+          </button>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="file-upload-card">
+          <div class="upload-zone" id="upload-zone">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p>
+              Drag & drop files here or <span class="upload-link">browse</span>
+            </p>
+            <p class="upload-formats">
+              Supports: Excel (.xlsx, .xls), KMZ, KML, CSV, GPX
+            </p>
+            <input
+              type="file"
+              id="file-input"
+              accept=".xlsx,.xls,.kmz,.kml,.csv,.gpx"
+              multiple
+              hidden
+            />
+          </div>
+          <div class="file-info" id="file-info" style="display: none">
+            <span class="file-name" id="file-name"></span>
+            <button class="clear-file-btn" id="clear-file">×</button>
+          </div>
+        </div>
+
+        <!-- Geocoding Section -->
+        <div class="geocode-card">
+          <div class="input-header">
+            <label for="geocode-input">Geocode Address</label>
+          </div>
+          <div class="geocode-input-wrapper">
+            <input
+              type="text"
+              id="geocode-input"
+              placeholder="Enter an address (e.g., Brandenburger Tor, Berlin)"
+            />
+            <button class="btn btn-secondary geocode-btn" id="geocode-btn">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+              Geocode
+            </button>
+          </div>
+        </div>
+
+        <div class="results-grid">
+          <!-- Decimal Degrees -->
+          <div class="result-card">
+            <div class="result-header">
+              <h3>Decimal Degrees (DD)</h3>
+              <button
+                class="copy-btn"
+                data-target="dd-output"
+                title="Copy to clipboard"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path
+                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+            <div class="result-output" id="dd-output">—</div>
+            <div class="result-example">e.g., 52.520000, 13.405000</div>
+          </div>
+
+          <!-- Degrees Minutes Seconds -->
+          <div class="result-card">
+            <div class="result-header">
+              <h3>Degrees Minutes Seconds (DMS)</h3>
+              <button
+                class="copy-btn"
+                data-target="dms-output"
+                title="Copy to clipboard"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path
+                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+            <div class="result-output" id="dms-output">—</div>
+            <div class="result-example">e.g., 52°31'12.0"N, 13°24'18.0"E</div>
+          </div>
+
+          <!-- UTM -->
+          <div class="result-card">
+            <div class="result-header">
+              <h3>UTM</h3>
+              <button
+                class="copy-btn"
+                data-target="utm-output"
+                title="Copy to clipboard"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path
+                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+            <div class="result-output" id="utm-output">—</div>
+            <div class="result-example">e.g., 33U 391205 5820157</div>
+          </div>
+
+          <!-- MGRS -->
+          <div class="result-card">
+            <div class="result-header">
+              <h3>MGRS</h3>
+              <button
+                class="copy-btn"
+                data-target="mgrs-output"
+                title="Copy to clipboard"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path
+                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+            <div class="result-output" id="mgrs-output">—</div>
+            <div class="result-example">e.g., 33UUU 91205 20157</div>
+          </div>
+
+          <!-- Gauß-Krüger -->
+          <div class="result-card">
+            <div class="result-header">
+              <h3>Gauß-Krüger (GK)</h3>
+              <button
+                class="copy-btn"
+                data-target="gk-output"
+                title="Copy to clipboard"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path
+                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+            <div class="result-output" id="gk-output">—</div>
+            <div class="result-example">e.g., R: 3391205.00, H: 5820157.00</div>
+          </div>
+        </div>
+
+        <!-- Batch Results Table -->
+        <div class="batch-results" id="batch-results" style="display: none">
+          <div class="batch-header">
+            <h3>Batch Results</h3>
+            <div class="batch-actions">
+              <button class="btn btn-secondary" id="export-csv">
+                Export CSV
+              </button>
+              <button class="btn btn-secondary" id="export-excel">
+                Export Excel
+              </button>
+              <button class="btn btn-secondary" id="clear-batch">Clear</button>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table class="results-table" id="results-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Input</th>
+                  <th>DD</th>
+                  <th>DMS</th>
+                  <th>UTM</th>
+                  <th>MGRS</th>
+                  <th>GK</th>
+                </tr>
+              </thead>
+              <tbody id="results-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="formats-section">
+        <h2 class="section-title">Supported Formats</h2>
+        <div class="formats-grid">
+          <div class="format-item">
+            <h4>Decimal Degrees</h4>
+            <code>52.5200, 13.4050</code>
+          </div>
+          <div class="format-item">
+            <h4>DMS</h4>
+            <code>52°31'12"N, 13°24'18"E</code>
+          </div>
+          <div class="format-item">
+            <h4>UTM</h4>
+            <code>33U 385590 5819671</code>
+          </div>
+          <div class="format-item">
+            <h4>MGRS</h4>
+            <code>33UUU 85590 19671</code>
+          </div>
+          <div class="format-item">
+            <h4>Gauß-Krüger</h4>
+            <code>3233165, 5706262</code>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-container">
+        <p>Built for GIS professionals and enthusiasts</p>
+      </div>
+    </footer>
+  </body>
+</html>
