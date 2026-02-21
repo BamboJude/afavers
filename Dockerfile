@@ -1,4 +1,5 @@
 # Dockerfile for Railway - builds the server from /server directory
+# Updated: Force rebuild
 
 # Use Node.js 22 LTS
 FROM node:22-alpine
