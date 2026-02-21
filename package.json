@@ -1,6 +1,7 @@
 {
   "name": "job-tracker",
   "version": "1.0.0",
+  "type": "module",
   "description": "Full-stack job tracking platform",
   "private": true,
   "workspaces": [
