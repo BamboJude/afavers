@@ -3,21 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 export const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@afavers.com');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent, useMock = false) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      await login(email, password, useMock);
+      await login(email, password, false);
       navigate('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid email or password');
@@ -26,21 +26,20 @@ export const LoginPage = () => {
     }
   };
 
-  const handleMockLogin = (e: React.FormEvent) => {
-    handleSubmit(e, true);
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-blue-50 to-indigo-100">
       <div className="max-w-md w-full mx-4">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
+            <div className="inline-block p-3 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mb-4">
+              <span className="text-4xl">🌱</span>
+            </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Job Tracker
+              Green Jobs Tracker
             </h1>
             <p className="text-gray-600">
-              Sign in to manage your job applications
+              Track your sustainable career opportunities
             </p>
           </div>
 
@@ -63,8 +62,8 @@ export const LoginPage = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                placeholder="admin@example.com"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                placeholder="admin@afavers.com"
               />
             </div>
 
@@ -78,7 +77,7 @@ export const LoginPage = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                 placeholder="••••••••"
               />
             </div>
@@ -86,40 +85,34 @@ export const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
+              className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                'Sign In'
+              )}
             </button>
           </form>
 
-          {/* Mock Mode Button */}
-          <div className="mt-4">
-            <button
-              onClick={handleMockLogin}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
-            >
-              🎨 Try Mock Mode (No Backend Required)
-            </button>
-          </div>
-
-          {/* Info Cards */}
-          <div className="mt-6 space-y-3">
-            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <p className="text-xs text-purple-800 font-medium mb-1">🎨 Mock Mode:</p>
-              <p className="text-xs text-purple-600">
-                Explore the UI without database setup. Any credentials work!
-              </p>
-            </div>
-
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-xs text-blue-800 font-medium mb-1">🔐 Real Mode (Default Credentials):</p>
-              <p className="text-xs text-blue-600">
-                Email: admin@example.com<br />
-                Password: changeme123
-              </p>
-            </div>
+          {/* Info */}
+          <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-gray-700 text-center">
+              <span className="font-medium">🌍</span> Finding opportunities in sustainability, climate, GIS, and renewable energy
+            </p>
           </div>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-sm text-gray-600 mt-6">
+          afavers.com • Automated job tracking for environmental careers
+        </p>
       </div>
     </div>
   );

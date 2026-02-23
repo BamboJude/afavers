@@ -6,8 +6,9 @@ import { env } from '../../config/env.js';
 const BASE_URL = 'https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/app/jobs';
 
 // Search configuration
-const KEYWORDS = ['GIS', 'Umwelt', 'Klimaschutz', 'Energie', 'Sustainability', 'Environmental'];
+const KEYWORDS = ['consulting', 'beratung', 'nachhaltigkeit', 'umwelt', 'gis', 'energy', 'renewable energy'];
 const LOCATIONS = ['Düsseldorf', 'Köln', 'Essen', 'Bochum', 'Dortmund'];
+const PAGES_PER_SEARCH = 2; // Fetch 2 pages per keyword/location combination
 
 interface BundesagenturJob {
   refnr: string;
