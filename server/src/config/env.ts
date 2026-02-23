@@ -40,7 +40,7 @@ export const env: EnvConfig = {
   BUNDESAGENTUR_API_KEY: process.env.BUNDESAGENTUR_API_KEY,
   ADZUNA_APP_ID: process.env.ADZUNA_APP_ID,
   ADZUNA_APP_KEY: process.env.ADZUNA_APP_KEY,
-  CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
+  CLIENT_URL: (process.env.CLIENT_URL || 'http://localhost:5173').trim(),
 };
 
 // Log configuration (without sensitive data)
