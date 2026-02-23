@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import { env } from './config/env.js';
 import authRoutes from './routes/auth.routes.js';
+import jobsRoutes from './routes/jobs.routes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app: Application = express();
@@ -33,6 +34,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/jobs', jobsRoutes);
 
 // 404 handler
 app.use(notFound);
