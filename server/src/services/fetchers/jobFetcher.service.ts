@@ -1,7 +1,5 @@
-import { ExternalJob, Job } from '../../types/index.js';
+import { ExternalJob } from '../../types/index.js';
 import { fetchBundesagenturJobs } from './bundesagentur.fetcher.js';
-import { fetchAdzunaJobs } from './adzuna.fetcher.js';
-import { scrapeGreenjobs } from './greenjobs.scraper.js';
 import { deduplicateJobs } from './deduplication.service.js';
 import * as jobModel from '../../models/job.model.js';
 
@@ -12,54 +10,31 @@ export interface FetchResult {
   failed: number;
   sources: {
     bundesagentur: number;
-    adzuna: number;
-    greenjobs: number;
   };
 }
 
 /**
  * Main job fetcher orchestrator
- * Fetches jobs from all sources, deduplicates, and saves to database
+ * Fetches jobs from Bundesagentur für Arbeit, deduplicates, and saves to database
  */
 export async function fetchAndSaveJobs(): Promise<FetchResult> {
   const startTime = Date.now();
 
-  console.log('\n🚀 Starting job fetch from all sources...\n');
+  console.log('\n🚀 Starting job fetch from Bundesagentur für Arbeit...\n');
 
-  // Run all fetchers in parallel
-  const results = await Promise.allSettled([
-    fetchBundesagenturJobs(),
-    fetchAdzunaJobs(),
-    scrapeGreenjobs()
-  ]);
-
-  // Collect successful results
-  const bundesagenturJobs = results[0].status === 'fulfilled' ? results[0].value : [];
-  const adzunaJobs = results[1].status === 'fulfilled' ? results[1].value : [];
-  const greenjobsJobs = results[2].status === 'fulfilled' ? results[2].value : [];
-
-  // Log any failures
-  if (results[0].status === 'rejected') {
-    console.error('❌ Bundesagentur fetcher failed:', results[0].reason);
+  let bundesagenturJobs: ExternalJob[] = [];
+  try {
+    bundesagenturJobs = await fetchBundesagenturJobs();
+  } catch (error) {
+    console.error('❌ Bundesagentur fetcher failed:', error);
   }
-  if (results[1].status === 'rejected') {
-    console.error('❌ Adzuna fetcher failed:', results[1].reason);
-  }
-  if (results[2].status === 'rejected') {
-    console.error('❌ greenjobs fetcher failed:', results[2].reason);
-  }
-
-  // Combine all jobs
-  const allJobs = [...bundesagenturJobs, ...adzunaJobs, ...greenjobsJobs];
 
   console.log(`\n📊 Fetch Summary:`);
   console.log(`   Bundesagentur: ${bundesagenturJobs.length} jobs`);
-  console.log(`   Adzuna: ${adzunaJobs.length} jobs`);
-  console.log(`   greenjobs.de: ${greenjobsJobs.length} jobs`);
-  console.log(`   Total: ${allJobs.length} jobs`);
 
   // Deduplicate jobs
-  const deduplicatedJobs = deduplicateJobs(allJobs);
+  const deduplicatedJobs = deduplicateJobs(bundesagenturJobs);
+  console.log(`   After deduplication: ${deduplicatedJobs.length} jobs`);
 
   // Save to database
   console.log('\n💾 Saving jobs to database...');
@@ -79,9 +54,7 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
     updated: saveResult.updated,
     failed: saveResult.failed,
     sources: {
-      bundesagentur: bundesagenturJobs.length,
-      adzuna: adzunaJobs.length,
-      greenjobs: greenjobsJobs.length
+      bundesagentur: bundesagenturJobs.length
     }
   };
 }
