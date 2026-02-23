@@ -3,7 +3,7 @@ import { ExternalJob } from '../../types/index.js';
 import { env } from '../../config/env.js';
 
 // API endpoint for Bundesagentur für Arbeit
-const BASE_URL = 'https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/jobs';
+const BASE_URL = 'https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/app/jobs';
 
 // Search configuration
 const KEYWORDS = ['GIS', 'Umwelt', 'Klimaschutz', 'Energie', 'Sustainability', 'Environmental'];
@@ -77,13 +77,16 @@ async function fetchJobsForKeywordAndLocation(
         was: keyword,
         wo: location,
         size: 50, // Results per page
-        page: 0,
+        page: 1, // Page numbering starts at 1
         angebotsart: 1, // 1 = regular work
-        pav: false // Exclude private employment agencies
+        pav: false, // Exclude private employment agencies
+        umkreis: 25 // Search radius in km
       },
       headers: {
-        'User-Agent': 'JobTracker/1.0',
-        'X-API-Key': 'jobboerse-jobsuche'
+        'User-Agent': 'Jobsuche/2.9.2 (de.arbeitsagentur.jobboerse; build:1077; iOS 15.1.0) Alamofire/5.4.4',
+        'X-API-Key': 'jobboerse-jobsuche',
+        'Host': 'rest.arbeitsagentur.de',
+        'Connection': 'keep-alive'
       },
       timeout: 10000
     });
