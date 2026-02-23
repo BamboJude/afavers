@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/database';
-import { env } from '../config/env';
-import { User, UserResponse } from '../types';
+import { pool } from '../config/database.js';
+import { env } from '../config/env.js';
+import { User, UserResponse } from '../types/index.js';
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
