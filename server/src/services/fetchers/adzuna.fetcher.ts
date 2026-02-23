@@ -6,8 +6,9 @@ import { env } from '../../config/env.js';
 const BASE_URL = 'https://api.adzuna.com/v1/api/jobs/de/search';
 
 // Search configuration
-const KEYWORDS = ['GIS', 'Umwelt', 'Klimaschutz', 'Energie', 'Sustainability'];
+const KEYWORDS = ['consulting', 'beratung', 'nachhaltigkeit', 'umwelt', 'gis', 'energy', 'renewable energy'];
 const LOCATIONS = ['Düsseldorf', 'Köln', 'Essen', 'Bochum', 'Dortmund'];
+const PAGES_PER_SEARCH = 2; // Fetch 2 pages per keyword/location combination
 
 interface AdzunaJob {
   id: string;
@@ -72,7 +73,7 @@ export async function fetchAdzunaJobs(): Promise<ExternalJob[]> {
 }
 
 /**
- * Fetch jobs for a specific keyword and location
+ * Fetch jobs for a specific keyword and location (with pagination)
  */
 async function fetchJobsForKeywordAndLocation(
   keyword: string,
@@ -80,37 +81,52 @@ async function fetchJobsForKeywordAndLocation(
 ): Promise<ExternalJob[]> {
   const jobs: ExternalJob[] = [];
 
-  try {
-    const response = await axios.get<AdzunaResponse>(`${BASE_URL}/1`, {
-      params: {
-        app_id: env.ADZUNA_APP_ID,
-        app_key: env.ADZUNA_APP_KEY,
-        results_per_page: 50,
-        what: keyword,
-        where: location
-      },
-      timeout: 10000
-    });
+  // Fetch multiple pages
+  for (let page = 1; page <= PAGES_PER_SEARCH; page++) {
+    try {
+      const response = await axios.get<AdzunaResponse>(`${BASE_URL}/${page}`, {
+        params: {
+          app_id: env.ADZUNA_APP_ID,
+          app_key: env.ADZUNA_APP_KEY,
+          results_per_page: 50,
+          what: keyword,
+          where: location
+        },
+        timeout: 10000
+      });
 
-    if (response.data?.results) {
-      for (const job of response.data.results) {
-        try {
-          const externalJob = mapToExternalJob(job);
-          jobs.push(externalJob);
-        } catch (error) {
-          console.error('Error mapping Adzuna job:', error);
+      if (response.data?.results) {
+        for (const job of response.data.results) {
+          try {
+            const externalJob = mapToExternalJob(job);
+            jobs.push(externalJob);
+          } catch (error) {
+            console.error('Error mapping Adzuna job:', error);
+          }
         }
       }
-    }
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 429) {
-        console.warn('⚠️  Adzuna rate limit reached');
-      } else {
-        console.error(`Adzuna API error (${keyword}, ${location}):`, error.message);
+
+      // If we got fewer results than requested, no more pages available
+      if (!response.data?.results || response.data.results.length < 50) {
+        break;
       }
-    } else {
-      console.error('Unexpected error:', error);
+
+      // Small delay between pages
+      if (page < PAGES_PER_SEARCH) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 429) {
+          console.warn('⚠️  Adzuna rate limit reached');
+          break; // Stop pagination if rate limited
+        } else {
+          console.error(`Adzuna API error (${keyword}, ${location}, page ${page}):`, error.message);
+        }
+      } else {
+        console.error('Unexpected error:', error);
+      }
+      break; // Stop pagination on error
     }
   }
 
