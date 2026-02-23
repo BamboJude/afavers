@@ -87,8 +87,7 @@ async function fetchJobsForKeywordAndLocation(
         app_key: env.ADZUNA_APP_KEY,
         results_per_page: 50,
         what: keyword,
-        where: location,
-        content_type: 'application/json'
+        where: location
       },
       timeout: 10000
     });
