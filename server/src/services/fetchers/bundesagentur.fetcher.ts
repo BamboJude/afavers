@@ -81,7 +81,7 @@ async function fetchJobsForKeywordAndLocation(
       },
       headers: {
         'User-Agent': 'JobTracker/1.0',
-        ...(env.BUNDESAGENTUR_API_KEY && { 'X-API-Key': env.BUNDESAGENTUR_API_KEY })
+        'X-API-Key': 'jobboerse-jobsuche'
       },
       timeout: 10000
     });
