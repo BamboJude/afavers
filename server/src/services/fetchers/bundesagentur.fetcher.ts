@@ -77,7 +77,9 @@ async function fetchJobsForKeywordAndLocation(
         was: keyword,
         wo: location,
         size: 50, // Results per page
-        page: 0
+        page: 0,
+        angebotsart: 1, // 1 = regular work
+        pav: false // Exclude private employment agencies
       },
       headers: {
         'User-Agent': 'JobTracker/1.0',
