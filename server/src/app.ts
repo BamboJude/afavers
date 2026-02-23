@@ -1,8 +1,8 @@
 import express, { Application } from 'express';
 import cors from 'cors';
-import { env } from './config/env';
-import authRoutes from './routes/auth.routes';
-import { errorHandler, notFound } from './middleware/errorHandler';
+import { env } from './config/env.js';
+import authRoutes from './routes/auth.routes.js';
+import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app: Application = express();
 
