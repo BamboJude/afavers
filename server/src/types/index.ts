@@ -49,6 +49,8 @@ export interface JobFilters {
   sortOrder?: 'ASC' | 'DESC';
   limit?: number;
   offset?: number;
+  userKeywords?: string[];   // Filter jobs to match user's search keywords
+  userLocations?: string[];  // Filter jobs to match user's target locations
 }
 
 // External job fetcher types
