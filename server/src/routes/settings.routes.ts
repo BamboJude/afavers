@@ -5,8 +5,8 @@ import { pool } from '../config/database.js';
 const router = express.Router();
 router.use(authenticateToken);
 
-const DEFAULT_KEYWORDS  = 'consulting,beratung,nachhaltigkeit,umwelt,gis,energy';
-const DEFAULT_LOCATIONS = 'Düsseldorf,Köln,Essen,Bochum,Dortmund';
+const DEFAULT_KEYWORDS  = '';
+const DEFAULT_LOCATIONS = '';
 
 /** GET /api/settings */
 router.get('/', async (req: AuthRequest, res) => {
