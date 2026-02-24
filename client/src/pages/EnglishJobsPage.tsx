@@ -16,6 +16,21 @@ const STATUS_COLORS: Record<string, string> = {
   rejected:     'bg-red-100 text-red-600',
 };
 
+const SOURCE_BADGES: Record<string, { label: string; cls: string }> = {
+  bundesagentur: { label: 'Bundesagentur', cls: 'bg-blue-50 text-blue-600 border-blue-200' },
+  adzuna:        { label: 'Adzuna',        cls: 'bg-orange-50 text-orange-600 border-orange-200' },
+  greenjobs:     { label: 'GreenJobs',     cls: 'bg-green-50 text-green-700 border-green-200' },
+};
+
+const SourceBadge = ({ source }: { source: string }) => {
+  const badge = SOURCE_BADGES[source.toLowerCase()] ?? { label: source, cls: 'bg-gray-100 text-gray-500 border-gray-200' };
+  return (
+    <span className={`px-2 py-0.5 rounded text-xs font-medium border ${badge.cls}`}>
+      {badge.label}
+    </span>
+  );
+};
+
 const LIMIT = 50;
 
 export const EnglishJobsPage = () => {
@@ -173,7 +188,8 @@ export const EnglishJobsPage = () => {
                       </p>
                     )}
 
-                    <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                    <div className="flex items-center gap-3 mt-3 text-xs text-gray-400 flex-wrap">
+                      <SourceBadge source={job.source} />
                       {job.posted_date && (
                         <span>{t('posted')} {new Date(job.posted_date).toLocaleDateString('en-GB')}</span>
                       )}
