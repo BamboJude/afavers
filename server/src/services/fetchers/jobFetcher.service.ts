@@ -1,7 +1,6 @@
 import { ExternalJob } from '../../types/index.js';
 import { fetchBundesagenturJobs } from './bundesagentur.fetcher.js';
 import { fetchStepstoneJobs } from './stepstone.fetcher.js';
-import { fetchIndeedJobs } from './indeed.fetcher.js';
 import { deduplicateJobs } from './deduplication.service.js';
 import * as jobModel from '../../models/job.model.js';
 import { detectLanguage } from '../../utils/languageDetect.js';
@@ -14,7 +13,6 @@ export interface FetchResult {
   sources: {
     bundesagentur: number;
     stepstone: number;
-    indeed: number;
   };
 }
 
@@ -29,7 +27,6 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
 
   let bundesagenturJobs: ExternalJob[] = [];
   let stepstoneJobs: ExternalJob[] = [];
-  let indeedJobs: ExternalJob[] = [];
 
   try {
     bundesagenturJobs = await fetchBundesagenturJobs();
@@ -43,18 +40,11 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
     console.error('❌ StepStone fetcher failed:', error);
   }
 
-  try {
-    indeedJobs = await fetchIndeedJobs();
-  } catch (error) {
-    console.error('❌ Indeed fetcher failed:', error);
-  }
-
-  const allJobs = [...bundesagenturJobs, ...stepstoneJobs, ...indeedJobs];
+  const allJobs = [...bundesagenturJobs, ...stepstoneJobs];
 
   console.log(`\n📊 Fetch Summary:`);
   console.log(`   Bundesagentur: ${bundesagenturJobs.length} jobs`);
   console.log(`   StepStone:     ${stepstoneJobs.length} jobs`);
-  console.log(`   Indeed:        ${indeedJobs.length} jobs`);
 
   // Deduplicate across all sources
   const deduplicatedJobs = deduplicateJobs(allJobs);
@@ -80,7 +70,6 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
     sources: {
       bundesagentur: bundesagenturJobs.length,
       stepstone: stepstoneJobs.length,
-      indeed: indeedJobs.length,
     },
   };
 }
