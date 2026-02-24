@@ -122,9 +122,17 @@ router.patch('/:id/status', async (req: AuthRequest, res) => {
     const jobId = parseInt(req.params.id as string);
     const { status, appliedDate, followUpDate } = req.body;
 
+    // Auto-set applied_date to today when marking as applied (if not already provided)
+    let resolvedAppliedDate: Date | undefined = appliedDate ? new Date(appliedDate) : undefined;
+    if (status === 'applied' && !appliedDate) {
+      // Check if applied_date is already set; if not, set it to today
+      const existing = await jobModel.findById(jobId, req.userId);
+      if (!existing?.applied_date) resolvedAppliedDate = new Date();
+    }
+
     await jobModel.upsertUserJob(req.userId!, jobId, {
       status,
-      applied_date:   appliedDate   ? new Date(appliedDate)   : undefined,
+      applied_date:   resolvedAppliedDate,
       follow_up_date: followUpDate  ? new Date(followUpDate)  : undefined,
     });
 
