@@ -52,4 +52,5 @@ export interface JobFilters {
   limit?: number;
   offset?: number;
   language?: 'en' | 'de';
+  noFilter?: boolean;
 }

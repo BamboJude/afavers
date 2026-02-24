@@ -71,6 +71,7 @@ export const JobsPage = () => {
         sortOrder: 'DESC',
         search: search || undefined,
         status: activeTab !== 'all' ? activeTab : undefined,
+        noFilter: activeTab === 'all' ? true : undefined,
       };
       const response = await jobsService.getJobs(filters);
       setJobs(response.jobs);
