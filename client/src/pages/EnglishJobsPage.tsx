@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { jobsService } from '../services/jobs.service';
-import type { Job, JobFilters, DashboardStats } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { jobsService } from '../services/jobs.service';
+import type { Job } from '../types';
 import { useLanguage } from '../store/languageStore';
+import { LanguageToggle } from '../components/common/LanguageToggle';
 
-type Tab = 'new' | 'saved' | 'applied' | 'interviewing' | 'all';
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
 const STATUS_COLORS: Record<string, string> = {
   new:          'bg-blue-100 text-blue-700',
@@ -15,28 +16,19 @@ const STATUS_COLORS: Record<string, string> = {
   rejected:     'bg-red-100 text-red-600',
 };
 
-const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+const LIMIT = 50;
 
-export const JobsPage = () => {
+export const EnglishJobsPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [activeTab, setActiveTab] = useState<Tab>('new');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const LIMIT = 50;
-
-  useEffect(() => {
-    loadStats();
-  }, []);
 
   // Debounce search
   useEffect(() => {
@@ -50,31 +42,23 @@ export const JobsPage = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, [activeTab, search, sortBy, page]);
-
-  const loadStats = async () => {
-    try {
-      const s = await jobsService.getStats();
-      setStats(s);
-    } catch {}
-  };
+  }, [search, page]);
 
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const filters: JobFilters = {
+      const response = await jobsService.getJobs({
+        language: 'en',
         limit: LIMIT,
         offset: (page - 1) * LIMIT,
-        sortBy,
+        sortBy: 'created_at',
         sortOrder: 'DESC',
         search: search || undefined,
-        status: activeTab !== 'all' ? activeTab : undefined,
-      };
-      const response = await jobsService.getJobs(filters);
+      });
       setJobs(response.jobs);
       setTotal(response.total);
     } catch (error) {
-      console.error('Failed to fetch jobs:', error);
+      console.error('Failed to fetch English jobs:', error);
     } finally {
       setLoading(false);
     }
@@ -85,13 +69,7 @@ export const JobsPage = () => {
     setActionLoading(job.id);
     try {
       await jobsService.updateStatus(job.id, 'saved');
-      if (activeTab === 'new') {
-        setJobs(prev => prev.filter(j => j.id !== job.id));
-        setTotal(prev => prev - 1);
-      } else {
-        setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'saved' } : j));
-      }
-      setStats(prev => prev ? { ...prev, new: Math.max(0, prev.new - 1), saved: prev.saved + 1 } : prev);
+      setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'saved' } : j));
     } catch {}
     setActionLoading(null);
   };
@@ -103,35 +81,11 @@ export const JobsPage = () => {
       await jobsService.toggleHidden(job.id, true);
       setJobs(prev => prev.filter(j => j.id !== job.id));
       setTotal(prev => prev - 1);
-      if (job.status === 'new') {
-        setStats(prev => prev ? { ...prev, new: Math.max(0, prev.new - 1), total: Math.max(0, prev.total - 1) } : prev);
-      }
     } catch {}
     setActionLoading(null);
   };
 
-  const handleTabChange = (tab: Tab) => {
-    setActiveTab(tab);
-    setPage(1);
-  };
-
   const totalPages = Math.ceil(total / LIMIT);
-
-  const tabs: { id: Tab; label: string; count?: number }[] = [
-    { id: 'new',          label: t('new'),          count: stats?.new },
-    { id: 'saved',        label: t('saved'),        count: stats?.saved },
-    { id: 'applied',      label: t('applied'),      count: stats?.applied },
-    { id: 'interviewing', label: t('interviewing'), count: stats?.interviewing },
-    { id: 'all',          label: t('all'),          count: stats?.total },
-  ];
-
-  const tabColors: Record<Tab, string> = {
-    new:          'border-blue-500 text-blue-600',
-    saved:        'border-yellow-500 text-yellow-600',
-    applied:      'border-green-500 text-green-600',
-    interviewing: 'border-purple-500 text-purple-600',
-    all:          'border-gray-500 text-gray-700',
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -139,66 +93,35 @@ export const JobsPage = () => {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">{t('jobs')}</h1>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="px-4 py-2 text-sm text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-lg transition"
-            >
-              ← {t('dashboard')}
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🇬🇧</span>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">{t('englishJobsTitle')}</h1>
+                <p className="text-xs text-gray-400 mt-0.5">{t('englishJobsDesc')}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <LanguageToggle />
+              <button
+                onClick={() => navigate('/jobs')}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-lg transition"
+              >
+                {t('backToJobs')}
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex overflow-x-auto">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`px-5 py-3.5 text-sm font-medium border-b-2 whitespace-nowrap transition ${
-                  activeTab === tab.id
-                    ? tabColors[tab.id]
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tab.label}
-                {tab.count !== undefined && (
-                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
-                    activeTab === tab.id ? 'bg-gray-100' : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {tab.count.toLocaleString()}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Search + Sort bar */}
+      {/* Search bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex gap-3 flex-wrap">
-          <input
-            type="text"
-            placeholder={t('searchPlaceholder')}
-            value={searchInput}
-            onChange={e => setSearchInput(e.target.value)}
-            className="flex-1 min-w-48 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-          />
-          <select
-            value={sortBy}
-            onChange={e => { setSortBy(e.target.value); setPage(1); }}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
-          >
-            <option value="created_at">{t('newestFirst')}</option>
-            <option value="posted_date">{t('postedDate')}</option>
-            <option value="title">{t('titleAZ')}</option>
-            <option value="company">{t('companyAZ')}</option>
-          </select>
-        </div>
+        <input
+          type="text"
+          placeholder={t('searchPlaceholder')}
+          value={searchInput}
+          onChange={e => setSearchInput(e.target.value)}
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+        />
         <p className="text-xs text-gray-400 mt-2">{total.toLocaleString()} {t('jobs').toLowerCase()}</p>
       </div>
 
@@ -211,10 +134,15 @@ export const JobsPage = () => {
           </div>
         ) : jobs.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
-            <p className="text-gray-400 text-lg">{t('noJobsFound')}</p>
-            {activeTab === 'new' && (
-              <p className="text-gray-400 text-sm mt-1">{t('allCaughtUp')} 🎉</p>
-            )}
+            <p className="text-4xl mb-4">🇬🇧</p>
+            <p className="text-gray-600 text-lg font-medium">{t('noEnglishJobs')}</p>
+            <p className="text-gray-400 text-sm mt-2">{t('noEnglishJobsHint')}</p>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="mt-6 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
+            >
+              ← {t('dashboard')}
+            </button>
           </div>
         ) : (
           <div className="space-y-2">
@@ -246,11 +174,11 @@ export const JobsPage = () => {
 
                     <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
                       {job.posted_date && (
-                        <span>{t('posted')} {new Date(job.posted_date).toLocaleDateString('de-DE')}</span>
+                        <span>{t('posted')} {new Date(job.posted_date).toLocaleDateString('en-GB')}</span>
                       )}
                       {job.deadline && (
                         <span className="text-orange-500 font-medium">
-                          {t('deadline')} {new Date(job.deadline).toLocaleDateString('de-DE')}
+                          {t('deadline')} {new Date(job.deadline).toLocaleDateString('en-GB')}
                         </span>
                       )}
                       {job.salary && (
@@ -267,7 +195,6 @@ export const JobsPage = () => {
                       <button
                         onClick={e => handleSave(e, job)}
                         disabled={actionLoading === job.id}
-                        title={t('saveJob')}
                         className="px-3 py-1.5 text-sm font-medium bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40"
                       >
                         ⭐ {t('save')}
@@ -276,7 +203,6 @@ export const JobsPage = () => {
                     <button
                       onClick={e => handleHide(e, job)}
                       disabled={actionLoading === job.id}
-                      title={t('hideJob')}
                       className="px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
                     >
                       ✕ {t('hide')}
@@ -288,7 +214,6 @@ export const JobsPage = () => {
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-3 mt-8">
             <button
