@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
+import { LanguageToggle } from '../components/common/LanguageToggle';
 
 const STATUS_OPTIONS: { value: Job['status']; label: string; color: string }[] = [
   { value: 'new',          label: 'New',          color: 'bg-blue-100 text-blue-700 border-blue-300' },
@@ -146,7 +147,8 @@ export const JobDetailPage = () => {
             >
               ← Back to Jobs
             </button>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <LanguageToggle />
               <a
                 href={job.url}
                 target="_blank"
