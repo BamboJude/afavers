@@ -29,6 +29,7 @@ export interface Job {
   applied_date: Date | null;
   follow_up_date: Date | null;
   is_hidden: boolean;
+  language: 'en' | 'de' | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -51,6 +52,7 @@ export interface JobFilters {
   offset?: number;
   userKeywords?: string[];   // Filter jobs to match user's search keywords
   userLocations?: string[];  // Filter jobs to match user's target locations
+  language?: 'en' | 'de';   // Filter by detected language
 }
 
 // External job fetcher types
