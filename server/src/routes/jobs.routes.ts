@@ -68,14 +68,27 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/jobs/stats
+ * Get job counts grouped by status
+ */
+router.get('/stats', async (req, res) => {
+  try {
+    const stats = await jobModel.getStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+/**
  * GET /api/jobs/:id
  * Get single job by ID
  */
 router.get('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const jobs = await jobModel.findAll();
-    const job = jobs.find(j => j.id === id);
+    const job = await jobModel.findById(id);
 
     if (!job) {
       return res.status(404).json({ error: 'Job not found' });

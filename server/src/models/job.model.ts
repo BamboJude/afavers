@@ -172,6 +172,46 @@ export async function bulkUpsert(jobs: Partial<Job>[]): Promise<{ inserted: numb
 }
 
 /**
+ * Find a job by its internal ID
+ */
+export async function findById(id: number): Promise<Job | null> {
+  const result = await pool.query<Job>('SELECT * FROM jobs WHERE id = $1', [id]);
+  return result.rows[0] || null;
+}
+
+/**
+ * Get status counts for all jobs (excluding hidden)
+ */
+export async function getStats(): Promise<{
+  total: number; new: number; saved: number; applied: number;
+  interviewing: number; offered: number; rejected: number; new_today: number;
+}> {
+  const result = await pool.query(`
+    SELECT
+      COUNT(*) FILTER (WHERE is_hidden = FALSE) as total,
+      COUNT(*) FILTER (WHERE status = 'new' AND is_hidden = FALSE) as new,
+      COUNT(*) FILTER (WHERE status = 'saved' AND is_hidden = FALSE) as saved,
+      COUNT(*) FILTER (WHERE status = 'applied' AND is_hidden = FALSE) as applied,
+      COUNT(*) FILTER (WHERE status = 'interviewing' AND is_hidden = FALSE) as interviewing,
+      COUNT(*) FILTER (WHERE status = 'offered' AND is_hidden = FALSE) as offered,
+      COUNT(*) FILTER (WHERE status = 'rejected' AND is_hidden = FALSE) as rejected,
+      COUNT(*) FILTER (WHERE status = 'new' AND is_hidden = FALSE AND created_at >= CURRENT_DATE) as new_today
+    FROM jobs
+  `);
+  const row = result.rows[0];
+  return {
+    total: parseInt(row.total),
+    new: parseInt(row.new),
+    saved: parseInt(row.saved),
+    applied: parseInt(row.applied),
+    interviewing: parseInt(row.interviewing),
+    offered: parseInt(row.offered),
+    rejected: parseInt(row.rejected),
+    new_today: parseInt(row.new_today),
+  };
+}
+
+/**
  * Delete a job by ID
  */
 export async function deleteById(id: number): Promise<boolean> {
