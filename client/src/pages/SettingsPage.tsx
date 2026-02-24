@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useLanguage } from '../store/languageStore';
 import { LanguageToggle } from '../components/common/LanguageToggle';
+import { DemoBanner } from '../components/common/DemoBanner';
+import { useAuthStore } from '../store/authStore';
 
 interface Settings {
   keywords: string;
@@ -12,6 +14,7 @@ interface Settings {
 export const SettingsPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const isDemo = useAuthStore((s) => s.isDemo);
   const [settings, setSettings] = useState<Settings>({
     keywords: '',
     locations: '',
@@ -75,6 +78,7 @@ export const SettingsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <DemoBanner />
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-900">{t('settings')}</h1>
@@ -145,7 +149,8 @@ export const SettingsPage = () => {
                 </span>
                 <button
                   onClick={handleSave}
-                  disabled={saving}
+                  disabled={saving || isDemo}
+                  title={isDemo ? 'Not available in demo mode' : undefined}
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
                 >
                   {saving ? '...' : t('saveSettings')}
@@ -192,7 +197,8 @@ export const SettingsPage = () => {
               <div className="flex justify-end pt-1">
                 <button
                   onClick={handleChangePassword}
-                  disabled={pwSaving || !pwForm.current || !pwForm.next || !pwForm.confirm}
+                  disabled={pwSaving || !pwForm.current || !pwForm.next || !pwForm.confirm || isDemo}
+                  title={isDemo ? 'Not available in demo mode' : undefined}
                   className="px-6 py-2.5 bg-gray-800 hover:bg-gray-900 disabled:opacity-40 text-white text-sm font-medium rounded-lg transition"
                 >
                   {pwSaving ? 'Saving...' : 'Update Password'}

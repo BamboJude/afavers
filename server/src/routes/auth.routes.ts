@@ -7,6 +7,9 @@ const router = express.Router();
 // POST /api/auth/login - Login with email and password
 router.post('/login', authController.login);
 
+// POST /api/auth/demo - One-click demo login (no credentials needed)
+router.post('/demo', authController.loginDemo);
+
 // POST /api/auth/logout - Logout (client-side token removal)
 router.post('/logout', authController.logout);
 

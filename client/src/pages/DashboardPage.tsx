@@ -5,9 +5,10 @@ import { jobsService } from '../services/jobs.service';
 import type { DashboardStats, FollowUpAlert } from '../types';
 import { useLanguage } from '../store/languageStore';
 import { LanguageToggle } from '../components/common/LanguageToggle';
+import { DemoBanner } from '../components/common/DemoBanner';
 
 export const DashboardPage = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, isDemo } = useAuthStore();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -54,6 +55,7 @@ export const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <DemoBanner />
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -202,7 +204,8 @@ export const DashboardPage = () => {
                 <p className="text-sm text-gray-500 mb-4">{t('autoFetchNote')}</p>
                 <button
                   onClick={handleFetchJobs}
-                  disabled={fetching}
+                  disabled={fetching || isDemo}
+                  title={isDemo ? 'Not available in demo mode' : undefined}
                   className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
                 >
                   {fetching ? t('fetching') : t('fetchNow')}

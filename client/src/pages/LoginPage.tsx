@@ -7,9 +7,24 @@ export const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   const login = useAuthStore((state) => state.login);
+  const loginDemo = useAuthStore((state) => state.loginDemo);
   const navigate = useNavigate();
+
+  const handleDemo = async () => {
+    setError('');
+    setDemoLoading(true);
+    try {
+      await loginDemo();
+      navigate('/dashboard');
+    } catch {
+      setError('Demo account unavailable. Try again later.');
+    } finally {
+      setDemoLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +99,22 @@ export const LoginPage = () => {
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-6">
+          <div className="mt-5">
+            <div className="relative flex items-center">
+              <div className="flex-grow border-t border-gray-200" />
+              <span className="px-3 text-sm text-gray-400">or</span>
+              <div className="flex-grow border-t border-gray-200" />
+            </div>
+            <button
+              onClick={handleDemo}
+              disabled={demoLoading}
+              className="mt-4 w-full bg-amber-400 hover:bg-amber-500 disabled:opacity-50 text-amber-900 font-semibold py-3 px-4 rounded-lg transition"
+            >
+              {demoLoading ? 'Loading demo...' : '⚡ Try Demo — no sign-up needed'}
+            </button>
+          </div>
+
+          <p className="text-center text-sm text-gray-500 mt-4">
             Don't have an account?{' '}
             <Link to="/register" className="text-green-600 hover:text-green-700 font-medium">
               Create one free

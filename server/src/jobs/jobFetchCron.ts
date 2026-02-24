@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import { fetchAndSaveJobs } from '../services/fetchers/jobFetcher.service.js';
+import { resetDemoData, ensureDemoUser } from '../services/demoReset.service.js';
 
 /**
  * Initialize job fetch cron job
@@ -19,6 +20,17 @@ export function initializeJobFetchCron(): void {
       console.error('[CRON] ❌ Job fetch failed:', error);
     }
   });
+
+  // Daily midnight: reset demo user data
+  cron.schedule('0 0 * * *', async () => {
+    console.log('[CRON] Resetting demo data...');
+    await resetDemoData();
+  });
+
+  // Seed demo data on startup (ensures demo user + data always exists)
+  ensureDemoUser().then(userId => {
+    resetDemoData().catch(console.error);
+  }).catch(console.error);
 
   console.log('✅ Cron job scheduled: Every 2 hours');
   console.log('   Next run at: ' + getNextCronTime());

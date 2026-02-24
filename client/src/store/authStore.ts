@@ -10,7 +10,9 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isDemo: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginDemo: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -38,21 +40,34 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
+      isDemo: false,
 
       login: async (email, password) => {
         const data = await authRequest('login', email, password);
-        set({ user: data.user, token: data.token, isAuthenticated: true });
+        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: false });
+      },
+
+      loginDemo: async () => {
+        const response = await fetch(`${API_URL}/api/auth/demo`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Demo login failed');
+        }
+        const data = await response.json();
+        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: true });
       },
 
       register: async (email, password) => {
         await authRequest('register', email, password);
-        // Auto-login after successful registration
         const data = await authRequest('login', email, password);
-        set({ user: data.user, token: data.token, isAuthenticated: true });
+        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: false });
       },
 
       logout: () => {
-        set({ user: null, token: null, isAuthenticated: false });
+        set({ user: null, token: null, isAuthenticated: false, isDemo: false });
       },
     }),
     { name: 'auth-storage' }

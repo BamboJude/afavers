@@ -27,6 +27,10 @@ async function getUserSearchFilters(userId: number): Promise<{ userKeywords: str
 
 /** POST /api/jobs/fetch — manually trigger job fetching */
 router.post('/fetch', async (req: AuthRequest, res) => {
+  if (req.isDemo) {
+    res.status(403).json({ error: 'Not available in demo mode' });
+    return;
+  }
   try {
     const result = await fetchAndSaveJobs();
     res.json({ success: true, message: 'Job fetch completed', ...result });
