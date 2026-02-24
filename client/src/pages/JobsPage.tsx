@@ -27,7 +27,7 @@ export const JobsPage = () => {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
-  const [englishOnly, setEnglishOnly] = useState(false);
+  const [langFilter, setLangFilter] = useState<'en' | 'de' | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -49,7 +49,7 @@ export const JobsPage = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, [activeTab, search, sortBy, page, englishOnly]);
+  }, [activeTab, search, sortBy, page, langFilter]);
 
   const loadStats = async () => {
     try {
@@ -68,7 +68,7 @@ export const JobsPage = () => {
         sortOrder: 'DESC',
         search: search || undefined,
         status: activeTab !== 'all' ? activeTab : undefined,
-        language: englishOnly ? 'en' : undefined,
+        language: langFilter ?? undefined,
       };
       const response = await jobsService.getJobs(filters);
       setJobs(response.jobs);
@@ -199,21 +199,36 @@ export const JobsPage = () => {
             <option value="title">Title A–Z</option>
             <option value="company">Company A–Z</option>
           </select>
-          <button
-            onClick={() => { setEnglishOnly(v => !v); setPage(1); }}
-            title={englishOnly ? 'Showing English jobs only — click to show all' : 'Click to show English jobs only'}
-            className={`px-3 py-2 rounded-lg text-sm font-medium border transition ${
-              englishOnly
-                ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
-                : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400 hover:text-blue-600'
-            }`}
-          >
-            🇬🇧 English only
-          </button>
+          <div className="flex gap-1 border border-gray-300 rounded-lg overflow-hidden">
+            <button
+              onClick={() => { setLangFilter(langFilter === 'en' ? null : 'en'); setPage(1); }}
+              title="English jobs only"
+              className={`px-3 py-2 text-sm font-medium transition ${
+                langFilter === 'en'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              🇬🇧 English
+            </button>
+            <div className="w-px bg-gray-300" />
+            <button
+              onClick={() => { setLangFilter(langFilter === 'de' ? null : 'de'); setPage(1); }}
+              title="German jobs only"
+              className={`px-3 py-2 text-sm font-medium transition ${
+                langFilter === 'de'
+                  ? 'bg-yellow-500 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              🇩🇪 German
+            </button>
+          </div>
         </div>
         <p className="text-xs text-gray-400 mt-2">
           {total.toLocaleString()} jobs
-          {englishOnly && <span className="ml-1 text-blue-500">· English only</span>}
+          {langFilter === 'en' && <span className="ml-1 text-blue-500">· English only</span>}
+          {langFilter === 'de' && <span className="ml-1 text-yellow-600">· German only</span>}
         </p>
       </div>
 
