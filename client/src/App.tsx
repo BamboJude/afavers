@@ -8,6 +8,7 @@ import { KanbanPage } from './pages/KanbanPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SetupPage } from './pages/SetupPage';
 import { EnglishJobsPage } from './pages/EnglishJobsPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 
 function App() {
@@ -69,6 +70,14 @@ function App() {
           element={
             <ProtectedRoute>
               <EnglishJobsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <AnalyticsPage />
             </ProtectedRoute>
           }
         />

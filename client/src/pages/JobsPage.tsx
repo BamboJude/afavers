@@ -32,6 +32,15 @@ const SourceBadge = ({ source }: { source: string }) => {
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
+const deadlineUrgency = (deadline: string | null): string => {
+  if (!deadline) return '';
+  const days = Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
+  if (days < 0)  return 'border-red-400 bg-red-50';
+  if (days <= 3) return 'border-red-300 bg-red-50';
+  if (days <= 7) return 'border-orange-300 bg-orange-50';
+  return '';
+};
+
 export const JobsPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -240,7 +249,7 @@ export const JobsPage = () => {
               <div
                 key={job.id}
                 onClick={() => navigate(`/jobs/${job.id}`)}
-                className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-gray-300 transition cursor-pointer"
+                className={`bg-white rounded-xl border p-5 hover:shadow-md transition cursor-pointer ${deadlineUrgency(job.deadline) || 'border-gray-200 hover:border-gray-300'}`}
               >
                 <div className="flex items-start gap-4">
                   <div className="flex-1 min-w-0">

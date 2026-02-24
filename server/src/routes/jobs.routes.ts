@@ -85,6 +85,26 @@ router.get('/', async (req: AuthRequest, res) => {
   }
 });
 
+/** GET /api/jobs/follow-ups — jobs with overdue/today follow-up dates */
+router.get('/follow-ups', async (req: AuthRequest, res) => {
+  try {
+    const alerts = await jobModel.getFollowUps(req.userId!);
+    res.json(alerts);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch follow-ups' });
+  }
+});
+
+/** GET /api/jobs/analytics */
+router.get('/analytics', async (req: AuthRequest, res) => {
+  try {
+    const data = await jobModel.getAnalytics(req.userId!);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
 /** GET /api/jobs/:id — single job with user-specific overlay */
 router.get('/:id', async (req: AuthRequest, res) => {
   try {
@@ -125,6 +145,31 @@ router.patch('/:id/notes', async (req: AuthRequest, res) => {
     res.json({ success: true, job });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update notes' });
+  }
+});
+
+/** PATCH /api/jobs/:id/cover-letter */
+router.patch('/:id/cover-letter', async (req: AuthRequest, res) => {
+  try {
+    const jobId = parseInt(req.params.id as string);
+    await jobModel.upsertUserJob(req.userId!, jobId, { cover_letter: req.body.coverLetter });
+    const job = await jobModel.findById(jobId, req.userId);
+    res.json({ success: true, job });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update cover letter' });
+  }
+});
+
+/** PATCH /api/jobs/:id/interview-date */
+router.patch('/:id/interview-date', async (req: AuthRequest, res) => {
+  try {
+    const jobId = parseInt(req.params.id as string);
+    const interview_date = req.body.interviewDate ? new Date(req.body.interviewDate) : null;
+    await jobModel.upsertUserJob(req.userId!, jobId, { interview_date });
+    const job = await jobModel.findById(jobId, req.userId);
+    res.json({ success: true, job });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update interview date' });
   }
 });
 

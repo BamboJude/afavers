@@ -21,6 +21,11 @@ export const JobDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
+  const [coverLetter, setCoverLetter] = useState('');
+  const [savingCoverLetter, setSavingCoverLetter] = useState(false);
+  const [coverLetterSaved, setCoverLetterSaved] = useState(false);
+  const [interviewDate, setInterviewDate] = useState('');
+  const [savingInterviewDate, setSavingInterviewDate] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
 
@@ -34,6 +39,8 @@ export const JobDetailPage = () => {
       const data = await jobsService.getJob(Number(id));
       setJob(data);
       setNotes(data.notes || '');
+      setCoverLetter(data.cover_letter || '');
+      setInterviewDate(data.interview_date ? data.interview_date.slice(0, 10) : '');
     } catch (error) {
       console.error('Failed to fetch job:', error);
     } finally {
@@ -66,6 +73,35 @@ export const JobDetailPage = () => {
       console.error('Failed to save notes:', error);
     } finally {
       setSavingNotes(false);
+    }
+  };
+
+  const handleSaveCoverLetter = async () => {
+    if (!job) return;
+    setSavingCoverLetter(true);
+    try {
+      const updated = await jobsService.updateCoverLetter(job.id, coverLetter);
+      setJob(updated);
+      setCoverLetterSaved(true);
+      setTimeout(() => setCoverLetterSaved(false), 2000);
+    } catch (error) {
+      console.error('Failed to save cover letter:', error);
+    } finally {
+      setSavingCoverLetter(false);
+    }
+  };
+
+  const handleSaveInterviewDate = async (date: string) => {
+    if (!job) return;
+    setSavingInterviewDate(true);
+    try {
+      const updated = await jobsService.updateInterviewDate(job.id, date || null);
+      setJob(updated);
+      setInterviewDate(date);
+    } catch (error) {
+      console.error('Failed to save interview date:', error);
+    } finally {
+      setSavingInterviewDate(false);
     }
   };
 
@@ -214,6 +250,57 @@ export const JobDetailPage = () => {
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
             >
               {savingNotes ? 'Saving...' : 'Save Notes'}
+            </button>
+          </div>
+        </div>
+
+        {/* Interview date */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Interview Date</h2>
+          <div className="flex items-center gap-3">
+            <input
+              type="date"
+              value={interviewDate}
+              onChange={e => handleSaveInterviewDate(e.target.value)}
+              disabled={savingInterviewDate}
+              className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm text-gray-700 disabled:opacity-50"
+            />
+            {interviewDate && (
+              <span className="text-sm text-purple-700 font-medium">
+                📞 {new Date(interviewDate).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </span>
+            )}
+            {interviewDate && (
+              <button
+                onClick={() => handleSaveInterviewDate('')}
+                className="text-xs text-gray-400 hover:text-red-500 transition"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Cover letter */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Cover Letter Draft</h2>
+          <textarea
+            value={coverLetter}
+            onChange={e => setCoverLetter(e.target.value)}
+            placeholder="Draft your cover letter here — key points, opening line, why this role..."
+            rows={8}
+            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
+          />
+          <div className="flex justify-between items-center mt-2">
+            <span className={`text-xs transition ${coverLetterSaved ? 'text-green-600' : 'text-transparent'}`}>
+              ✓ Saved
+            </span>
+            <button
+              onClick={handleSaveCoverLetter}
+              disabled={savingCoverLetter}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
+            >
+              {savingCoverLetter ? 'Saving...' : 'Save Draft'}
             </button>
           </div>
         </div>

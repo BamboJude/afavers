@@ -17,8 +17,10 @@ export interface Job {
   salary: string | null;
   status: 'new' | 'saved' | 'applied' | 'interviewing' | 'offered' | 'rejected';
   notes: string | null;
+  cover_letter: string | null;
   applied_date: string | null;
   follow_up_date: string | null;
+  interview_date: string | null;
   is_hidden: boolean;
   language: 'en' | 'de' | null;
   created_at: string;
@@ -34,6 +36,21 @@ export interface DashboardStats {
   offered: number;
   rejected: number;
   new_today: number;
+  applied_today: number;
+}
+
+export interface FollowUpAlert {
+  id: number;
+  title: string;
+  company: string;
+  follow_up_date: string;
+  status: string;
+}
+
+export interface AnalyticsData {
+  bySource: { source: string; count: number }[];
+  byWeek:   { week: string;   count: number }[];
+  byStatus: { status: string; count: number }[];
 }
 
 export interface JobsResponse {

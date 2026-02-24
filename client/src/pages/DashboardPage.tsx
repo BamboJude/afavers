@@ -2,7 +2,7 @@ import { useAuthStore } from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { jobsService } from '../services/jobs.service';
-import type { DashboardStats } from '../types';
+import type { DashboardStats, FollowUpAlert } from '../types';
 import { useLanguage } from '../store/languageStore';
 import { LanguageToggle } from '../components/common/LanguageToggle';
 
@@ -11,12 +11,14 @@ export const DashboardPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [followUps, setFollowUps] = useState<FollowUpAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [fetchMsg, setFetchMsg] = useState('');
 
   useEffect(() => {
     loadStats();
+    jobsService.getFollowUps().then(setFollowUps).catch(() => {});
   }, []);
 
   const loadStats = async () => {
@@ -105,12 +107,32 @@ export const DashboardPage = () => {
               </div>
             )}
 
+            {/* Follow-up reminders */}
+            {followUps.length > 0 && (
+              <div className="mb-6 bg-amber-50 border border-amber-300 rounded-xl p-4">
+                <p className="text-sm font-semibold text-amber-800 mb-2">⏰ Follow-ups due ({followUps.length})</p>
+                <div className="space-y-1">
+                  {followUps.map(f => (
+                    <div
+                      key={f.id}
+                      onClick={() => navigate(`/jobs/${f.id}`)}
+                      className="flex justify-between items-center text-sm cursor-pointer hover:bg-amber-100 rounded px-2 py-1 transition"
+                    >
+                      <span className="text-amber-900 font-medium truncate">{f.title} · {f.company}</span>
+                      <span className="text-amber-600 shrink-0 ml-3">{new Date(f.follow_up_date).toLocaleDateString('de-DE')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Stats row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {[
                 { label: t('totalJobs'),    value: stats?.total || 0,        icon: '📋', color: 'bg-gray-50 border-gray-200',      text: 'text-gray-600' },
                 { label: t('saved'),        value: stats?.saved || 0,        icon: '⭐', color: 'bg-yellow-50 border-yellow-200',  text: 'text-yellow-700', onClick: () => navigate('/jobs') },
-                { label: t('applied'),      value: stats?.applied || 0,      icon: '✅', color: 'bg-green-50 border-green-200',   text: 'text-green-700',  onClick: () => navigate('/kanban') },
+                { label: t('applied'),      value: stats?.applied || 0,      icon: '✅', color: 'bg-green-50 border-green-200',   text: 'text-green-700',  onClick: () => navigate('/kanban'),
+                  sub: stats?.applied_today ? `+${stats.applied_today} today` : undefined },
                 { label: t('interviewing'), value: stats?.interviewing || 0, icon: '📞', color: 'bg-purple-50 border-purple-200', text: 'text-purple-700', onClick: () => navigate('/kanban') },
               ].map(stat => (
                 <div
@@ -122,6 +144,9 @@ export const DashboardPage = () => {
                     <div>
                       <p className={`text-sm font-medium ${stat.text}`}>{stat.label}</p>
                       <p className="text-3xl font-bold text-gray-900 mt-1">{stat.value.toLocaleString()}</p>
+                      {'sub' in stat && stat.sub && (
+                        <p className="text-xs text-green-600 font-medium mt-0.5">{stat.sub}</p>
+                      )}
                     </div>
                     <span className="text-2xl">{stat.icon}</span>
                   </div>
@@ -130,7 +155,7 @@ export const DashboardPage = () => {
             </div>
 
             {/* Action cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-6">
               <button
                 onClick={() => navigate('/jobs')}
                 className="bg-white rounded-xl border-2 border-gray-200 hover:border-blue-400 p-6 text-left transition group"
@@ -160,6 +185,15 @@ export const DashboardPage = () => {
                 <p className="text-sm text-gray-500">
                   {(stats?.saved || 0) + (stats?.applied || 0) + (stats?.interviewing || 0)} {t('applicationsBoardDesc')}
                 </p>
+              </button>
+
+              <button
+                onClick={() => navigate('/analytics')}
+                className="bg-white rounded-xl border-2 border-gray-200 hover:border-indigo-400 p-6 text-left transition group"
+              >
+                <div className="text-3xl mb-3">📊</div>
+                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-700 mb-1">Analytics</h3>
+                <p className="text-sm text-gray-500">Track your progress</p>
               </button>
 
               <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
