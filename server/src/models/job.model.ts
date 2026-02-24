@@ -70,35 +70,40 @@ export async function upsertUserJob(
   updates: {
     status?: string;
     notes?: string;
+    cover_letter?: string | null;
     applied_date?: Date | null;
     follow_up_date?: Date | null;
+    interview_date?: Date | null;
     is_hidden?: boolean;
   }
 ): Promise<void> {
-  // Fetch existing row so we can merge
   const existing = await pool.query(
     'SELECT * FROM user_jobs WHERE user_id = $1 AND job_id = $2',
     [userId, jobId]
   );
   const current = existing.rows[0] || {};
 
-  const status       = updates.status       !== undefined ? updates.status       : (current.status       ?? 'new');
-  const notes        = updates.notes        !== undefined ? updates.notes        : (current.notes        ?? null);
-  const applied_date = updates.applied_date !== undefined ? updates.applied_date : (current.applied_date ?? null);
-  const follow_up    = updates.follow_up_date !== undefined ? updates.follow_up_date : (current.follow_up_date ?? null);
-  const is_hidden    = updates.is_hidden    !== undefined ? updates.is_hidden    : (current.is_hidden    ?? false);
+  const status         = updates.status         !== undefined ? updates.status         : (current.status         ?? 'new');
+  const notes          = updates.notes          !== undefined ? updates.notes          : (current.notes          ?? null);
+  const cover_letter   = updates.cover_letter   !== undefined ? updates.cover_letter   : (current.cover_letter   ?? null);
+  const applied_date   = updates.applied_date   !== undefined ? updates.applied_date   : (current.applied_date   ?? null);
+  const follow_up      = updates.follow_up_date !== undefined ? updates.follow_up_date : (current.follow_up_date ?? null);
+  const interview_date = updates.interview_date !== undefined ? updates.interview_date : (current.interview_date ?? null);
+  const is_hidden      = updates.is_hidden      !== undefined ? updates.is_hidden      : (current.is_hidden      ?? false);
 
   await pool.query(
-    `INSERT INTO user_jobs (user_id, job_id, status, notes, applied_date, follow_up_date, is_hidden, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+    `INSERT INTO user_jobs (user_id, job_id, status, notes, cover_letter, applied_date, follow_up_date, interview_date, is_hidden, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
      ON CONFLICT (user_id, job_id) DO UPDATE SET
-       status        = EXCLUDED.status,
-       notes         = EXCLUDED.notes,
-       applied_date  = EXCLUDED.applied_date,
-       follow_up_date= EXCLUDED.follow_up_date,
-       is_hidden     = EXCLUDED.is_hidden,
-       updated_at    = NOW()`,
-    [userId, jobId, status, notes, applied_date, follow_up, is_hidden]
+       status         = EXCLUDED.status,
+       notes          = EXCLUDED.notes,
+       cover_letter   = EXCLUDED.cover_letter,
+       applied_date   = EXCLUDED.applied_date,
+       follow_up_date = EXCLUDED.follow_up_date,
+       interview_date = EXCLUDED.interview_date,
+       is_hidden      = EXCLUDED.is_hidden,
+       updated_at     = NOW()`,
+    [userId, jobId, status, notes, cover_letter, applied_date, follow_up, interview_date, is_hidden]
   );
 }
 
@@ -187,8 +192,10 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
       j.created_at, j.updated_at,
       COALESCE(uj.status,    'new')   AS status,
       uj.notes,
+      uj.cover_letter,
       uj.applied_date,
       uj.follow_up_date,
+      uj.interview_date,
       COALESCE(uj.is_hidden, FALSE)   AS is_hidden
     FROM jobs j
     LEFT JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $1
@@ -286,8 +293,10 @@ export async function findById(id: number, userId?: number): Promise<Job | null>
        j.created_at, j.updated_at,
        COALESCE(uj.status,    'new')  AS status,
        uj.notes,
+       uj.cover_letter,
        uj.applied_date,
        uj.follow_up_date,
+       uj.interview_date,
        COALESCE(uj.is_hidden, FALSE)  AS is_hidden
      FROM jobs j
      LEFT JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $2
@@ -306,7 +315,7 @@ export async function getStats(
   userLocations?: string[]
 ): Promise<{
   total: number; new: number; saved: number; applied: number;
-  interviewing: number; offered: number; rejected: number; new_today: number;
+  interviewing: number; offered: number; rejected: number; new_today: number; applied_today: number;
 }> {
   const userIdParam = userId ?? 0;
   const values: unknown[] = [userIdParam];
@@ -338,7 +347,8 @@ export async function getStats(
        COUNT(*) FILTER (WHERE uj.status = 'interviewing'                   AND COALESCE(uj.is_hidden, FALSE) = FALSE) AS interviewing,
        COUNT(*) FILTER (WHERE uj.status = 'offered'                        AND COALESCE(uj.is_hidden, FALSE) = FALSE) AS offered,
        COUNT(*) FILTER (WHERE uj.status = 'rejected'                       AND COALESCE(uj.is_hidden, FALSE) = FALSE) AS rejected,
-       COUNT(*) FILTER (WHERE COALESCE(uj.status, 'new') = 'new'          AND COALESCE(uj.is_hidden, FALSE) = FALSE AND j.created_at >= CURRENT_DATE) AS new_today
+       COUNT(*) FILTER (WHERE COALESCE(uj.status, 'new') = 'new' AND COALESCE(uj.is_hidden, FALSE) = FALSE AND j.created_at >= CURRENT_DATE) AS new_today,
+       COUNT(*) FILTER (WHERE uj.status = 'applied' AND uj.applied_date >= CURRENT_DATE) AS applied_today
      FROM jobs j
      LEFT JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $1
      ${whereClause}`,
@@ -346,14 +356,76 @@ export async function getStats(
   );
   const row = result.rows[0];
   return {
-    total:        parseInt(row.total),
-    new:          parseInt(row.new),
-    saved:        parseInt(row.saved),
-    applied:      parseInt(row.applied),
-    interviewing: parseInt(row.interviewing),
-    offered:      parseInt(row.offered),
-    rejected:     parseInt(row.rejected),
-    new_today:    parseInt(row.new_today),
+    total:         parseInt(row.total),
+    new:           parseInt(row.new),
+    saved:         parseInt(row.saved),
+    applied:       parseInt(row.applied),
+    interviewing:  parseInt(row.interviewing),
+    offered:       parseInt(row.offered),
+    rejected:      parseInt(row.rejected),
+    new_today:     parseInt(row.new_today),
+    applied_today: parseInt(row.applied_today) || 0,
+  };
+}
+
+/**
+ * Get jobs with overdue or due-today follow-up dates for a user
+ */
+export async function getFollowUps(userId: number): Promise<{ id: number; title: string; company: string; follow_up_date: string; status: string }[]> {
+  const result = await pool.query(
+    `SELECT j.id, j.title, j.company, uj.follow_up_date::text, uj.status
+     FROM jobs j
+     JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $1
+     WHERE uj.follow_up_date <= CURRENT_DATE
+       AND uj.status NOT IN ('rejected', 'offered')
+       AND COALESCE(uj.is_hidden, FALSE) = FALSE
+     ORDER BY uj.follow_up_date ASC
+     LIMIT 10`,
+    [userId]
+  );
+  return result.rows;
+}
+
+/**
+ * Get analytics data for a user
+ */
+export async function getAnalytics(userId: number): Promise<{
+  bySource: { source: string; count: number }[];
+  byWeek: { week: string; count: number }[];
+  byStatus: { status: string; count: number }[];
+}> {
+  const [sourceRes, weekRes, statusRes] = await Promise.all([
+    pool.query(
+      `SELECT j.source, COUNT(*) AS count
+       FROM jobs j
+       LEFT JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $1
+       WHERE COALESCE(uj.is_hidden, FALSE) = FALSE
+       GROUP BY j.source ORDER BY count DESC`,
+      [userId]
+    ),
+    pool.query(
+      `SELECT DATE_TRUNC('week', uj.applied_date)::date::text AS week, COUNT(*) AS count
+       FROM user_jobs uj
+       WHERE uj.user_id = $1
+         AND uj.status IN ('applied','interviewing','offered','rejected')
+         AND uj.applied_date >= CURRENT_DATE - INTERVAL '8 weeks'
+       GROUP BY week ORDER BY week`,
+      [userId]
+    ),
+    pool.query(
+      `SELECT COALESCE(uj.status, 'new') AS status, COUNT(*) AS count
+       FROM jobs j
+       LEFT JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $1
+       WHERE COALESCE(uj.is_hidden, FALSE) = FALSE
+       GROUP BY status`,
+      [userId]
+    ),
+  ]);
+
+  return {
+    bySource: sourceRes.rows.map(r => ({ source: r.source, count: parseInt(r.count) })),
+    byWeek:   weekRes.rows.map(r   => ({ week: r.week,     count: parseInt(r.count) })),
+    byStatus: statusRes.rows.map(r => ({ status: r.status, count: parseInt(r.count) })),
   };
 }
 

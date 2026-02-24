@@ -26,8 +26,10 @@ export interface Job {
   salary: string | null;
   status: JobStatus;
   notes: string | null;
+  cover_letter: string | null;
   applied_date: Date | null;
   follow_up_date: Date | null;
+  interview_date: Date | null;
   is_hidden: boolean;
   language: 'en' | 'de' | null;
   created_at: Date;

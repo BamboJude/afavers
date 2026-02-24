@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Job, JobsResponse, JobFilters, DashboardStats } from '../types';
+import type { Job, JobsResponse, JobFilters, DashboardStats, FollowUpAlert, AnalyticsData } from '../types';
 
 export const jobsService = {
   // Get dashboard stats
@@ -59,6 +59,30 @@ export const jobsService = {
   // Trigger manual job fetch
   async fetchJobs(): Promise<any> {
     const response = await api.post('/jobs/fetch');
+    return response.data;
+  },
+
+  // Update cover letter
+  async updateCoverLetter(id: number, coverLetter: string): Promise<Job> {
+    const response = await api.patch<{ job: Job }>(`/jobs/${id}/cover-letter`, { coverLetter });
+    return response.data.job;
+  },
+
+  // Update interview date
+  async updateInterviewDate(id: number, interviewDate: string | null): Promise<Job> {
+    const response = await api.patch<{ job: Job }>(`/jobs/${id}/interview-date`, { interviewDate });
+    return response.data.job;
+  },
+
+  // Get follow-up alerts (overdue/today)
+  async getFollowUps(): Promise<FollowUpAlert[]> {
+    const response = await api.get<FollowUpAlert[]>('/jobs/follow-ups');
+    return response.data;
+  },
+
+  // Get analytics data
+  async getAnalytics(): Promise<AnalyticsData> {
+    const response = await api.get<AnalyticsData>('/jobs/analytics');
     return response.data;
   },
 };
