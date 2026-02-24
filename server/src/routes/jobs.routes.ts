@@ -1,65 +1,55 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.middleware.js';
+import { authenticateToken, AuthRequest } from '../middleware/auth.middleware.js';
 import { fetchAndSaveJobs } from '../services/fetchers/jobFetcher.service.js';
 import * as jobModel from '../models/job.model.js';
 
 const router = express.Router();
-
-// All job routes require authentication
 router.use(authenticateToken);
 
-/**
- * POST /api/jobs/fetch
- * Manually trigger job fetching
- */
-router.post('/fetch', async (req, res) => {
+/** POST /api/jobs/fetch — manually trigger job fetching */
+router.post('/fetch', async (req: AuthRequest, res) => {
   try {
-    console.log('📡 Manual job fetch triggered');
     const result = await fetchAndSaveJobs();
-
-    res.json({
-      success: true,
-      message: 'Job fetch completed',
-      ...result
-    });
+    res.json({ success: true, message: 'Job fetch completed', ...result });
   } catch (error) {
-    console.error('Manual job fetch failed:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Job fetch failed',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
+    res.status(500).json({ success: false, error: 'Job fetch failed' });
   }
 });
 
-/**
- * GET /api/jobs
- * Get all jobs with filtering
- */
-router.get('/', async (req, res) => {
+/** GET /api/jobs/stats — per-user status counts */
+router.get('/stats', async (req: AuthRequest, res) => {
   try {
+    const stats = await jobModel.getStats(req.userId);
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+/** GET /api/jobs — list jobs with user-specific status overlay */
+router.get('/', async (req: AuthRequest, res) => {
+  try {
+    const q = (key: string) => req.query[key] as string | undefined;
     const filters = {
-      status: req.query.status as string,
-      source: req.query.source as string,
-      search: req.query.search as string,
-      sortBy: req.query.sortBy as string,
-      sortOrder: req.query.sortOrder as 'ASC' | 'DESC',
-      limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
-      offset: req.query.offset ? parseInt(req.query.offset as string) : undefined
+      status:    q('status'),
+      source:    q('source'),
+      search:    q('search'),
+      sortBy:    q('sortBy'),
+      sortOrder: q('sortOrder') as 'ASC' | 'DESC' | undefined,
+      limit:     q('limit')  ? parseInt(q('limit')!)  : undefined,
+      offset:    q('offset') ? parseInt(q('offset')!) : undefined,
     };
 
-    const jobs = await jobModel.findAll(filters);
-    const total = await jobModel.count({
-      status: filters.status,
-      source: filters.source,
-      search: filters.search
-    });
+    const [jobs, total] = await Promise.all([
+      jobModel.findAll(filters, req.userId),
+      jobModel.count({ status: filters.status, source: filters.source, search: filters.search }, req.userId),
+    ]);
 
     res.json({
       jobs,
       total,
-      page: filters.offset ? Math.floor(filters.offset / (filters.limit || 50)) + 1 : 1,
-      limit: filters.limit || 50
+      page:  filters.offset ? Math.floor(filters.offset / (filters.limit || 50)) + 1 : 1,
+      limit: filters.limit || 50,
     });
   } catch (error) {
     console.error('Error fetching jobs:', error);
@@ -67,132 +57,68 @@ router.get('/', async (req, res) => {
   }
 });
 
-/**
- * GET /api/jobs/stats
- * Get job counts grouped by status
- */
-router.get('/stats', async (req, res) => {
+/** GET /api/jobs/:id — single job with user-specific overlay */
+router.get('/:id', async (req: AuthRequest, res) => {
   try {
-    const stats = await jobModel.getStats();
-    res.json(stats);
-  } catch (error) {
-    console.error('Error fetching stats:', error);
-    res.status(500).json({ error: 'Failed to fetch stats' });
-  }
-});
-
-/**
- * GET /api/jobs/:id
- * Get single job by ID
- */
-router.get('/:id', async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    const job = await jobModel.findById(id);
-
-    if (!job) {
-      return res.status(404).json({ error: 'Job not found' });
-    }
-
+    const job = await jobModel.findById(parseInt(req.params.id), req.userId);
+    if (!job) return res.status(404).json({ error: 'Job not found' });
     res.json(job);
   } catch (error) {
-    console.error('Error fetching job:', error);
     res.status(500).json({ error: 'Failed to fetch job' });
   }
 });
 
-/**
- * PATCH /api/jobs/:id/status
- * Update job status
- */
-router.patch('/:id/status', async (req, res) => {
+/** PATCH /api/jobs/:id/status */
+router.patch('/:id/status', async (req: AuthRequest, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const jobId = parseInt(req.params.id);
     const { status, appliedDate, followUpDate } = req.body;
 
-    const updates: any = { status };
-
-    if (appliedDate) {
-      updates.applied_date = new Date(appliedDate);
-    }
-
-    if (followUpDate) {
-      updates.follow_up_date = new Date(followUpDate);
-    }
-
-    const updatedJob = await jobModel.update(id, updates);
-
-    res.json({
-      success: true,
-      job: updatedJob
+    await jobModel.upsertUserJob(req.userId!, jobId, {
+      status,
+      applied_date:   appliedDate   ? new Date(appliedDate)   : undefined,
+      follow_up_date: followUpDate ? new Date(followUpDate) : undefined,
     });
+
+    const job = await jobModel.findById(jobId, req.userId);
+    res.json({ success: true, job });
   } catch (error) {
-    console.error('Error updating job status:', error);
-    res.status(500).json({ error: 'Failed to update job status' });
+    console.error('Error updating status:', error);
+    res.status(500).json({ error: 'Failed to update status' });
   }
 });
 
-/**
- * PATCH /api/jobs/:id/notes
- * Update job notes
- */
-router.patch('/:id/notes', async (req, res) => {
+/** PATCH /api/jobs/:id/notes */
+router.patch('/:id/notes', async (req: AuthRequest, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const { notes } = req.body;
-
-    const updatedJob = await jobModel.update(id, { notes });
-
-    res.json({
-      success: true,
-      job: updatedJob
-    });
+    const jobId = parseInt(req.params.id);
+    await jobModel.upsertUserJob(req.userId!, jobId, { notes: req.body.notes });
+    const job = await jobModel.findById(jobId, req.userId);
+    res.json({ success: true, job });
   } catch (error) {
-    console.error('Error updating job notes:', error);
-    res.status(500).json({ error: 'Failed to update job notes' });
+    res.status(500).json({ error: 'Failed to update notes' });
   }
 });
 
-/**
- * PATCH /api/jobs/:id/hide
- * Hide/show a job
- */
-router.patch('/:id/hide', async (req, res) => {
+/** PATCH /api/jobs/:id/hide */
+router.patch('/:id/hide', async (req: AuthRequest, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const { isHidden } = req.body;
-
-    const updatedJob = await jobModel.update(id, { is_hidden: isHidden });
-
-    res.json({
-      success: true,
-      job: updatedJob
-    });
+    const jobId = parseInt(req.params.id);
+    await jobModel.upsertUserJob(req.userId!, jobId, { is_hidden: req.body.isHidden });
+    const job = await jobModel.findById(jobId, req.userId);
+    res.json({ success: true, job });
   } catch (error) {
-    console.error('Error hiding/showing job:', error);
     res.status(500).json({ error: 'Failed to hide/show job' });
   }
 });
 
-/**
- * DELETE /api/jobs/:id
- * Delete a job
- */
-router.delete('/:id', async (req, res) => {
+/** DELETE /api/jobs/:id */
+router.delete('/:id', async (req: AuthRequest, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const success = await jobModel.deleteById(id);
-
-    if (!success) {
-      return res.status(404).json({ error: 'Job not found' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Job deleted successfully'
-    });
+    const success = await jobModel.deleteById(parseInt(req.params.id));
+    if (!success) return res.status(404).json({ error: 'Job not found' });
+    res.json({ success: true, message: 'Job deleted' });
   } catch (error) {
-    console.error('Error deleting job:', error);
     res.status(500).json({ error: 'Failed to delete job' });
   }
 });

@@ -2,24 +2,35 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
-export const LoginPage = () => {
+export const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const login = useAuthStore((state) => state.login);
+  const register = useAuthStore((state) => state.register);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await login(email, password);
+      await register(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid email or password');
+      setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -31,7 +42,8 @@ export const LoginPage = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <img src="/logo.png" alt="afavers" className="h-24 mx-auto mb-4" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
-            <p className="text-gray-500 text-sm">Automated job tracking for sustainability careers</p>
+            <h2 className="text-xl font-bold text-gray-900">Create your account</h2>
+            <p className="text-gray-500 text-sm mt-1">Track sustainability jobs in NRW, Germany</p>
           </div>
 
           {error && (
@@ -60,8 +72,22 @@ export const LoginPage = () => {
                 id="password"
                 type="password"
                 required
+                minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                placeholder="At least 8 characters"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+              <input
+                id="confirm"
+                type="password"
+                required
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                 placeholder="••••••••"
               />
@@ -78,22 +104,22 @@ export const LoginPage = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                   </svg>
-                  Signing in...
+                  Creating account...
                 </span>
-              ) : 'Sign In'}
+              ) : 'Create Account'}
             </button>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-green-600 hover:text-green-700 font-medium">
-              Create one free
+            Already have an account?{' '}
+            <Link to="/login" className="text-green-600 hover:text-green-700 font-medium">
+              Sign in
             </Link>
           </p>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-5">
-          afavers.com · Jobs auto-fetched from Bundesagentur für Arbeit every 2h
+          Free to use · No credit card required
         </p>
       </div>
     </div>

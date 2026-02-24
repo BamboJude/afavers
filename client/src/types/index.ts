@@ -32,6 +32,7 @@ export interface DashboardStats {
   interviewing: number;
   offered: number;
   rejected: number;
+  new_today: number;
 }
 
 export interface JobsResponse {
