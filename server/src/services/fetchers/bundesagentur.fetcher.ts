@@ -1,14 +1,33 @@
 import axios from 'axios';
 import { ExternalJob } from '../../types/index.js';
-import { env } from '../../config/env.js';
+import { pool } from '../../config/database.js';
 
 // API endpoint for Bundesagentur für Arbeit
 const BASE_URL = 'https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/app/jobs';
 
-// Search configuration
-const KEYWORDS = ['consulting', 'beratung', 'nachhaltigkeit', 'umwelt', 'gis', 'energy', 'renewable energy'];
-const LOCATIONS = ['Düsseldorf', 'Köln', 'Essen', 'Bochum', 'Dortmund'];
-const PAGES_PER_SEARCH = 2; // Fetch 2 pages per keyword/location combination
+const DEFAULT_KEYWORDS  = ['consulting', 'beratung', 'nachhaltigkeit', 'umwelt', 'gis', 'energy'];
+const DEFAULT_LOCATIONS = ['Düsseldorf', 'Köln', 'Essen', 'Bochum', 'Dortmund'];
+
+/** Collect unique keywords/locations from all users' settings */
+async function getUserSearchConfig(): Promise<{ keywords: string[]; locations: string[] }> {
+  try {
+    const result = await pool.query('SELECT keywords, locations FROM user_settings');
+    if (result.rows.length === 0) return { keywords: DEFAULT_KEYWORDS, locations: DEFAULT_LOCATIONS };
+
+    const keywords  = new Set<string>();
+    const locations = new Set<string>();
+    for (const row of result.rows) {
+      row.keywords.split(',').map((k: string) => k.trim()).filter(Boolean).forEach((k: string) => keywords.add(k.toLowerCase()));
+      row.locations.split(',').map((l: string) => l.trim()).filter(Boolean).forEach((l: string) => locations.add(l));
+    }
+    return {
+      keywords:  keywords.size  > 0 ? [...keywords]  : DEFAULT_KEYWORDS,
+      locations: locations.size > 0 ? [...locations] : DEFAULT_LOCATIONS,
+    };
+  } catch {
+    return { keywords: DEFAULT_KEYWORDS, locations: DEFAULT_LOCATIONS };
+  }
+}
 
 interface BundesagenturJob {
   refnr: string;
@@ -36,12 +55,12 @@ interface BundesagenturResponse {
 export async function fetchBundesagenturJobs(): Promise<ExternalJob[]> {
   const allJobs: ExternalJob[] = [];
 
-  console.log('🇩🇪 Fetching jobs from Bundesagentur für Arbeit...');
+  const { keywords, locations } = await getUserSearchConfig();
+  console.log(`🇩🇪 Fetching jobs — ${keywords.length} keywords × ${locations.length} locations`);
 
   try {
-    // Iterate through each keyword and location combination
-    for (const keyword of KEYWORDS) {
-      for (const location of LOCATIONS) {
+    for (const keyword of keywords) {
+      for (const location of locations) {
         try {
           const jobs = await fetchJobsForKeywordAndLocation(keyword, location);
           allJobs.push(...jobs);
