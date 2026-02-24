@@ -2,17 +2,20 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
+import { useLanguage } from '../store/languageStore';
+import { LanguageToggle } from '../components/common/LanguageToggle';
 
-const COLUMNS: { status: Job['status']; label: string; color: string; bg: string }[] = [
-  { status: 'saved',        label: 'Saved',        color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' },
-  { status: 'applied',      label: 'Applied',      color: 'text-green-700',  bg: 'bg-green-50 border-green-200' },
-  { status: 'interviewing', label: 'Interviewing', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
-  { status: 'offered',      label: 'Offered',      color: 'text-emerald-700',bg: 'bg-emerald-50 border-emerald-200' },
-  { status: 'rejected',     label: 'Rejected',     color: 'text-red-700',    bg: 'bg-red-50 border-red-200' },
+const COLUMNS: { status: Job['status']; labelKey: string; color: string; bg: string }[] = [
+  { status: 'saved',        labelKey: 'saved',        color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' },
+  { status: 'applied',      labelKey: 'applied',      color: 'text-green-700',  bg: 'bg-green-50 border-green-200' },
+  { status: 'interviewing', labelKey: 'interviewing', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
+  { status: 'offered',      labelKey: 'offered',      color: 'text-emerald-700',bg: 'bg-emerald-50 border-emerald-200' },
+  { status: 'rejected',     labelKey: 'rejected',     color: 'text-red-700',    bg: 'bg-red-50 border-red-200' },
 ];
 
 export const KanbanPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [dragging, setDragging] = useState<Job | null>(null);
@@ -77,21 +80,22 @@ export const KanbanPage = () => {
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Applications Board</h1>
-              <p className="text-sm text-gray-500 mt-1">{totalTracked} jobs being tracked</p>
+              <h1 className="text-2xl font-bold text-gray-900">{t('kanban')}</h1>
+              <p className="text-sm text-gray-500 mt-1">{totalTracked} {t('jobsTracked')}</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex items-center gap-2">
+              <LanguageToggle />
               <button
                 onClick={() => navigate('/jobs')}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition"
               >
-                + Track New Jobs
+                {t('trackNewJobs')}
               </button>
               <button
                 onClick={() => navigate('/dashboard')}
                 className="px-4 py-2 border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium rounded-lg transition"
               >
-                ← Dashboard
+                ← {t('dashboard')}
               </button>
             </div>
           </div>
@@ -122,7 +126,7 @@ export const KanbanPage = () => {
                   {/* Column Header */}
                   <div className="p-4 border-b border-current border-opacity-20">
                     <div className="flex justify-between items-center">
-                      <h2 className={`font-semibold ${col.color}`}>{col.label}</h2>
+                      <h2 className={`font-semibold ${col.color}`}>{t(col.labelKey)}</h2>
                       <span className={`text-sm font-bold px-2 py-0.5 rounded-full bg-white ${col.color}`}>
                         {colJobs.length}
                       </span>
@@ -173,13 +177,13 @@ export const KanbanPage = () => {
 
           {totalTracked === 0 && (
             <div className="text-center py-20">
-              <p className="text-gray-500 text-lg mb-2">No jobs tracked yet</p>
-              <p className="text-gray-400 text-sm mb-6">Go to Jobs and save jobs you're interested in to track them here</p>
+              <p className="text-gray-500 text-lg mb-2">{t('noJobsTracked')}</p>
+              <p className="text-gray-400 text-sm mb-6">{t('noJobsTrackedHint')}</p>
               <button
                 onClick={() => navigate('/jobs')}
                 className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition"
               >
-                Browse Jobs →
+                {t('browseJobs2')}
               </button>
             </div>
           )}

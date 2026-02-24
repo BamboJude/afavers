@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { AnalyticsData } from '../types';
+import { LanguageToggle } from '../components/common/LanguageToggle';
 
 const SOURCE_LABELS: Record<string, string> = {
   bundesagentur: 'Bundesagentur',
@@ -71,7 +72,8 @@ export const AnalyticsPage = () => {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-900">📊 Analytics</h1>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
             <button
               onClick={handleExport}
               disabled={exporting}
