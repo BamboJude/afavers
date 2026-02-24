@@ -18,6 +18,37 @@ export const SettingsPage = () => {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
+  // Change password state
+  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const handleChangePassword = async () => {
+    setPwMsg(null);
+    if (pwForm.next !== pwForm.confirm) {
+      setPwMsg({ text: 'New passwords do not match.', ok: false });
+      return;
+    }
+    if (pwForm.next.length < 8) {
+      setPwMsg({ text: 'New password must be at least 8 characters.', ok: false });
+      return;
+    }
+    setPwSaving(true);
+    try {
+      await api.patch('/auth/password', {
+        currentPassword: pwForm.current,
+        newPassword: pwForm.next,
+      });
+      setPwMsg({ text: 'Password changed successfully.', ok: true });
+      setPwForm({ current: '', next: '', confirm: '' });
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || 'Failed to change password.';
+      setPwMsg({ text: msg, ok: false });
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
   useEffect(() => {
     api.get<Settings>('/settings').then(r => {
       setSettings(r.data);
@@ -112,6 +143,53 @@ export const SettingsPage = () => {
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
                 >
                   {saving ? 'Saving...' : 'Save Settings'}
+                </button>
+              </div>
+            </div>
+
+            {/* Change Password */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+              <h2 className="text-sm font-semibold text-gray-700">Change Password</h2>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Current password</label>
+                <input
+                  type="password"
+                  value={pwForm.current}
+                  onChange={e => setPwForm(f => ({ ...f, current: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                  placeholder="••••••••"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">New password</label>
+                <input
+                  type="password"
+                  value={pwForm.next}
+                  onChange={e => setPwForm(f => ({ ...f, next: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                  placeholder="Min. 8 characters"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Confirm new password</label>
+                <input
+                  type="password"
+                  value={pwForm.confirm}
+                  onChange={e => setPwForm(f => ({ ...f, confirm: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                  placeholder="••••••••"
+                />
+              </div>
+              {pwMsg && (
+                <p className={`text-sm ${pwMsg.ok ? 'text-green-600' : 'text-red-600'}`}>{pwMsg.text}</p>
+              )}
+              <div className="flex justify-end pt-1">
+                <button
+                  onClick={handleChangePassword}
+                  disabled={pwSaving || !pwForm.current || !pwForm.next || !pwForm.confirm}
+                  className="px-6 py-2.5 bg-gray-800 hover:bg-gray-900 disabled:opacity-40 text-white text-sm font-medium rounded-lg transition"
+                >
+                  {pwSaving ? 'Saving...' : 'Update Password'}
                 </button>
               </div>
             </div>

@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { pool } from '../config/database.js';
 import { env } from '../config/env.js';
 import { User, UserResponse } from '../types/index.js';
+import { AuthRequest } from '../middleware/auth.middleware.js';
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -63,6 +64,43 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
   // With JWT, logout is handled client-side by removing the token
   // Server can implement token blacklisting if needed
   res.json({ message: 'Logout successful' });
+};
+
+export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ error: 'Current and new password are required' });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      res.status(400).json({ error: 'New password must be at least 8 characters' });
+      return;
+    }
+
+    const result = await pool.query<User>('SELECT * FROM users WHERE id = $1', [req.userId]);
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const user = result.rows[0];
+    const isValid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isValid) {
+      res.status(401).json({ error: 'Current password is incorrect' });
+      return;
+    }
+
+    const password_hash = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [password_hash, req.userId]);
+
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
 };
 
 // For initial setup or password reset
