@@ -31,7 +31,7 @@ export const LoginPage = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <img src="/logo.png" alt="afavers" className="h-24 mx-auto mb-4" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
-            <p className="text-gray-500 text-sm">Automated job tracking for sustainability careers</p>
+            <p className="text-gray-500 text-sm">Your automated job search assistant</p>
           </div>
 
           {error && (

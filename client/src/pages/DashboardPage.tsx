@@ -55,7 +55,13 @@ export const DashboardPage = () => {
           <div className="flex justify-between items-center">
             <img src="/logo.png" alt="afavers" className="h-20" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-400">{user?.email}</span>
+              <span className="text-sm text-gray-400 hidden sm:block">{user?.email}</span>
+              <button
+                onClick={() => navigate('/settings')}
+                className="px-3 py-1.5 text-sm text-gray-500 hover:text-blue-600 border border-gray-200 hover:border-blue-200 rounded-lg transition"
+              >
+                ⚙ Settings
+              </button>
               <button
                 onClick={handleLogout}
                 className="px-3 py-1.5 text-sm text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-lg transition"

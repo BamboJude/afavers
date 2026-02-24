@@ -43,7 +43,7 @@ export const RegisterPage = () => {
           <div className="text-center mb-8">
             <img src="/logo.png" alt="afavers" className="h-24 mx-auto mb-4" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
             <h2 className="text-xl font-bold text-gray-900">Create your account</h2>
-            <p className="text-gray-500 text-sm mt-1">Track sustainability jobs in NRW, Germany</p>
+            <p className="text-gray-500 text-sm mt-1">Your automated job search assistant</p>
           </div>
 
           {error && (

@@ -5,6 +5,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { JobsPage } from './pages/JobsPage';
 import { JobDetailPage } from './pages/JobDetailPage';
 import { KanbanPage } from './pages/KanbanPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 
 function App() {
@@ -42,6 +43,14 @@ function App() {
           element={
             <ProtectedRoute>
               <KanbanPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
             </ProtectedRoute>
           }
         />
