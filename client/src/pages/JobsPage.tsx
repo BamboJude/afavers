@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { jobsService } from '../services/jobs.service';
 import type { Job, JobFilters, DashboardStats } from '../types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../store/languageStore';
 
 type Tab = 'new' | 'saved' | 'applied' | 'interviewing' | 'all';
@@ -19,13 +19,15 @@ const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g
 
 export const JobsPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useLanguage();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [activeTab, setActiveTab] = useState<Tab>('new');
+  const initialTab = (searchParams.get('tab') as Tab) || 'new';
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
