@@ -1,5 +1,7 @@
 import { ExternalJob } from '../../types/index.js';
 import { fetchBundesagenturJobs } from './bundesagentur.fetcher.js';
+import { fetchStepstoneJobs } from './stepstone.fetcher.js';
+import { fetchIndeedJobs } from './indeed.fetcher.js';
 import { deduplicateJobs } from './deduplication.service.js';
 import * as jobModel from '../../models/job.model.js';
 import { detectLanguage } from '../../utils/languageDetect.js';
@@ -11,6 +13,8 @@ export interface FetchResult {
   failed: number;
   sources: {
     bundesagentur: number;
+    stepstone: number;
+    indeed: number;
   };
 }
 
@@ -21,20 +25,39 @@ export interface FetchResult {
 export async function fetchAndSaveJobs(): Promise<FetchResult> {
   const startTime = Date.now();
 
-  console.log('\n🚀 Starting job fetch from Bundesagentur für Arbeit...\n');
+  console.log('\n🚀 Starting job fetch from all sources...\n');
 
   let bundesagenturJobs: ExternalJob[] = [];
+  let stepstoneJobs: ExternalJob[] = [];
+  let indeedJobs: ExternalJob[] = [];
+
   try {
     bundesagenturJobs = await fetchBundesagenturJobs();
   } catch (error) {
     console.error('❌ Bundesagentur fetcher failed:', error);
   }
 
+  try {
+    stepstoneJobs = await fetchStepstoneJobs();
+  } catch (error) {
+    console.error('❌ StepStone fetcher failed:', error);
+  }
+
+  try {
+    indeedJobs = await fetchIndeedJobs();
+  } catch (error) {
+    console.error('❌ Indeed fetcher failed:', error);
+  }
+
+  const allJobs = [...bundesagenturJobs, ...stepstoneJobs, ...indeedJobs];
+
   console.log(`\n📊 Fetch Summary:`);
   console.log(`   Bundesagentur: ${bundesagenturJobs.length} jobs`);
+  console.log(`   StepStone:     ${stepstoneJobs.length} jobs`);
+  console.log(`   Indeed:        ${indeedJobs.length} jobs`);
 
-  // Deduplicate jobs
-  const deduplicatedJobs = deduplicateJobs(bundesagenturJobs);
+  // Deduplicate across all sources
+  const deduplicatedJobs = deduplicateJobs(allJobs);
   console.log(`   After deduplication: ${deduplicatedJobs.length} jobs`);
 
   // Save to database
@@ -55,8 +78,10 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
     updated: saveResult.updated,
     failed: saveResult.failed,
     sources: {
-      bundesagentur: bundesagenturJobs.length
-    }
+      bundesagentur: bundesagenturJobs.length,
+      stepstone: stepstoneJobs.length,
+      indeed: indeedJobs.length,
+    },
   };
 }
 
