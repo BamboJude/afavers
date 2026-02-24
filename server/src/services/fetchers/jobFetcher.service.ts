@@ -85,7 +85,7 @@ async function saveJobsToDatabase(jobs: ExternalJob[]): Promise<{
           existing.location !== externalJob.location;
 
         if (hasChanges) {
-          await jobModel.update(existing.id, {
+          await jobModel.updateJobCore(existing.id, {
             title: externalJob.title,
             company: externalJob.company,
             location: externalJob.location,

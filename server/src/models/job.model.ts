@@ -137,6 +137,22 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
     p++;
   }
 
+  // Filter by user's search keywords (title or description must match at least one)
+  if (filters?.userKeywords && filters.userKeywords.length > 0) {
+    const patterns = filters.userKeywords.map(k => `%${k.trim()}%`);
+    values.push(patterns);
+    conditions.push(`(j.title ILIKE ANY($${p}) OR j.description ILIKE ANY($${p}))`);
+    p++;
+  }
+
+  // Filter by user's target locations
+  if (filters?.userLocations && filters.userLocations.length > 0) {
+    const patterns = filters.userLocations.map(l => `%${l.trim()}%`);
+    values.push(patterns);
+    conditions.push(`j.location ILIKE ANY($${p})`);
+    p++;
+  }
+
   // Always exclude hidden jobs
   conditions.push(`COALESCE(uj.is_hidden, FALSE) = FALSE`);
 
@@ -180,7 +196,7 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
  * Count jobs matching filters for a given user
  */
 export async function count(
-  filters?: Pick<JobFilters, 'status' | 'source' | 'search'>,
+  filters?: Pick<JobFilters, 'status' | 'source' | 'search' | 'userKeywords' | 'userLocations'>,
   userId?: number
 ): Promise<number> {
   const conditions: string[] = [];
@@ -211,6 +227,20 @@ export async function count(
   if (filters?.status) {
     conditions.push(`COALESCE(uj.status, 'new') = $${p}`);
     values.push(filters.status);
+    p++;
+  }
+
+  if (filters?.userKeywords && filters.userKeywords.length > 0) {
+    const patterns = filters.userKeywords.map(k => `%${k.trim()}%`);
+    values.push(patterns);
+    conditions.push(`(j.title ILIKE ANY($${p}) OR j.description ILIKE ANY($${p}))`);
+    p++;
+  }
+
+  if (filters?.userLocations && filters.userLocations.length > 0) {
+    const patterns = filters.userLocations.map(l => `%${l.trim()}%`);
+    values.push(patterns);
+    conditions.push(`j.location ILIKE ANY($${p})`);
     p++;
   }
 
@@ -255,11 +285,35 @@ export async function findById(id: number, userId?: number): Promise<Job | null>
 /**
  * Get job counts per status for a specific user
  */
-export async function getStats(userId?: number): Promise<{
+export async function getStats(
+  userId?: number,
+  userKeywords?: string[],
+  userLocations?: string[]
+): Promise<{
   total: number; new: number; saved: number; applied: number;
   interviewing: number; offered: number; rejected: number; new_today: number;
 }> {
   const userIdParam = userId ?? 0;
+  const values: unknown[] = [userIdParam];
+  let p = 2;
+  const whereConds: string[] = [];
+
+  if (userKeywords && userKeywords.length > 0) {
+    const patterns = userKeywords.map(k => `%${k.trim()}%`);
+    values.push(patterns);
+    whereConds.push(`(j.title ILIKE ANY($${p}) OR j.description ILIKE ANY($${p}))`);
+    p++;
+  }
+
+  if (userLocations && userLocations.length > 0) {
+    const patterns = userLocations.map(l => `%${l.trim()}%`);
+    values.push(patterns);
+    whereConds.push(`j.location ILIKE ANY($${p})`);
+    p++;
+  }
+
+  const whereClause = whereConds.length > 0 ? `WHERE ${whereConds.join(' AND ')}` : '';
+
   const result = await pool.query(
     `SELECT
        COUNT(*) FILTER (WHERE COALESCE(uj.is_hidden, FALSE) = FALSE) AS total,
@@ -271,8 +325,9 @@ export async function getStats(userId?: number): Promise<{
        COUNT(*) FILTER (WHERE uj.status = 'rejected'                       AND COALESCE(uj.is_hidden, FALSE) = FALSE) AS rejected,
        COUNT(*) FILTER (WHERE COALESCE(uj.status, 'new') = 'new'          AND COALESCE(uj.is_hidden, FALSE) = FALSE AND j.created_at >= CURRENT_DATE) AS new_today
      FROM jobs j
-     LEFT JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $1`,
-    [userIdParam]
+     LEFT JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $1
+     ${whereClause}`,
+    values
   );
   const row = result.rows[0];
   return {
