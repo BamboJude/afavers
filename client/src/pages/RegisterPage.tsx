@@ -28,7 +28,7 @@ export const RegisterPage = () => {
     setLoading(true);
     try {
       await register(email, password);
-      navigate('/dashboard');
+      navigate('/setup');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
