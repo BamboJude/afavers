@@ -105,6 +105,46 @@ router.get('/analytics', async (req: AuthRequest, res) => {
   }
 });
 
+/** GET /api/jobs/export — download tracked jobs as CSV */
+router.get('/export', async (req: AuthRequest, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT j.title, j.company, j.location, j.source,
+              COALESCE(uj.status, 'new') AS status,
+              uj.applied_date, j.url, j.posted_date, j.salary, j.deadline
+       FROM jobs j
+       JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $1
+       WHERE uj.status IN ('saved','applied','interviewing','offered','rejected')
+         AND COALESCE(uj.is_hidden, FALSE) = FALSE
+       ORDER BY uj.applied_date DESC NULLS LAST, uj.updated_at DESC`,
+      [req.userId]
+    );
+
+    const escape = (val: unknown) => {
+      if (val == null) return '';
+      const s = val instanceof Date ? val.toISOString().slice(0, 10) : String(val);
+      return s.includes(',') || s.includes('"') || s.includes('\n')
+        ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+
+    const headers = ['Title','Company','Location','Source','Status','Applied Date','URL','Posted Date','Salary','Deadline'];
+    const csv = [
+      headers.join(','),
+      ...result.rows.map(r => [
+        escape(r.title), escape(r.company), escape(r.location), escape(r.source),
+        escape(r.status), escape(r.applied_date), escape(r.url),
+        escape(r.posted_date), escape(r.salary), escape(r.deadline),
+      ].join(',')),
+    ].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="afavers-applications.csv"');
+    res.send(csv);
+  } catch (error) {
+    res.status(500).json({ error: 'Export failed' });
+  }
+});
+
 /** GET /api/jobs/:id — single job with user-specific overlay */
 router.get('/:id', async (req: AuthRequest, res) => {
   try {

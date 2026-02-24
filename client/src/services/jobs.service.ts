@@ -85,4 +85,15 @@ export const jobsService = {
     const response = await api.get<AnalyticsData>('/jobs/analytics');
     return response.data;
   },
+
+  // Export tracked jobs as CSV download
+  async exportCsv(): Promise<void> {
+    const response = await api.get('/jobs/export', { responseType: 'blob' });
+    const url = URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'afavers-applications.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };
