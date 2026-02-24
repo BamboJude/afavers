@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { AnalyticsData } from '../types';
 import { LanguageToggle } from '../components/common/LanguageToggle';
+import { DemoBanner } from '../components/common/DemoBanner';
 
 const SOURCE_LABELS: Record<string, string> = {
   bundesagentur: 'Bundesagentur',
@@ -69,6 +70,7 @@ export const AnalyticsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <DemoBanner />
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-900">📊 Analytics</h1>

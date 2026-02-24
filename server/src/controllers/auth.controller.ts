@@ -5,6 +5,7 @@ import { pool } from '../config/database.js';
 import { env } from '../config/env.js';
 import { User, UserResponse } from '../types/index.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
+import { ensureDemoUser } from '../services/demoReset.service.js';
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -66,7 +67,26 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
   res.json({ message: 'Logout successful' });
 };
 
+export const loginDemo = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = await ensureDemoUser();
+    const token = jwt.sign(
+      { userId, email: 'demo@afavers.com', isDemo: true },
+      env.JWT_SECRET,
+      { expiresIn: '2h' }
+    );
+    res.json({ user: { id: userId, email: 'demo@afavers.com' }, token, isDemo: true });
+  } catch (error) {
+    console.error('Demo login error:', error);
+    res.status(500).json({ error: 'Demo login failed' });
+  }
+};
+
 export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+  if (req.isDemo) {
+    res.status(403).json({ error: 'Not available in demo mode' });
+    return;
+  }
   try {
     const { currentPassword, newPassword } = req.body;
 

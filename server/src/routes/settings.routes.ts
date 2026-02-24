@@ -26,6 +26,9 @@ router.get('/', async (req: AuthRequest, res) => {
 
 /** PUT /api/settings */
 router.put('/', async (req: AuthRequest, res) => {
+  if (req.isDemo) {
+    return res.status(403).json({ error: 'Not available in demo mode' });
+  }
   try {
     const { keywords, locations } = req.body;
     if (!keywords || !locations) {

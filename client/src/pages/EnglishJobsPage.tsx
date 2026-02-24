@@ -4,6 +4,7 @@ import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
 import { useLanguage } from '../store/languageStore';
 import { LanguageToggle } from '../components/common/LanguageToggle';
+import { DemoBanner } from '../components/common/DemoBanner';
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
@@ -114,6 +115,7 @@ export const EnglishJobsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <DemoBanner />
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

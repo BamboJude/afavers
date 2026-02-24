@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
 import { LanguageToggle } from '../components/common/LanguageToggle';
+import { DemoBanner } from '../components/common/DemoBanner';
 
 const STATUS_OPTIONS: { value: Job['status']; label: string; color: string }[] = [
   { value: 'new',          label: 'New',          color: 'bg-blue-100 text-blue-700 border-blue-300' },
@@ -137,6 +138,7 @@ export const JobDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <DemoBanner />
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
