@@ -31,11 +31,15 @@ export const AnalyticsPage = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     jobsService.getAnalytics()
       .then(setData)
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        setError(err?.response?.data?.error || err?.message || 'Unknown error');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -68,6 +72,11 @@ export const AnalyticsPage = () => {
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-300 rounded-xl p-6 text-center">
+            <p className="text-red-700 font-semibold mb-1">Failed to load analytics</p>
+            <p className="text-red-500 text-sm font-mono">{error}</p>
           </div>
         ) : (
           <>

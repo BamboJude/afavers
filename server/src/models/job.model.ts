@@ -417,7 +417,7 @@ export async function getAnalytics(userId: number): Promise<{
        FROM jobs j
        LEFT JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $1
        WHERE COALESCE(uj.is_hidden, FALSE) = FALSE
-       GROUP BY status`,
+       GROUP BY 1`,
       [userId]
     ),
   ]);
