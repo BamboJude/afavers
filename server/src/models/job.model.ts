@@ -21,13 +21,15 @@ export async function create(jobData: Partial<Job>): Promise<Job> {
     url, source, posted_date, deadline, salary,
   } = jobData;
 
+  const { language } = jobData;
+
   const result = await pool.query<Job>(
     `INSERT INTO jobs (
       external_id, title, company, location, description, url,
-      source, posted_date, deadline, salary
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      source, posted_date, deadline, salary, language
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING *`,
-    [external_id, title, company, location, description, url, source, posted_date, deadline, salary]
+    [external_id, title, company, location, description, url, source, posted_date, deadline, salary, language ?? null]
   );
   return result.rows[0];
 }
@@ -36,7 +38,7 @@ export async function create(jobData: Partial<Job>): Promise<Job> {
  * Update the core job record (title, description, etc.) — used by the fetcher
  */
 export async function updateJobCore(id: number, updates: Partial<Job>): Promise<Job> {
-  const allowed = ['title', 'company', 'location', 'description', 'url', 'posted_date', 'deadline', 'salary'];
+  const allowed = ['title', 'company', 'location', 'description', 'url', 'posted_date', 'deadline', 'salary', 'language'];
   const fields: string[] = [];
   const values: unknown[] = [];
   let p = 1;
@@ -153,6 +155,13 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
     p++;
   }
 
+  // Filter by language
+  if (filters?.language) {
+    conditions.push(`j.language = $${p}`);
+    values.push(filters.language);
+    p++;
+  }
+
   // Always exclude hidden jobs
   conditions.push(`COALESCE(uj.is_hidden, FALSE) = FALSE`);
 
@@ -174,7 +183,7 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
   const query = `
     SELECT
       j.id, j.external_id, j.title, j.company, j.location, j.description,
-      j.url, j.source, j.posted_date, j.deadline, j.salary,
+      j.url, j.source, j.posted_date, j.deadline, j.salary, j.language,
       j.created_at, j.updated_at,
       COALESCE(uj.status,    'new')   AS status,
       uj.notes,
@@ -196,7 +205,7 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
  * Count jobs matching filters for a given user
  */
 export async function count(
-  filters?: Pick<JobFilters, 'status' | 'source' | 'search' | 'userKeywords' | 'userLocations'>,
+  filters?: Pick<JobFilters, 'status' | 'source' | 'search' | 'userKeywords' | 'userLocations' | 'language'>,
   userId?: number
 ): Promise<number> {
   const conditions: string[] = [];
@@ -244,6 +253,12 @@ export async function count(
     p++;
   }
 
+  if (filters?.language) {
+    conditions.push(`j.language = $${p}`);
+    values.push(filters.language);
+    p++;
+  }
+
   conditions.push(`COALESCE(uj.is_hidden, FALSE) = FALSE`);
 
   const whereClause = `WHERE ${conditions.join(' AND ')}`;
@@ -267,7 +282,7 @@ export async function findById(id: number, userId?: number): Promise<Job | null>
   const result = await pool.query<Job>(
     `SELECT
        j.id, j.external_id, j.title, j.company, j.location, j.description,
-       j.url, j.source, j.posted_date, j.deadline, j.salary,
+       j.url, j.source, j.posted_date, j.deadline, j.salary, j.language,
        j.created_at, j.updated_at,
        COALESCE(uj.status,    'new')  AS status,
        uj.notes,

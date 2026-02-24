@@ -2,6 +2,7 @@ import { ExternalJob } from '../../types/index.js';
 import { fetchBundesagenturJobs } from './bundesagentur.fetcher.js';
 import { deduplicateJobs } from './deduplication.service.js';
 import * as jobModel from '../../models/job.model.js';
+import { detectLanguage } from '../../utils/languageDetect.js';
 
 export interface FetchResult {
   total: number;
@@ -85,6 +86,7 @@ async function saveJobsToDatabase(jobs: ExternalJob[]): Promise<{
           existing.location !== externalJob.location;
 
         if (hasChanges) {
+          const language = detectLanguage(externalJob.title, externalJob.description || '');
           await jobModel.updateJobCore(existing.id, {
             title: externalJob.title,
             company: externalJob.company,
@@ -93,13 +95,15 @@ async function saveJobsToDatabase(jobs: ExternalJob[]): Promise<{
             url: externalJob.url,
             posted_date: externalJob.postedDate ? new Date(externalJob.postedDate) : null,
             deadline: externalJob.deadline ? new Date(externalJob.deadline) : null,
-            salary: externalJob.salary || null
+            salary: externalJob.salary || null,
+            language,
           });
           updated++;
         }
       } else {
         // Create new job
         const source = externalJob.id.split('_')[0]; // Extract source from ID
+        const language = detectLanguage(externalJob.title, externalJob.description || '');
 
         await jobModel.create({
           external_id: externalJob.id,
@@ -112,7 +116,7 @@ async function saveJobsToDatabase(jobs: ExternalJob[]): Promise<{
           posted_date: externalJob.postedDate ? new Date(externalJob.postedDate) : null,
           deadline: externalJob.deadline ? new Date(externalJob.deadline) : null,
           salary: externalJob.salary || null,
-          status: 'new'
+          language,
         });
         inserted++;
       }

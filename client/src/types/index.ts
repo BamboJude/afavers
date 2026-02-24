@@ -20,6 +20,7 @@ export interface Job {
   applied_date: string | null;
   follow_up_date: string | null;
   is_hidden: boolean;
+  language: 'en' | 'de' | null;
   created_at: string;
   updated_at: string;
 }
@@ -50,4 +51,5 @@ export interface JobFilters {
   sortOrder?: 'ASC' | 'DESC';
   limit?: number;
   offset?: number;
+  language?: 'en' | 'de';
 }

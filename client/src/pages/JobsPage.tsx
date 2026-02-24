@@ -27,6 +27,7 @@ export const JobsPage = () => {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
+  const [englishOnly, setEnglishOnly] = useState(false);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -48,7 +49,7 @@ export const JobsPage = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, [activeTab, search, sortBy, page]);
+  }, [activeTab, search, sortBy, page, englishOnly]);
 
   const loadStats = async () => {
     try {
@@ -67,6 +68,7 @@ export const JobsPage = () => {
         sortOrder: 'DESC',
         search: search || undefined,
         status: activeTab !== 'all' ? activeTab : undefined,
+        language: englishOnly ? 'en' : undefined,
       };
       const response = await jobsService.getJobs(filters);
       setJobs(response.jobs);
@@ -179,13 +181,13 @@ export const JobsPage = () => {
 
       {/* Search + Sort bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <input
             type="text"
             placeholder="Search by title, company or location..."
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            className="flex-1 min-w-48 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
           />
           <select
             value={sortBy}
@@ -197,8 +199,22 @@ export const JobsPage = () => {
             <option value="title">Title A–Z</option>
             <option value="company">Company A–Z</option>
           </select>
+          <button
+            onClick={() => { setEnglishOnly(v => !v); setPage(1); }}
+            title={englishOnly ? 'Showing English jobs only — click to show all' : 'Click to show English jobs only'}
+            className={`px-3 py-2 rounded-lg text-sm font-medium border transition ${
+              englishOnly
+                ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400 hover:text-blue-600'
+            }`}
+          >
+            🇬🇧 English only
+          </button>
         </div>
-        <p className="text-xs text-gray-400 mt-2">{total.toLocaleString()} jobs</p>
+        <p className="text-xs text-gray-400 mt-2">
+          {total.toLocaleString()} jobs
+          {englishOnly && <span className="ml-1 text-blue-500">· English only</span>}
+        </p>
       </div>
 
       {/* Jobs list */}
