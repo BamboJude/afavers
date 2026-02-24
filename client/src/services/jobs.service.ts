@@ -4,21 +4,8 @@ import type { Job, JobsResponse, JobFilters, DashboardStats } from '../types';
 export const jobsService = {
   // Get dashboard stats
   async getStats(): Promise<DashboardStats> {
-    const response = await api.get<JobsResponse>('/jobs');
-    const jobs = response.data.jobs;
-
-    // Calculate stats from jobs
-    const stats: DashboardStats = {
-      total: response.data.total,
-      new: jobs.filter(j => j.status === 'new').length,
-      saved: jobs.filter(j => j.status === 'saved').length,
-      applied: jobs.filter(j => j.status === 'applied').length,
-      interviewing: jobs.filter(j => j.status === 'interviewing').length,
-      offered: jobs.filter(j => j.status === 'offered').length,
-      rejected: jobs.filter(j => j.status === 'rejected').length,
-    };
-
-    return stats;
+    const response = await api.get<DashboardStats>('/jobs/stats');
+    return response.data;
   },
 
   // Get all jobs with filters
