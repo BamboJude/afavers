@@ -130,7 +130,7 @@ export const DashboardPage = () => {
             </div>
 
             {/* Action cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-6">
               <button
                 onClick={() => navigate('/jobs')}
                 className="bg-white rounded-xl border-2 border-gray-200 hover:border-blue-400 p-6 text-left transition group"
@@ -139,6 +139,17 @@ export const DashboardPage = () => {
                 <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700 mb-1">{t('browseJobs')}</h3>
                 <p className="text-sm text-gray-500">
                   {stats?.new || 0} {t('browseJobsDesc')}
+                </p>
+              </button>
+
+              <button
+                onClick={() => navigate('/jobs?tab=all')}
+                className="bg-white rounded-xl border-2 border-gray-200 hover:border-gray-400 p-6 text-left transition group"
+              >
+                <div className="text-3xl mb-3">📋</div>
+                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-gray-700 mb-1">{t('allJobs')}</h3>
+                <p className="text-sm text-gray-500">
+                  {stats?.total || 0} {t('allJobsDesc')}
                 </p>
               </button>
 
