@@ -53,6 +53,7 @@ export interface JobFilters {
   userKeywords?: string[];   // Filter jobs to match user's search keywords
   userLocations?: string[];  // Filter jobs to match user's target locations
   language?: 'en' | 'de';   // Filter by detected language
+  noFilter?: boolean;        // Bypass user keyword/location filters — show all jobs
 }
 
 // External job fetcher types

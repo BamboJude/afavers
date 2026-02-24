@@ -49,6 +49,7 @@ export const EnglishJobsPage = () => {
       setLoading(true);
       const response = await jobsService.getJobs({
         language: 'en',
+        noFilter: true,
         limit: LIMIT,
         offset: (page - 1) * LIMIT,
         sortBy: 'created_at',

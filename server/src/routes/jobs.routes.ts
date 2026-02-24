@@ -46,11 +46,14 @@ router.get('/stats', async (req: AuthRequest, res) => {
   }
 });
 
-/** GET /api/jobs — list jobs filtered to user's keywords/locations */
+/** GET /api/jobs — list jobs; keyword/location filters skipped when ?noFilter=true */
 router.get('/', async (req: AuthRequest, res) => {
   try {
     const q = (key: string) => req.query[key] as string | undefined;
-    const { userKeywords, userLocations } = await getUserSearchFilters(req.userId!);
+    const noFilter = q('noFilter') === 'true';
+    const { userKeywords, userLocations } = noFilter
+      ? { userKeywords: [], userLocations: [] }
+      : await getUserSearchFilters(req.userId!);
 
     const filters = {
       status:    q('status'),
