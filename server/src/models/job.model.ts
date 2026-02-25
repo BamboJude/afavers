@@ -456,6 +456,26 @@ export async function bulkUpsert(jobs: Partial<Job>[]): Promise<{ inserted: numb
 }
 
 /**
+ * Delete jobs from a source that are no longer in the latest fetch.
+ * Only removes jobs the user hasn't interacted with (still status=new).
+ * Jobs that were saved/applied/etc. are preserved so tracking data isn't lost.
+ */
+export async function deleteStaleJobs(source: string, activeExternalIds: string[]): Promise<number> {
+  if (activeExternalIds.length === 0) return 0; // safety: don't wipe everything if fetch returned nothing
+  const result = await pool.query(
+    `DELETE FROM jobs
+     WHERE source = $1
+       AND external_id != ALL($2::text[])
+       AND id NOT IN (
+         SELECT job_id FROM user_jobs
+         WHERE status IS NOT NULL AND status != 'new'
+       )`,
+    [source, activeExternalIds]
+  );
+  return result.rowCount ?? 0;
+}
+
+/**
  * Delete a job by ID
  */
 export async function deleteById(id: number): Promise<boolean> {

@@ -54,12 +54,29 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
   console.log('\n💾 Saving jobs to database...');
   const saveResult = await saveJobsToDatabase(deduplicatedJobs);
 
+  // Remove stale jobs (no longer returned by source, user hasn't interacted)
+  console.log('\n🧹 Cleaning up stale jobs...');
+  const staleDeleted = { bundesagentur: 0, stepstone: 0 };
+  if (bundesagenturJobs.length > 0) {
+    const ids = bundesagenturJobs.map(j => j.id);
+    staleDeleted.bundesagentur = await jobModel.deleteStaleJobs('bundesagentur', ids);
+  }
+  if (stepstoneJobs.length > 0) {
+    const ids = stepstoneJobs.map(j => j.id);
+    staleDeleted.stepstone = await jobModel.deleteStaleJobs('stepstone', ids);
+  }
+  const totalDeleted = staleDeleted.bundesagentur + staleDeleted.stepstone;
+  if (totalDeleted > 0) {
+    console.log(`   Deleted ${totalDeleted} stale jobs (bundesagentur: ${staleDeleted.bundesagentur}, stepstone: ${staleDeleted.stepstone})`);
+  }
+
   const duration = Math.round((Date.now() - startTime) / 1000);
 
   console.log('\n✅ Job fetch complete!');
   console.log(`   Duration: ${duration}s`);
   console.log(`   New jobs: ${saveResult.inserted}`);
   console.log(`   Updated jobs: ${saveResult.updated}`);
+  console.log(`   Stale deleted: ${totalDeleted}`);
   console.log(`   Failed: ${saveResult.failed}\n`);
 
   return {
