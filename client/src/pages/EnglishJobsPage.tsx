@@ -27,6 +27,7 @@ const STATUS_COLORS: Record<string, string> = {
 const SOURCE_BADGES: Record<string, { label: string; cls: string }> = {
   bundesagentur: { label: 'Bundesagentur', cls: 'bg-blue-50 text-blue-600 border-blue-200' },
   stepstone:     { label: 'StepStone',     cls: 'bg-orange-50 text-orange-600 border-orange-200' },
+  adzuna:        { label: 'Adzuna',        cls: 'bg-purple-50 text-purple-600 border-purple-200' },
 };
 
 const SourceBadge = ({ source }: { source: string }) => {

@@ -1,6 +1,7 @@
 import { ExternalJob } from '../../types/index.js';
 import { fetchBundesagenturJobs } from './bundesagentur.fetcher.js';
 import { fetchStepstoneJobs } from './stepstone.fetcher.js';
+import { fetchAdzunaJobs } from './adzuna.fetcher.js';
 import { deduplicateJobs } from './deduplication.service.js';
 import * as jobModel from '../../models/job.model.js';
 import { detectLanguage } from '../../utils/languageDetect.js';
@@ -13,6 +14,7 @@ export interface FetchResult {
   sources: {
     bundesagentur: number;
     stepstone: number;
+    adzuna: number;
   };
 }
 
@@ -27,6 +29,7 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
 
   let bundesagenturJobs: ExternalJob[] = [];
   let stepstoneJobs: ExternalJob[] = [];
+  let adzunaJobs: ExternalJob[] = [];
 
   try {
     bundesagenturJobs = await fetchBundesagenturJobs();
@@ -40,11 +43,18 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
     console.error('❌ StepStone fetcher failed:', error);
   }
 
-  const allJobs = [...bundesagenturJobs, ...stepstoneJobs];
+  try {
+    adzunaJobs = await fetchAdzunaJobs();
+  } catch (error) {
+    console.error('❌ Adzuna fetcher failed:', error);
+  }
+
+  const allJobs = [...bundesagenturJobs, ...stepstoneJobs, ...adzunaJobs];
 
   console.log(`\n📊 Fetch Summary:`);
   console.log(`   Bundesagentur: ${bundesagenturJobs.length} jobs`);
   console.log(`   StepStone:     ${stepstoneJobs.length} jobs`);
+  console.log(`   Adzuna:        ${adzunaJobs.length} jobs`);
 
   // Deduplicate across all sources
   const deduplicatedJobs = deduplicateJobs(allJobs);
@@ -56,18 +66,19 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
 
   // Remove stale jobs (no longer returned by source, user hasn't interacted)
   console.log('\n🧹 Cleaning up stale jobs...');
-  const staleDeleted = { bundesagentur: 0, stepstone: 0 };
+  const staleDeleted = { bundesagentur: 0, stepstone: 0, adzuna: 0 };
   if (bundesagenturJobs.length > 0) {
-    const ids = bundesagenturJobs.map(j => j.id);
-    staleDeleted.bundesagentur = await jobModel.deleteStaleJobs('bundesagentur', ids);
+    staleDeleted.bundesagentur = await jobModel.deleteStaleJobs('bundesagentur', bundesagenturJobs.map(j => j.id));
   }
   if (stepstoneJobs.length > 0) {
-    const ids = stepstoneJobs.map(j => j.id);
-    staleDeleted.stepstone = await jobModel.deleteStaleJobs('stepstone', ids);
+    staleDeleted.stepstone = await jobModel.deleteStaleJobs('stepstone', stepstoneJobs.map(j => j.id));
   }
-  const totalDeleted = staleDeleted.bundesagentur + staleDeleted.stepstone;
+  if (adzunaJobs.length > 0) {
+    staleDeleted.adzuna = await jobModel.deleteStaleJobs('adzuna', adzunaJobs.map(j => j.id));
+  }
+  const totalDeleted = staleDeleted.bundesagentur + staleDeleted.stepstone + staleDeleted.adzuna;
   if (totalDeleted > 0) {
-    console.log(`   Deleted ${totalDeleted} stale jobs (bundesagentur: ${staleDeleted.bundesagentur}, stepstone: ${staleDeleted.stepstone})`);
+    console.log(`   Deleted ${totalDeleted} stale jobs (bundesagentur: ${staleDeleted.bundesagentur}, stepstone: ${staleDeleted.stepstone}, adzuna: ${staleDeleted.adzuna})`);
   }
 
   const duration = Math.round((Date.now() - startTime) / 1000);
@@ -87,6 +98,7 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
     sources: {
       bundesagentur: bundesagenturJobs.length,
       stepstone: stepstoneJobs.length,
+      adzuna: adzunaJobs.length,
     },
   };
 }
