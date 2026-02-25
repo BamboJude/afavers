@@ -23,7 +23,9 @@ export const translations: Record<Lang, Record<string, string>> = {
 
     // Jobs page
     searchPlaceholder: 'Search by title, company or location...',
+    allSources: 'All sources',
     newestFirst: 'Newest first',
+    recentlyAdded: 'Recently added',
     postedDate: 'Posted date',
     titleAZ: 'Title A–Z',
     companyAZ: 'Company A–Z',
@@ -108,7 +110,9 @@ export const translations: Record<Lang, Record<string, string>> = {
 
     // Jobs page
     searchPlaceholder: 'Suche nach Titel, Unternehmen oder Ort...',
+    allSources: 'Alle Quellen',
     newestFirst: 'Neueste zuerst',
+    recentlyAdded: 'Zuletzt hinzugefügt',
     postedDate: 'Datum der Ausschreibung',
     titleAZ: 'Titel A–Z',
     companyAZ: 'Unternehmen A–Z',

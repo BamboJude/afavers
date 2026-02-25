@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { AnalyticsData } from '../types';
-import { LanguageToggle } from '../components/common/LanguageToggle';
-import { DemoBanner } from '../components/common/DemoBanner';
 
 const SOURCE_LABELS: Record<string, string> = {
   bundesagentur: 'Bundesagentur',
@@ -30,7 +27,6 @@ const Bar = ({ value, max, color }: { value: number; max: number; color: string 
 );
 
 export const AnalyticsPage = () => {
-  const navigate = useNavigate();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,30 +66,19 @@ export const AnalyticsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DemoBanner />
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900">📊 Analytics</h1>
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <button
-              onClick={handleExport}
-              disabled={exporting}
-              className="text-sm text-green-700 hover:text-green-900 border border-green-300 hover:border-green-500 bg-green-50 hover:bg-green-100 px-4 py-2 rounded-lg transition disabled:opacity-50"
-            >
-              {exporting ? 'Exporting...' : '⬇ Export CSV'}
-            </button>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="text-sm text-gray-500 hover:text-gray-800 border border-gray-200 px-4 py-2 rounded-lg transition"
-            >
-              ← Dashboard
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* Page header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-5 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+        <button
+          onClick={handleExport}
+          disabled={exporting}
+          className="text-sm text-green-700 hover:text-green-900 border border-green-300 hover:border-green-500 bg-green-50 hover:bg-green-100 px-4 py-2 rounded-lg transition disabled:opacity-50 font-medium"
+        >
+          {exporting ? 'Exporting...' : '⬇ Export CSV'}
+        </button>
+      </div>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>

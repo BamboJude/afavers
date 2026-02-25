@@ -10,6 +10,13 @@ import { SetupPage } from './pages/SetupPage';
 import { EnglishJobsPage } from './pages/EnglishJobsPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
+import { AppLayout } from './components/layout/AppLayout';
+
+const ProtectedLayout = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute>
+    <AppLayout>{children}</AppLayout>
+  </ProtectedRoute>
+);
 
 function App() {
   return (
@@ -17,70 +24,14 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/jobs"
-          element={
-            <ProtectedRoute>
-              <JobsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/jobs/:id"
-          element={
-            <ProtectedRoute>
-              <JobDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/kanban"
-          element={
-            <ProtectedRoute>
-              <KanbanPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <SettingsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/setup"
-          element={
-            <ProtectedRoute>
-              <SetupPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/english-jobs"
-          element={
-            <ProtectedRoute>
-              <EnglishJobsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute>
-              <AnalyticsPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/dashboard"    element={<ProtectedLayout><DashboardPage /></ProtectedLayout>} />
+        <Route path="/jobs"         element={<ProtectedLayout><JobsPage /></ProtectedLayout>} />
+        <Route path="/jobs/:id"     element={<ProtectedLayout><JobDetailPage /></ProtectedLayout>} />
+        <Route path="/kanban"       element={<ProtectedLayout><KanbanPage /></ProtectedLayout>} />
+        <Route path="/settings"     element={<ProtectedLayout><SettingsPage /></ProtectedLayout>} />
+        <Route path="/setup"        element={<ProtectedLayout><SetupPage /></ProtectedLayout>} />
+        <Route path="/english-jobs" element={<ProtectedLayout><EnglishJobsPage /></ProtectedLayout>} />
+        <Route path="/analytics"    element={<ProtectedLayout><AnalyticsPage /></ProtectedLayout>} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

@@ -4,11 +4,9 @@ import { useState, useEffect } from 'react';
 import { jobsService } from '../services/jobs.service';
 import type { DashboardStats, FollowUpAlert } from '../types';
 import { useLanguage } from '../store/languageStore';
-import { LanguageToggle } from '../components/common/LanguageToggle';
-import { DemoBanner } from '../components/common/DemoBanner';
 
 export const DashboardPage = () => {
-  const { user, logout, isDemo } = useAuthStore();
+  const { isDemo } = useAuthStore();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -48,200 +46,219 @@ export const DashboardPage = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DemoBanner />
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+    <div className="px-6 py-8 max-w-6xl mx-auto">
+
+      {/* Page title */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">{t('dashboard')}</h1>
+        <p className="text-sm text-gray-500 mt-1">Your job search at a glance</p>
+      </div>
+
+      {/* New jobs hero banner */}
+      {stats && stats.new > 0 && (
+        <div
+          onClick={() => navigate('/jobs')}
+          className="mb-6 bg-gradient-to-r from-green-500 to-blue-600 rounded-2xl p-6 text-white cursor-pointer hover:from-green-600 hover:to-blue-700 transition shadow-lg shadow-green-100"
+        >
           <div className="flex justify-between items-center">
-            <img src="/logo.png" alt="afavers" className="h-20" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
-            <div className="flex items-center gap-3">
-              <LanguageToggle />
-              <span className="text-sm text-gray-400 hidden sm:block">{user?.email}</span>
-              <button
-                onClick={() => navigate('/settings')}
-                className="px-3 py-1.5 text-sm text-gray-500 hover:text-blue-600 border border-gray-200 hover:border-blue-200 rounded-lg transition"
-              >
-                ⚙ {t('settings')}
-              </button>
-              <button
-                onClick={handleLogout}
-                className="px-3 py-1.5 text-sm text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-200 rounded-lg transition"
-              >
-                {t('logout')}
-              </button>
+            <div>
+              <p className="text-green-100 text-sm font-medium mb-1">{t('unreviewedJobs')}</p>
+              <p className="text-5xl font-bold tracking-tight">{stats.new.toLocaleString()}</p>
+              {stats.new_today > 0 && (
+                <p className="text-green-100 text-sm mt-2">+{stats.new_today} {t('addedToday')}</p>
+              )}
+            </div>
+            <div className="text-right">
+              <div className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 px-5 py-2.5 rounded-xl text-sm font-semibold transition border border-white/30">
+                {t('reviewNow')} →
+              </div>
             </div>
           </div>
         </div>
-      </header>
+      )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {loading ? (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
-          </div>
-        ) : (
-          <>
-            {/* New jobs banner */}
-            {stats && stats.new > 0 && (
+      {/* Follow-up reminders */}
+      {followUps.length > 0 && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="text-sm font-semibold text-amber-800 mb-2.5">⏰ Follow-ups due ({followUps.length})</p>
+          <div className="space-y-1">
+            {followUps.map(f => (
               <div
-                onClick={() => navigate('/jobs')}
-                className="mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-5 text-white cursor-pointer hover:from-blue-700 hover:to-indigo-700 transition"
+                key={f.id}
+                onClick={() => navigate(`/jobs/${f.id}`)}
+                className="flex justify-between items-center text-sm cursor-pointer hover:bg-amber-100 rounded-lg px-3 py-1.5 transition"
               >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-blue-200 text-sm font-medium mb-1">{t('unreviewedJobs')}</p>
-                    <p className="text-4xl font-bold">{stats.new.toLocaleString()}</p>
-                    {stats.new_today > 0 && (
-                      <p className="text-blue-200 text-sm mt-1">+{stats.new_today} {t('addedToday')}</p>
-                    )}
-                  </div>
-                  <span className="border-2 border-white border-opacity-60 hover:bg-white hover:bg-opacity-20 px-5 py-2.5 rounded-lg text-sm font-semibold transition text-white">
-                    {t('reviewNow')}
-                  </span>
-                </div>
+                <span className="text-amber-900 font-medium truncate">{f.title} · {f.company}</span>
+                <span className="text-amber-600 shrink-0 ml-3">{new Date(f.follow_up_date).toLocaleDateString('de-DE')}</span>
               </div>
-            )}
+            ))}
+          </div>
+        </div>
+      )}
 
-            {/* Follow-up reminders */}
-            {followUps.length > 0 && (
-              <div className="mb-6 bg-amber-50 border border-amber-300 rounded-xl p-4">
-                <p className="text-sm font-semibold text-amber-800 mb-2">⏰ Follow-ups due ({followUps.length})</p>
-                <div className="space-y-1">
-                  {followUps.map(f => (
-                    <div
-                      key={f.id}
-                      onClick={() => navigate(`/jobs/${f.id}`)}
-                      className="flex justify-between items-center text-sm cursor-pointer hover:bg-amber-100 rounded px-2 py-1 transition"
-                    >
-                      <span className="text-amber-900 font-medium truncate">{f.title} · {f.company}</span>
-                      <span className="text-amber-600 shrink-0 ml-3">{new Date(f.follow_up_date).toLocaleDateString('de-DE')}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Stats row */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {[
-                { label: t('totalJobs'),    value: stats?.total || 0,        icon: '📋', color: 'bg-gray-50 border-gray-200',      text: 'text-gray-600' },
-                { label: t('saved'),        value: stats?.saved || 0,        icon: '⭐', color: 'bg-yellow-50 border-yellow-200',  text: 'text-yellow-700', onClick: () => navigate('/jobs') },
-                { label: t('applied'),      value: stats?.applied || 0,      icon: '✅', color: 'bg-green-50 border-green-200',   text: 'text-green-700',  onClick: () => navigate('/kanban'),
-                  sub: stats?.applied_today ? `+${stats.applied_today} today` : undefined },
-                { label: t('interviewing'), value: stats?.interviewing || 0, icon: '📞', color: 'bg-purple-50 border-purple-200', text: 'text-purple-700', onClick: () => navigate('/kanban') },
-              ].map(stat => (
-                <div
-                  key={stat.label}
-                  onClick={stat.onClick}
-                  className={`rounded-xl border-2 ${stat.color} p-5 ${stat.onClick ? 'cursor-pointer hover:shadow-md transition' : ''}`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className={`text-sm font-medium ${stat.text}`}>{stat.label}</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-1">{stat.value.toLocaleString()}</p>
-                      {'sub' in stat && stat.sub && (
-                        <p className="text-xs text-green-600 font-medium mt-0.5">{stat.sub}</p>
-                      )}
-                    </div>
-                    <span className="text-2xl">{stat.icon}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Action cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-6">
-              <button
-                onClick={() => navigate('/jobs')}
-                className="bg-white rounded-xl border-2 border-gray-200 hover:border-blue-400 p-6 text-left transition group"
-              >
-                <div className="text-3xl mb-3">🔍</div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700 mb-1">{t('browseJobs')}</h3>
-                <p className="text-sm text-gray-500">
-                  {stats?.new || 0} {t('browseJobsDesc')}
-                </p>
-              </button>
-
-              <button
-                onClick={() => navigate('/english-jobs')}
-                className="bg-white rounded-xl border-2 border-gray-200 hover:border-blue-400 p-6 text-left transition group"
-              >
-                <div className="text-3xl mb-3">🇬🇧</div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700 mb-1">{t('englishJobs')}</h3>
-                <p className="text-sm text-gray-500">{t('englishJobsDesc')}</p>
-              </button>
-
-              <button
-                onClick={() => navigate('/kanban')}
-                className="bg-white rounded-xl border-2 border-gray-200 hover:border-purple-400 p-6 text-left transition group"
-              >
-                <div className="text-3xl mb-3">🗂️</div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-700 mb-1">{t('applicationsBoard')}</h3>
-                <p className="text-sm text-gray-500">
-                  {(stats?.saved || 0) + (stats?.applied || 0) + (stats?.interviewing || 0)} {t('applicationsBoardDesc')}
-                </p>
-              </button>
-
-              <button
-                onClick={() => navigate('/analytics')}
-                className="bg-white rounded-xl border-2 border-gray-200 hover:border-indigo-400 p-6 text-left transition group"
-              >
-                <div className="text-3xl mb-3">📊</div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-700 mb-1">Analytics</h3>
-                <p className="text-sm text-gray-500">Track your progress</p>
-              </button>
-
-              <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
-                <div className="text-3xl mb-3">🔄</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('fetchJobs')}</h3>
-                <p className="text-sm text-gray-500 mb-4">{t('autoFetchNote')}</p>
-                <button
-                  onClick={handleFetchJobs}
-                  disabled={fetching || isDemo}
-                  title={isDemo ? 'Not available in demo mode' : undefined}
-                  className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
-                >
-                  {fetching ? t('fetching') : t('fetchNow')}
-                </button>
-                {fetchMsg && (
-                  <p className={`text-xs mt-2 text-center ${fetchMsg.includes('failed') || fetchMsg.includes('fehlgeschlagen') ? 'text-red-500' : 'text-green-600'}`}>
-                    {fetchMsg}
-                  </p>
+      {/* Stats row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {[
+          {
+            label: t('totalJobs'),
+            value: stats?.total || 0,
+            icon: '📋',
+            bg: 'bg-white',
+            border: 'border-gray-200',
+            valueColor: 'text-gray-900',
+            labelColor: 'text-gray-500',
+          },
+          {
+            label: t('saved'),
+            value: stats?.saved || 0,
+            icon: '⭐',
+            bg: 'bg-yellow-50',
+            border: 'border-yellow-200',
+            valueColor: 'text-yellow-900',
+            labelColor: 'text-yellow-700',
+            onClick: () => navigate('/jobs?tab=saved'),
+          },
+          {
+            label: t('applied'),
+            value: stats?.applied || 0,
+            icon: '✅',
+            bg: 'bg-green-50',
+            border: 'border-green-200',
+            valueColor: 'text-green-900',
+            labelColor: 'text-green-700',
+            sub: stats?.applied_today ? `+${stats.applied_today} today` : undefined,
+            onClick: () => navigate('/kanban'),
+          },
+          {
+            label: t('interviewing'),
+            value: stats?.interviewing || 0,
+            icon: '📞',
+            bg: 'bg-purple-50',
+            border: 'border-purple-200',
+            valueColor: 'text-purple-900',
+            labelColor: 'text-purple-700',
+            onClick: () => navigate('/kanban'),
+          },
+        ].map(stat => (
+          <div
+            key={stat.label}
+            onClick={stat.onClick}
+            className={`rounded-xl border ${stat.bg} ${stat.border} p-5 ${stat.onClick ? 'cursor-pointer hover:shadow-md transition' : ''}`}
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={`text-xs font-semibold uppercase tracking-wide ${stat.labelColor}`}>{stat.label}</p>
+                <p className={`text-3xl font-bold mt-1.5 ${stat.valueColor}`}>{stat.value.toLocaleString()}</p>
+                {'sub' in stat && stat.sub && (
+                  <p className="text-xs text-green-600 font-medium mt-1">{stat.sub}</p>
                 )}
               </div>
+              <span className="text-2xl">{stat.icon}</span>
             </div>
+          </div>
+        ))}
+      </div>
 
-            {/* Pipeline summary */}
-            {((stats?.applied || 0) + (stats?.interviewing || 0) + (stats?.offered || 0) + (stats?.rejected || 0)) > 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{t('applicationPipeline')}</h3>
-                <div className="flex flex-wrap gap-4 text-sm">
-                  {[
-                    { label: t('saved'),        value: stats?.saved || 0,        dot: 'bg-yellow-400' },
-                    { label: t('applied'),      value: stats?.applied || 0,      dot: 'bg-green-400' },
-                    { label: t('interviewing'), value: stats?.interviewing || 0, dot: 'bg-purple-400' },
-                    { label: t('offered'),      value: stats?.offered || 0,      dot: 'bg-emerald-400' },
-                    { label: t('rejected'),     value: stats?.rejected || 0,     dot: 'bg-red-300' },
-                  ].map(s => (
-                    <div key={s.label} className="flex items-center gap-2">
-                      <div className={`w-2.5 h-2.5 rounded-full ${s.dot}`}></div>
-                      <span className="text-gray-500">{s.label}</span>
-                      <span className="font-bold text-gray-800">{s.value}</span>
-                    </div>
-                  ))}
-                </div>
+      {/* Quick-action grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+        {[
+          {
+            icon: '🔍',
+            label: t('browseJobs'),
+            desc: `${stats?.new || 0} ${t('browseJobsDesc')}`,
+            color: 'hover:border-blue-300 hover:bg-blue-50/40',
+            iconBg: 'bg-blue-50',
+            onClick: () => navigate('/jobs'),
+          },
+          {
+            icon: '🇬🇧',
+            label: t('englishJobs'),
+            desc: t('englishJobsDesc'),
+            color: 'hover:border-indigo-300 hover:bg-indigo-50/40',
+            iconBg: 'bg-indigo-50',
+            onClick: () => navigate('/english-jobs'),
+          },
+          {
+            icon: '🗂️',
+            label: t('applicationsBoard'),
+            desc: `${(stats?.saved || 0) + (stats?.applied || 0) + (stats?.interviewing || 0)} ${t('applicationsBoardDesc')}`,
+            color: 'hover:border-purple-300 hover:bg-purple-50/40',
+            iconBg: 'bg-purple-50',
+            onClick: () => navigate('/kanban'),
+          },
+          {
+            icon: '📊',
+            label: 'Analytics',
+            desc: 'Track your progress',
+            color: 'hover:border-pink-300 hover:bg-pink-50/40',
+            iconBg: 'bg-pink-50',
+            onClick: () => navigate('/analytics'),
+          },
+        ].map(card => (
+          <button
+            key={card.label}
+            onClick={card.onClick}
+            className={`bg-white rounded-xl border-2 border-gray-200 ${card.color} p-5 text-left transition group`}
+          >
+            <div className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center text-xl mb-3`}>
+              {card.icon}
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-700 mb-0.5">{card.label}</h3>
+            <p className="text-xs text-gray-400 leading-snug">{card.desc}</p>
+          </button>
+        ))}
+
+        {/* Fetch jobs card */}
+        <div className="bg-white rounded-xl border-2 border-gray-200 p-5">
+          <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center text-xl mb-3">🔄</div>
+          <h3 className="text-sm font-semibold text-gray-900 mb-0.5">{t('fetchJobs')}</h3>
+          <p className="text-xs text-gray-400 leading-snug mb-3">{t('autoFetchNote')}</p>
+          <button
+            onClick={handleFetchJobs}
+            disabled={fetching || isDemo}
+            title={isDemo ? 'Not available in demo mode' : undefined}
+            className="w-full px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition"
+          >
+            {fetching ? t('fetching') : t('fetchNow')}
+          </button>
+          {fetchMsg && (
+            <p className={`text-xs mt-1.5 text-center ${fetchMsg.includes('failed') || fetchMsg.includes('fehlgeschlagen') ? 'text-red-500' : 'text-green-600'}`}>
+              {fetchMsg}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Pipeline summary */}
+      {((stats?.applied || 0) + (stats?.interviewing || 0) + (stats?.offered || 0) + (stats?.rejected || 0)) > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">{t('applicationPipeline')}</h3>
+          <div className="flex flex-wrap gap-5">
+            {[
+              { label: t('saved'),        value: stats?.saved || 0,        dot: 'bg-yellow-400' },
+              { label: t('applied'),      value: stats?.applied || 0,      dot: 'bg-green-500' },
+              { label: t('interviewing'), value: stats?.interviewing || 0, dot: 'bg-purple-500' },
+              { label: t('offered'),      value: stats?.offered || 0,      dot: 'bg-emerald-500' },
+              { label: t('rejected'),     value: stats?.rejected || 0,     dot: 'bg-red-400' },
+            ].map(s => (
+              <div key={s.label} className="flex items-center gap-2.5">
+                <div className={`w-2.5 h-2.5 rounded-full ${s.dot} shrink-0`}></div>
+                <span className="text-sm text-gray-500">{s.label}</span>
+                <span className="text-sm font-bold text-gray-800">{s.value}</span>
               </div>
-            )}
-          </>
-        )}
-      </main>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -2,16 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
-import { LanguageToggle } from '../components/common/LanguageToggle';
-import { DemoBanner } from '../components/common/DemoBanner';
 
-const STATUS_OPTIONS: { value: Job['status']; label: string; color: string }[] = [
-  { value: 'new',          label: 'New',          color: 'bg-blue-100 text-blue-700 border-blue-300' },
-  { value: 'saved',        label: '⭐ Saved',      color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
-  { value: 'applied',      label: '✅ Applied',    color: 'bg-green-100 text-green-700 border-green-300' },
-  { value: 'interviewing', label: '📞 Interview',  color: 'bg-purple-100 text-purple-700 border-purple-300' },
-  { value: 'offered',      label: '🎉 Offered',    color: 'bg-emerald-100 text-emerald-700 border-emerald-300' },
-  { value: 'rejected',     label: '❌ Rejected',   color: 'bg-red-100 text-red-600 border-red-300' },
+const STATUS_OPTIONS: { value: Job['status']; label: string; color: string; dot: string }[] = [
+  { value: 'new',          label: 'New',          color: 'bg-blue-50 text-blue-700 border-blue-200',      dot: 'bg-blue-400' },
+  { value: 'saved',        label: '⭐ Saved',      color: 'bg-yellow-50 text-yellow-700 border-yellow-200', dot: 'bg-yellow-400' },
+  { value: 'applied',      label: '✅ Applied',    color: 'bg-green-50 text-green-700 border-green-200',   dot: 'bg-green-500' },
+  { value: 'interviewing', label: '📞 Interview',  color: 'bg-purple-50 text-purple-700 border-purple-200', dot: 'bg-purple-500' },
+  { value: 'offered',      label: '🎉 Offered',    color: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
+  { value: 'rejected',     label: '❌ Rejected',   color: 'bg-red-50 text-red-600 border-red-200',         dot: 'bg-red-400' },
 ];
 
 const isHtml = (str: string) => /<[a-z][\s\S]*>/i.test(str);
@@ -115,7 +113,7 @@ export const JobDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -123,10 +121,10 @@ export const JobDetailPage = () => {
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <p className="text-gray-500 text-lg">Job not found</p>
-          <button onClick={() => navigate('/jobs')} className="mt-4 text-blue-600 hover:underline text-sm">
+          <p className="text-gray-500 text-lg mb-3">Job not found</p>
+          <button onClick={() => navigate('/jobs')} className="text-blue-600 hover:underline text-sm">
             ← Back to Jobs
           </button>
         </div>
@@ -138,206 +136,225 @@ export const JobDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DemoBanner />
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex justify-between items-center">
-            <button
-              onClick={() => navigate('/jobs')}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition"
+
+      {/* Compact sticky header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10 px-6 py-3">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <button
+            onClick={() => navigate('/jobs')}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Jobs
+          </button>
+          <div className="flex items-center gap-2">
+            <a
+              href={job.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition"
             >
-              ← Back to Jobs
+              Apply →
+            </a>
+            <button
+              onClick={handleHide}
+              className="px-3 py-2 border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-200 text-sm rounded-lg transition"
+            >
+              {job.is_hidden ? 'Unhide' : 'Hide'}
             </button>
-            <div className="flex items-center gap-2">
-              <LanguageToggle />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          {/* LEFT: Job info + description */}
+          <div className="lg:col-span-2 space-y-4">
+
+            {/* Title card */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+              <div className="flex items-start justify-between gap-4 mb-5">
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900 leading-tight">{job.title}</h1>
+                  <p className="text-base text-gray-700 mt-1 font-medium">{job.company}</p>
+                  {job.location && (
+                    <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {job.location}
+                    </p>
+                  )}
+                </div>
+                <span className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold border ${currentStatus?.color}`}>
+                  {currentStatus?.label}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-100 text-sm">
+                {job.posted_date && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-400 text-xs">Posted</span>
+                    <span className="font-medium text-gray-700">{new Date(job.posted_date).toLocaleDateString('de-DE')}</span>
+                  </div>
+                )}
+                {job.deadline && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-400 text-xs">Deadline</span>
+                    <span className="font-semibold text-red-600">{new Date(job.deadline).toLocaleDateString('de-DE')}</span>
+                  </div>
+                )}
+                {job.salary && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-400 text-xs">Salary</span>
+                    <span className="font-semibold text-green-700">{job.salary}</span>
+                  </div>
+                )}
+                {job.applied_date && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-400 text-xs">Applied</span>
+                    <span className="font-medium text-blue-700">{new Date(job.applied_date).toLocaleDateString('de-DE')}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Job Description</h2>
+              {job.description ? (
+                isHtml(job.description) ? (
+                  <div
+                    className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: job.description }}
+                  />
+                ) : (
+                  <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm">{job.description}</p>
+                )
+              ) : (
+                <p className="text-gray-400 text-sm">No description available.</p>
+              )}
+            </div>
+
+            {/* Apply CTA */}
+            <div className="flex justify-center">
               <a
                 href={job.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
+                className="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition"
               >
-                Apply on Bundesagentur →
+                Apply on Bundesagentur für Arbeit
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
               </a>
-              <button
-                onClick={handleHide}
-                className="px-3 py-2 border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-200 text-sm rounded-lg transition"
-              >
-                {job.is_hidden ? 'Unhide' : 'Hide'}
-              </button>
             </div>
           </div>
-        </div>
-      </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+          {/* RIGHT: Status + Notes + Cover Letter */}
+          <div className="space-y-4">
 
-        {/* Job title card */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex justify-between items-start gap-4 mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 leading-tight">{job.title}</h1>
-              <p className="text-base text-gray-600 mt-1">{job.company}</p>
-              <p className="text-sm text-gray-400 mt-0.5">📍 {job.location}</p>
+            {/* Status */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-5">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Track Status</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {STATUS_OPTIONS.map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleStatusChange(option.value)}
+                    disabled={updatingStatus || job.status === option.value}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold border transition text-center ${
+                      job.status === option.value
+                        ? option.color
+                        : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                    } disabled:cursor-not-allowed`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <span className={`shrink-0 px-3 py-1 rounded-full text-sm font-medium border ${currentStatus?.color}`}>
-              {currentStatus?.label}
-            </span>
-          </div>
 
-          <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-100 text-sm">
-            {job.posted_date && (
-              <div>
-                <span className="text-gray-400">Posted </span>
-                <span className="font-medium text-gray-700">{new Date(job.posted_date).toLocaleDateString('de-DE')}</span>
-              </div>
-            )}
-            {job.deadline && (
-              <div>
-                <span className="text-gray-400">Deadline </span>
-                <span className="font-medium text-red-600">{new Date(job.deadline).toLocaleDateString('de-DE')}</span>
-              </div>
-            )}
-            {job.salary && (
-              <div>
-                <span className="text-gray-400">Salary </span>
-                <span className="font-medium text-green-700">{job.salary}</span>
-              </div>
-            )}
-            {job.applied_date && (
-              <div>
-                <span className="text-gray-400">Applied </span>
-                <span className="font-medium text-blue-700">{new Date(job.applied_date).toLocaleDateString('de-DE')}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Status update */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Track Status</h2>
-          <div className="flex flex-wrap gap-2">
-            {STATUS_OPTIONS.map(option => (
-              <button
-                key={option.value}
-                onClick={() => handleStatusChange(option.value)}
-                disabled={updatingStatus || job.status === option.value}
-                className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition ${
-                  job.status === option.value
-                    ? option.color
-                    : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400'
-                } disabled:cursor-not-allowed`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Notes */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">My Notes</h2>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            placeholder="Contact person, interview date, things to prepare, salary expectations..."
-            rows={5}
-            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
-          />
-          <div className="flex justify-between items-center mt-2">
-            <span className={`text-xs transition ${notesSaved ? 'text-green-600' : 'text-transparent'}`}>
-              ✓ Saved
-            </span>
-            <button
-              onClick={handleSaveNotes}
-              disabled={savingNotes}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
-            >
-              {savingNotes ? 'Saving...' : 'Save Notes'}
-            </button>
-          </div>
-        </div>
-
-        {/* Interview date */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Interview Date</h2>
-          <div className="flex items-center gap-3">
-            <input
-              type="date"
-              value={interviewDate}
-              onChange={e => handleSaveInterviewDate(e.target.value)}
-              disabled={savingInterviewDate}
-              className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm text-gray-700 disabled:opacity-50"
-            />
-            {interviewDate && (
-              <span className="text-sm text-purple-700 font-medium">
-                📞 {new Date(interviewDate).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </span>
-            )}
-            {interviewDate && (
-              <button
-                onClick={() => handleSaveInterviewDate('')}
-                className="text-xs text-gray-400 hover:text-red-500 transition"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Cover letter */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Cover Letter Draft</h2>
-          <textarea
-            value={coverLetter}
-            onChange={e => setCoverLetter(e.target.value)}
-            placeholder="Draft your cover letter here — key points, opening line, why this role..."
-            rows={8}
-            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
-          />
-          <div className="flex justify-between items-center mt-2">
-            <span className={`text-xs transition ${coverLetterSaved ? 'text-green-600' : 'text-transparent'}`}>
-              ✓ Saved
-            </span>
-            <button
-              onClick={handleSaveCoverLetter}
-              disabled={savingCoverLetter}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition"
-            >
-              {savingCoverLetter ? 'Saving...' : 'Save Draft'}
-            </button>
-          </div>
-        </div>
-
-        {/* Job description */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Job Description</h2>
-          {job.description ? (
-            isHtml(job.description) ? (
-              <div
-                className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: job.description }}
+            {/* Interview date */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-5">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Interview Date</h2>
+              <input
+                type="date"
+                value={interviewDate}
+                onChange={e => handleSaveInterviewDate(e.target.value)}
+                disabled={savingInterviewDate}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm text-gray-700 disabled:opacity-50"
               />
-            ) : (
-              <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm">{job.description}</p>
-            )
-          ) : (
-            <p className="text-gray-400 text-sm">No description available.</p>
-          )}
-        </div>
+              {interviewDate && (
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-sm text-purple-700 font-medium">
+                    📞 {new Date(interviewDate).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  </span>
+                  <button
+                    onClick={() => handleSaveInterviewDate('')}
+                    className="text-xs text-gray-400 hover:text-red-500 transition"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+            </div>
 
-        {/* Apply CTA at bottom */}
-        <div className="flex justify-center pb-4">
-          <a
-            href={job.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition"
-          >
-            Apply on Bundesagentur für Arbeit →
-          </a>
+            {/* Notes */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-5">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">My Notes</h2>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="Contact person, things to prepare, salary expectations..."
+                rows={5}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
+              />
+              <div className="flex justify-between items-center mt-2">
+                <span className={`text-xs transition ${notesSaved ? 'text-green-600' : 'text-transparent'}`}>
+                  ✓ Saved
+                </span>
+                <button
+                  onClick={handleSaveNotes}
+                  disabled={savingNotes}
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition"
+                >
+                  {savingNotes ? 'Saving...' : 'Save Notes'}
+                </button>
+              </div>
+            </div>
+
+            {/* Cover Letter */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-5">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Cover Letter Draft</h2>
+              <textarea
+                value={coverLetter}
+                onChange={e => setCoverLetter(e.target.value)}
+                placeholder="Draft key points, opening lines, why this role..."
+                rows={8}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
+              />
+              <div className="flex justify-between items-center mt-2">
+                <span className={`text-xs transition ${coverLetterSaved ? 'text-green-600' : 'text-transparent'}`}>
+                  ✓ Saved
+                </span>
+                <button
+                  onClick={handleSaveCoverLetter}
+                  disabled={savingCoverLetter}
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition"
+                >
+                  {savingCoverLetter ? 'Saving...' : 'Save Draft'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
