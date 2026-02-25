@@ -4,8 +4,7 @@ import type { AnalyticsData } from '../types';
 
 const SOURCE_LABELS: Record<string, string> = {
   bundesagentur: 'Bundesagentur',
-  adzuna: 'Adzuna',
-  greenjobs: 'GreenJobs',
+  stepstone: 'StepStone',
 };
 
 const STATUS_COLORS: Record<string, string> = {
