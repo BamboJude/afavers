@@ -68,6 +68,7 @@ router.get('/', async (req: AuthRequest, res) => {
       limit:     q('limit')  ? parseInt(q('limit')!)  : undefined,
       offset:    q('offset') ? parseInt(q('offset')!) : undefined,
       language:  q('language') as 'en' | 'de' | undefined,
+      dateFrom:  q('dateFrom'),
       userKeywords,
       userLocations,
     };

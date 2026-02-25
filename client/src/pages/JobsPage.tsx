@@ -75,6 +75,7 @@ export const JobsPage = () => {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('posted_date');
   const [sourceFilter, setSourceFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -96,7 +97,7 @@ export const JobsPage = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, [activeTab, search, sortBy, sourceFilter, page]);
+  }, [activeTab, search, sortBy, sourceFilter, dateFilter, page]);
 
   const loadStats = async () => {
     try {
@@ -117,6 +118,7 @@ export const JobsPage = () => {
         status: activeTab !== 'all' ? activeTab : undefined,
         noFilter: activeTab === 'all' ? true : undefined,
         source: sourceFilter || undefined,
+        dateFrom: dateFilter || undefined,
       };
       const response = await jobsService.getJobs(filters);
       setJobs(response.jobs);
@@ -161,10 +163,25 @@ export const JobsPage = () => {
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
     setSourceFilter('');
+    setDateFilter('');
     setPage(1);
   };
 
   const totalPages = Math.ceil(total / LIMIT);
+
+  const DATE_OPTIONS = [
+    { value: '',   label: t('anyTime') },
+    { value: '7',  label: t('last7Days') },
+    { value: '30', label: t('last30Days') },
+    { value: '90', label: t('last3Months') },
+  ];
+
+  const dateFromForDays = (days: string) => {
+    if (!days) return '';
+    const d = new Date();
+    d.setDate(d.getDate() - parseInt(days));
+    return d.toISOString().split('T')[0];
+  };
 
   const tabs: { id: Tab; label: string; count?: number; color: string; activeColor: string }[] = [
     { id: 'new',          label: t('new'),          count: stats?.new,          color: 'hover:text-blue-600',   activeColor: 'border-blue-500 text-blue-600' },
@@ -251,6 +268,22 @@ export const JobsPage = () => {
               className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
                 sourceFilter === opt.value
                   ? 'bg-gray-800 text-white border-gray-800'
+                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {/* Date filter pills */}
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          {DATE_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => { setDateFilter(dateFromForDays(opt.value)); setPage(1); }}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
+                dateFilter === dateFromForDays(opt.value)
+                  ? 'bg-green-700 text-white border-green-700'
                   : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
               }`}
             >
