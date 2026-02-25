@@ -5,6 +5,7 @@ import type { AnalyticsData } from '../types';
 const SOURCE_LABELS: Record<string, string> = {
   bundesagentur: 'Bundesagentur',
   stepstone: 'StepStone',
+  adzuna: 'Adzuna',
 };
 
 const STATUS_COLORS: Record<string, string> = {
