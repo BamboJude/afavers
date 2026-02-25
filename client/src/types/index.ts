@@ -70,4 +70,5 @@ export interface JobFilters {
   offset?: number;
   language?: 'en' | 'de';
   noFilter?: boolean;
+  dateFrom?: string;
 }

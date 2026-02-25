@@ -167,6 +167,13 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
     p++;
   }
 
+  // Filter by posted date
+  if (filters?.dateFrom) {
+    conditions.push(`j.posted_date >= $${p}`);
+    values.push(filters.dateFrom);
+    p++;
+  }
+
   // Always exclude hidden jobs
   conditions.push(`COALESCE(uj.is_hidden, FALSE) = FALSE`);
 
@@ -213,7 +220,7 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
  * Count jobs matching filters for a given user
  */
 export async function count(
-  filters?: Pick<JobFilters, 'status' | 'source' | 'search' | 'userKeywords' | 'userLocations' | 'language'>,
+  filters?: Pick<JobFilters, 'status' | 'source' | 'search' | 'userKeywords' | 'userLocations' | 'language' | 'dateFrom'>,
   userId?: number
 ): Promise<number> {
   const conditions: string[] = [];
@@ -264,6 +271,12 @@ export async function count(
   if (filters?.language) {
     conditions.push(`j.language = $${p}`);
     values.push(filters.language);
+    p++;
+  }
+
+  if (filters?.dateFrom) {
+    conditions.push(`j.posted_date >= $${p}`);
+    values.push(filters.dateFrom);
     p++;
   }
 
