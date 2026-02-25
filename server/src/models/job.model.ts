@@ -179,8 +179,9 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
     title: 'j.title',
     company: 'j.company',
   };
-  const sortCol = allowedSortCols[filters?.sortBy || 'created_at'] || 'j.created_at';
+  const sortCol = allowedSortCols[filters?.sortBy || 'posted_date'] || 'j.posted_date';
   const sortOrder = filters?.sortOrder === 'ASC' ? 'ASC' : 'DESC';
+  const nullsClause = sortCol === 'j.posted_date' ? ' NULLS LAST' : '';
 
   const limit  = filters?.limit  || 50;
   const offset = filters?.offset || 0;
@@ -200,7 +201,7 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
     FROM jobs j
     LEFT JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $1
     ${whereClause}
-    ORDER BY ${sortCol} ${sortOrder}
+    ORDER BY ${sortCol} ${sortOrder}${nullsClause}
     LIMIT ${limit} OFFSET ${offset}
   `;
 

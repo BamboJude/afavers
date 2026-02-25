@@ -3,8 +3,6 @@ import { jobsService } from '../services/jobs.service';
 import type { Job, JobFilters, DashboardStats } from '../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../store/languageStore';
-import { LanguageToggle } from '../components/common/LanguageToggle';
-import { DemoBanner } from '../components/common/DemoBanner';
 
 type Tab = 'new' | 'saved' | 'applied' | 'interviewing' | 'all';
 
@@ -26,7 +24,7 @@ const SOURCE_BADGES: Record<string, { label: string; cls: string }> = {
 const SourceBadge = ({ source }: { source: string }) => {
   const badge = SOURCE_BADGES[source.toLowerCase()] ?? { label: source, cls: 'bg-gray-100 text-gray-500 border-gray-200' };
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-medium border ${badge.cls}`}>
+    <span className={`px-2 py-0.5 rounded-md text-xs font-medium border ${badge.cls}`}>
       {badge.label}
     </span>
   );
@@ -43,6 +41,25 @@ const deadlineUrgency = (deadline: string | null): string => {
   return '';
 };
 
+const CompanyAvatar = ({ company }: { company: string }) => {
+  const letter = company?.trim()?.[0]?.toUpperCase() ?? '?';
+  const colors = [
+    'bg-blue-100 text-blue-700',
+    'bg-green-100 text-green-700',
+    'bg-purple-100 text-purple-700',
+    'bg-orange-100 text-orange-700',
+    'bg-pink-100 text-pink-700',
+    'bg-teal-100 text-teal-700',
+    'bg-indigo-100 text-indigo-700',
+  ];
+  const idx = letter.charCodeAt(0) % colors.length;
+  return (
+    <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-base font-bold shrink-0 ${colors[idx]}`}>
+      {letter}
+    </div>
+  );
+};
+
 export const JobsPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -56,7 +73,8 @@ export const JobsPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
+  const [sortBy, setSortBy] = useState('posted_date');
+  const [sourceFilter, setSourceFilter] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -78,7 +96,7 @@ export const JobsPage = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, [activeTab, search, sortBy, page]);
+  }, [activeTab, search, sortBy, sourceFilter, page]);
 
   const loadStats = async () => {
     try {
@@ -98,6 +116,7 @@ export const JobsPage = () => {
         search: search || undefined,
         status: activeTab !== 'all' ? activeTab : undefined,
         noFilter: activeTab === 'all' ? true : undefined,
+        source: sourceFilter || undefined,
       };
       const response = await jobsService.getJobs(filters);
       setJobs(response.jobs);
@@ -141,66 +160,47 @@ export const JobsPage = () => {
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
+    setSourceFilter('');
     setPage(1);
   };
 
   const totalPages = Math.ceil(total / LIMIT);
 
-  const tabs: { id: Tab; label: string; count?: number }[] = [
-    { id: 'new',          label: t('new'),          count: stats?.new },
-    { id: 'saved',        label: t('saved'),        count: stats?.saved },
-    { id: 'applied',      label: t('applied'),      count: stats?.applied },
-    { id: 'interviewing', label: t('interviewing'), count: stats?.interviewing },
-    { id: 'all',          label: t('all'),          count: stats?.total },
+  const tabs: { id: Tab; label: string; count?: number; color: string; activeColor: string }[] = [
+    { id: 'new',          label: t('new'),          count: stats?.new,          color: 'hover:text-blue-600',   activeColor: 'border-blue-500 text-blue-600' },
+    { id: 'saved',        label: t('saved'),        count: stats?.saved,        color: 'hover:text-yellow-600', activeColor: 'border-yellow-500 text-yellow-600' },
+    { id: 'applied',      label: t('applied'),      count: stats?.applied,      color: 'hover:text-green-600',  activeColor: 'border-green-500 text-green-600' },
+    { id: 'interviewing', label: t('interviewing'), count: stats?.interviewing, color: 'hover:text-purple-600', activeColor: 'border-purple-500 text-purple-600' },
+    { id: 'all',          label: t('all'),          count: stats?.total,        color: 'hover:text-gray-700',   activeColor: 'border-gray-500 text-gray-700' },
   ];
 
-  const tabColors: Record<Tab, string> = {
-    new:          'border-blue-500 text-blue-600',
-    saved:        'border-yellow-500 text-yellow-600',
-    applied:      'border-green-500 text-green-600',
-    interviewing: 'border-purple-500 text-purple-600',
-    all:          'border-gray-500 text-gray-700',
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DemoBanner />
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">{t('jobs')}</h1>
-            <div className="flex items-center gap-2">
-              <LanguageToggle />
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="px-4 py-2 text-sm text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-lg transition"
-              >
-                ← {t('dashboard')}
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 w-full">
+      {/* Page header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-5">
+        <div className="max-w-5xl mx-auto">
+          <h1 className="text-2xl font-bold text-gray-900">{t('jobs')}</h1>
         </div>
-      </header>
+      </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex overflow-x-auto">
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10 overflow-hidden">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="flex overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 className={`px-5 py-3.5 text-sm font-medium border-b-2 whitespace-nowrap transition ${
                   activeTab === tab.id
-                    ? tabColors[tab.id]
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? tab.activeColor
+                    : `border-transparent text-gray-400 ${tab.color}`
                 }`}
               >
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
-                    activeTab === tab.id ? 'bg-gray-100' : 'bg-gray-100 text-gray-500'
+                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 ${
+                    activeTab === tab.id ? 'text-gray-700' : 'text-gray-400'
                   }`}>
                     {tab.count.toLocaleString()}
                   </span>
@@ -212,109 +212,175 @@ export const JobsPage = () => {
       </div>
 
       {/* Search + Sort bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="max-w-5xl mx-auto px-6 py-4">
         <div className="flex gap-3 flex-wrap">
-          <input
-            type="text"
-            placeholder={t('searchPlaceholder')}
-            value={searchInput}
-            onChange={e => setSearchInput(e.target.value)}
-            className="flex-1 min-w-48 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-          />
+          <div className="flex-1 min-w-48 relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder={t('searchPlaceholder')}
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm bg-white"
+            />
+          </div>
           <select
             value={sortBy}
             onChange={e => { setSortBy(e.target.value); setPage(1); }}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+            className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
           >
-            <option value="created_at">{t('newestFirst')}</option>
-            <option value="posted_date">{t('postedDate')}</option>
+            <option value="posted_date">{t('newestFirst')}</option>
+            <option value="created_at">{t('recentlyAdded')}</option>
             <option value="title">{t('titleAZ')}</option>
             <option value="company">{t('companyAZ')}</option>
           </select>
+        </div>
+        {/* Source filter pills */}
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          {[
+            { value: '',              label: t('allSources') },
+            { value: 'bundesagentur', label: 'Bundesagentur' },
+            { value: 'adzuna',        label: 'Adzuna' },
+            { value: 'greenjobs',     label: 'GreenJobs' },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => { setSourceFilter(opt.value); setPage(1); }}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
+                sourceFilter === opt.value
+                  ? 'bg-gray-800 text-white border-gray-800'
+                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
         <p className="text-xs text-gray-400 mt-2">{total.toLocaleString()} {t('jobs').toLowerCase()}</p>
       </div>
 
       {/* Jobs list */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <main className="max-w-5xl mx-auto px-6 pb-12">
         {loading ? (
           <div className="text-center py-16">
             <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
             <p className="text-gray-400 mt-3 text-sm">{t('loadingJobs')}</p>
           </div>
         ) : jobs.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
-            <p className="text-gray-400 text-lg">{t('noJobsFound')}</p>
+          <div className="bg-white rounded-2xl border border-gray-200 p-16 text-center">
+            <div className="text-4xl mb-4">🔍</div>
+            <p className="text-gray-500 text-base font-medium">{t('noJobsFound')}</p>
             {activeTab === 'new' && (
               <p className="text-gray-400 text-sm mt-1">{t('allCaughtUp')} 🎉</p>
             )}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {jobs.map(job => (
               <div
                 key={job.id}
                 onClick={() => navigate(`/jobs/${job.id}`)}
-                className={`bg-white rounded-xl border p-5 hover:shadow-md transition cursor-pointer ${deadlineUrgency(job.deadline) || 'border-gray-200 hover:border-gray-300'}`}
+                className={`bg-white rounded-xl border hover:shadow-md transition cursor-pointer group ${
+                  deadlineUrgency(job.deadline) || 'border-gray-200 hover:border-gray-300'
+                }`}
               >
-                <div className="flex items-start gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 leading-snug">{job.title}</h3>
-                        <p className="text-sm text-gray-500 mt-0.5">{job.company} · {job.location}</p>
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-start gap-3">
+                    {/* Company avatar — hidden on small screens */}
+                    <div className="hidden sm:block shrink-0">
+                      <CompanyAvatar company={job.company} />
+                    </div>
+
+                    {/* Main content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-gray-900 leading-snug group-hover:text-blue-700 transition-colors text-sm sm:text-base">
+                            {job.title}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                            {job.company}
+                            {job.location && <span className="text-gray-400"> · {job.location}</span>}
+                          </p>
+                        </div>
+                        {job.status !== 'new' && (
+                          <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[job.status]}`}>
+                            {t(job.status)}
+                          </span>
+                        )}
                       </div>
-                      {job.status !== 'new' && (
-                        <span className={`shrink-0 px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[job.status]}`}>
-                          {t(job.status)}
-                        </span>
-                      )}
-                    </div>
 
-                    {job.description && (
-                      <p className="text-sm text-gray-400 mt-2 line-clamp-2 leading-relaxed">
-                        {stripHtml(job.description)}
-                      </p>
-                    )}
+                      {job.description && (
+                        <p className="text-xs sm:text-sm text-gray-400 mt-1.5 line-clamp-2 leading-relaxed">
+                          {stripHtml(job.description)}
+                        </p>
+                      )}
 
-                    <div className="flex items-center gap-3 mt-3 text-xs text-gray-400 flex-wrap">
-                      <SourceBadge source={job.source} />
-                      {job.posted_date && (
-                        <span>{t('posted')} {new Date(job.posted_date).toLocaleDateString('de-DE')}</span>
-                      )}
-                      {job.deadline && (
-                        <span className="text-orange-500 font-medium">
-                          {t('deadline')} {new Date(job.deadline).toLocaleDateString('de-DE')}
-                        </span>
-                      )}
-                      {job.salary && (
-                        <span className="text-green-600 font-medium">{job.salary}</span>
-                      )}
-                    </div>
-                  </div>
+                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
+                        <SourceBadge source={job.source} />
+                        {job.posted_date && (
+                          <span className="hidden sm:inline">{t('posted')} {new Date(job.posted_date).toLocaleDateString('de-DE')}</span>
+                        )}
+                        {job.deadline && (
+                          <span className="text-orange-500 font-medium">
+                            ⏰ {new Date(job.deadline).toLocaleDateString('de-DE')}
+                          </span>
+                        )}
+                        {job.salary && (
+                          <span className="text-green-600 font-medium">{job.salary}</span>
+                        )}
+                      </div>
 
-                  <div
-                    className="flex flex-col gap-2 shrink-0"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    {job.status === 'new' && (
-                      <button
-                        onClick={e => handleSave(e, job)}
-                        disabled={actionLoading === job.id}
-                        title={t('saveJob')}
-                        className="px-3 py-1.5 text-sm font-medium bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40"
+                      {/* Actions — below content on mobile, to the right on desktop */}
+                      <div
+                        className="flex gap-2 mt-3 sm:hidden"
+                        onClick={e => e.stopPropagation()}
                       >
-                        ⭐ {t('save')}
-                      </button>
-                    )}
-                    <button
-                      onClick={e => handleHide(e, job)}
-                      disabled={actionLoading === job.id}
-                      title={t('hideJob')}
-                      className="px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
+                        {job.status === 'new' && (
+                          <button
+                            onClick={e => handleSave(e, job)}
+                            disabled={actionLoading === job.id}
+                            className="flex-1 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40"
+                          >
+                            ⭐ {t('save')}
+                          </button>
+                        )}
+                        <button
+                          onClick={e => handleHide(e, job)}
+                          disabled={actionLoading === job.id}
+                          className="flex-1 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
+                        >
+                          ✕ {t('hide')}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Actions — right column on sm+ screens only */}
+                    <div
+                      className="hidden sm:flex flex-col gap-2 shrink-0"
+                      onClick={e => e.stopPropagation()}
                     >
-                      ✕ {t('hide')}
-                    </button>
+                      {job.status === 'new' && (
+                        <button
+                          onClick={e => handleSave(e, job)}
+                          disabled={actionLoading === job.id}
+                          title={t('saveJob')}
+                          className="px-3 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+                        >
+                          ⭐ {t('save')}
+                        </button>
+                      )}
+                      <button
+                        onClick={e => handleHide(e, job)}
+                        disabled={actionLoading === job.id}
+                        title={t('hideJob')}
+                        className="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
+                      >
+                        ✕ {t('hide')}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -328,17 +394,17 @@ export const JobsPage = () => {
             <button
               onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0); }}
               disabled={page === 1}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               ← {t('prev')}
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-500 font-medium">
               {t('page')} {page} {t('of')} {totalPages}
             </span>
             <button
               onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0); }}
               disabled={page === totalPages}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               {t('next')} →
             </button>
