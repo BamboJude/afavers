@@ -1,5 +1,11 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /map
+Disallow: /air-quality
+Disallow: /contact
+Disallow: /about
+Disallow: /geoconvert
+Disallow: /convert
 
 Sitemap: https://afavers.com/sitemap.xml

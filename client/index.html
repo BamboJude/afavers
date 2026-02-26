@@ -2,17 +2,65 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="shortcut icon" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>afavers – Automated Job Tracker</title>
-    <meta name="description" content="afavers automatically fetches jobs from Bundesagentur für Arbeit every 2 hours. Save, track, and manage your applications in one place." />
-    <meta property="og:title" content="afavers – Automated Job Tracker" />
-    <meta property="og:description" content="Automatically fetches jobs from Bundesagentur für Arbeit every 2 hours. Track applications with a Kanban board." />
+
+    <!-- Primary SEO -->
+    <title>afavers – Green Job Tracker for Germany</title>
+    <meta name="description" content="afavers automatically finds green and sustainability jobs in Germany every 2 hours. Track applications, manage your pipeline, and land your next role in climate, environment, or energy." />
+    <link rel="canonical" href="https://afavers.com" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="afavers" />
+    <meta property="og:title" content="afavers – Green Job Tracker for Germany" />
+    <meta property="og:description" content="Automatically finds sustainability, environment, and energy jobs in Germany. Save, track, and manage your applications in one place." />
     <meta property="og:url" content="https://afavers.com" />
     <meta property="og:type" content="website" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://afavers.com" />
+    <meta property="og:image" content="https://afavers.com/pwa-512x512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="afavers – Green Job Tracker for Germany" />
+    <meta name="twitter:description" content="Automatically finds sustainability, environment, and energy jobs in Germany. Save, track, and manage your applications in one place." />
+    <meta name="twitter:image" content="https://afavers.com/pwa-512x512.png" />
+
+    <!-- Google Verification -->
     <meta name="google-site-verification" content="lh_TeeZ8cKsZY3XtF8mcjX4HqnMt44RnMSzGsZR0VwE" />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "afavers",
+      "url": "https://afavers.com",
+      "description": "afavers automatically finds green and sustainability jobs in Germany every 2 hours. Track applications, manage your pipeline, and land your next role in climate, environment, or energy.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "afavers",
+        "url": "https://afavers.com",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://afavers.com/pwa-512x512.png",
+          "width": 512,
+          "height": 512
+        }
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
