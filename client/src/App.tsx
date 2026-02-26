@@ -11,6 +11,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { SetupPage } from './pages/SetupPage';
 import { EnglishJobsPage } from './pages/EnglishJobsPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
+import { HotpicksPage } from './pages/HotpicksPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 
@@ -36,6 +37,7 @@ function App() {
         <Route path="/setup"        element={<ProtectedLayout><SetupPage /></ProtectedLayout>} />
         <Route path="/english-jobs" element={<ProtectedLayout><EnglishJobsPage /></ProtectedLayout>} />
         <Route path="/analytics"    element={<ProtectedLayout><AnalyticsPage /></ProtectedLayout>} />
+        <Route path="/hotpicks"     element={<ProtectedLayout><HotpicksPage /></ProtectedLayout>} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
