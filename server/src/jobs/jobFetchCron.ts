@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { fetchAndSaveJobs } from '../services/fetchers/jobFetcher.service.js';
 import { resetDemoData, ensureDemoUser } from '../services/demoReset.service.js';
+import { pool } from '../config/database.js';
 
 /**
  * Initialize job fetch cron job
@@ -21,10 +22,19 @@ export function initializeJobFetchCron(): void {
     }
   });
 
-  // Daily midnight: reset demo user data
+  // Daily midnight: reset demo data + clean expired security records
   cron.schedule('0 0 * * *', async () => {
     console.log('[CRON] Resetting demo data...');
     await resetDemoData();
+
+    // Clean up expired token blacklist entries and stale lockout records
+    const { rowCount: blacklistCleaned } = await pool.query(
+      'DELETE FROM token_blacklist WHERE expires_at < NOW()'
+    );
+    const { rowCount: lockoutCleaned } = await pool.query(
+      "DELETE FROM login_attempts WHERE locked_until IS NULL OR locked_until < NOW() - INTERVAL '1 hour'"
+    );
+    console.log(`[CRON] Security cleanup: removed ${blacklistCleaned} expired tokens, ${lockoutCleaned} stale lockouts`);
   });
 
   // Seed demo data on startup (ensures demo user + data always exists)

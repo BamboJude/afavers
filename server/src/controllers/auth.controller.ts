@@ -9,33 +9,43 @@ import { User, UserResponse } from '../types/index.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 import { ensureDemoUser } from '../services/demoReset.service.js';
 
-// ── Account lockout (in-memory) ────────────────────────────────────────────
+// ── Account lockout (DB-backed) ────────────────────────────────────────────
 const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS   = 30 * 60 * 1000; // 30 minutes
 
-interface LockEntry { count: number; lockedUntil: number; }
-const lockMap = new Map<string, LockEntry>();
-
-function isLocked(email: string): boolean {
-  const e = lockMap.get(email);
-  if (!e) return false;
-  if (e.lockedUntil > Date.now()) return true;
-  lockMap.delete(email); // lock expired
+async function isLocked(email: string): Promise<boolean> {
+  const { rows } = await pool.query<{ locked_until: Date | null }>(
+    'SELECT locked_until FROM login_attempts WHERE email = $1',
+    [email]
+  );
+  if (rows.length === 0) return false;
+  const lockedUntil = rows[0].locked_until;
+  if (!lockedUntil) return false;
+  if (new Date(lockedUntil) > new Date()) return true;
+  // Lock expired — clean up
+  await pool.query('DELETE FROM login_attempts WHERE email = $1', [email]);
   return false;
 }
 
-function recordFailure(email: string): void {
-  const e = lockMap.get(email) ?? { count: 0, lockedUntil: 0 };
-  e.count += 1;
-  if (e.count >= MAX_ATTEMPTS) {
-    e.lockedUntil = Date.now() + LOCKOUT_MS;
-    e.count = 0;
-  }
-  lockMap.set(email, e);
+async function recordFailure(email: string): Promise<void> {
+  await pool.query(
+    `INSERT INTO login_attempts (email, attempts, updated_at)
+     VALUES ($1, 1, NOW())
+     ON CONFLICT (email) DO UPDATE SET
+       attempts = CASE
+         WHEN login_attempts.attempts + 1 >= $2 THEN 0
+         ELSE login_attempts.attempts + 1
+       END,
+       locked_until = CASE
+         WHEN login_attempts.attempts + 1 >= $2 THEN NOW() + INTERVAL '30 minutes'
+         ELSE login_attempts.locked_until
+       END,
+       updated_at = NOW()`,
+    [email, MAX_ATTEMPTS]
+  );
 }
 
-function clearFailures(email: string): void {
-  lockMap.delete(email);
+async function clearFailures(email: string): Promise<void> {
+  await pool.query('DELETE FROM login_attempts WHERE email = $1', [email]);
 }
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -73,7 +83,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (passErr) { res.status(400).json({ error: passErr }); return; }
 
     // Check account lockout before hitting the DB
-    if (isLocked(email.toLowerCase().trim())) {
+    if (await isLocked(email.toLowerCase().trim())) {
       res.status(429).json({ error: 'Account temporarily locked due to too many failed attempts. Try again in 30 minutes.' });
       return;
     }
@@ -85,7 +95,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     );
 
     if (result.rows.length === 0) {
-      recordFailure(email.toLowerCase().trim());
+      await recordFailure(email.toLowerCase().trim());
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
@@ -96,12 +106,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
 
     if (!isValidPassword) {
-      recordFailure(email.toLowerCase().trim());
+      await recordFailure(email.toLowerCase().trim());
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
 
-    clearFailures(email.toLowerCase().trim());
+    await clearFailures(email.toLowerCase().trim());
 
     // Generate JWT token
     const token = jwt.sign(
@@ -127,10 +137,26 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const logout = async (req: Request, res: Response): Promise<void> => {
-  // With JWT, logout is handled client-side by removing the token
-  // Server can implement token blacklisting if needed
-  res.json({ message: 'Logout successful' });
+export const logout = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+      const decoded = jwt.decode(token) as { exp?: number } | null;
+      const expiresAt = decoded?.exp
+        ? new Date(decoded.exp * 1000)
+        : new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      await pool.query(
+        'INSERT INTO token_blacklist (token_hash, expires_at) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [tokenHash, expiresAt]
+      );
+    }
+    res.json({ message: 'Logout successful' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.json({ message: 'Logout successful' }); // Always succeed client-side
+  }
 };
 
 export const loginDemo = async (_req: Request, res: Response): Promise<void> => {
