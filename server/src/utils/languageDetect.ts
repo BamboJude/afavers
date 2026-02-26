@@ -52,8 +52,9 @@ export function detectLanguage(title: string, description: string): 'en' | 'de' 
   if (total < 5) return null;
 
   const enRatio = en / total;
-  // Need at least 55% English dominance to label as English
-  if (enRatio >= 0.55) return 'en';
+  // Need at least 65% English dominance to label as English
+  // (conservative — German jobs often contain English tech terms)
+  if (enRatio >= 0.65) return 'en';
   // Need at least 55% German dominance to label as German
   if (enRatio <= 0.45) return 'de';
 
