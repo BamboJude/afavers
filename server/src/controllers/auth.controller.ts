@@ -260,7 +260,8 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     );
 
     if (existing.rows.length > 0) {
-      res.status(409).json({ error: 'User already exists' });
+      // Generic message — don't reveal whether the email is already registered
+      res.status(409).json({ error: 'Registration failed. Please try a different email or contact support.' });
       return;
     }
 
