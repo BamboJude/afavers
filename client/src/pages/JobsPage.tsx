@@ -3,6 +3,7 @@ import { jobsService } from '../services/jobs.service';
 import type { Job, JobFilters, DashboardStats } from '../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../store/languageStore';
+import { useSwipeAction } from '../hooks/useSwipeAction';
 
 type Tab = 'new' | 'saved' | 'applied' | 'interviewing' | 'all';
 
@@ -56,6 +57,44 @@ const CompanyAvatar = ({ company }: { company: string }) => {
   return (
     <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-base font-bold shrink-0 ${colors[idx]}`}>
       {letter}
+    </div>
+  );
+};
+
+/** Wraps a job card with swipe-to-save (right) and swipe-to-hide (left) gestures. */
+const SwipeableCard = ({
+  onSave,
+  onHide,
+  children,
+}: {
+  onSave?: () => void;   // undefined = save not applicable for this job
+  onHide: () => void;
+  children: React.ReactNode;
+}) => {
+  const { touchHandlers, cardStyle, bgOpacity, action } = useSwipeAction(
+    onSave ?? (() => {}),
+    onHide,
+  );
+  // Only show save hint if save is applicable for this job
+  const visibleAction = action === 'save' && !onSave ? null : action;
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {visibleAction && (
+        <div
+          className={`absolute inset-0 flex items-center ${
+            visibleAction === 'save' ? 'pl-5 bg-yellow-400' : 'justify-end pr-5 bg-gray-400'
+          }`}
+          style={{ opacity: bgOpacity }}
+        >
+          <span className="text-white text-sm font-bold select-none">
+            {visibleAction === 'save' ? '⭐ Save' : 'Hide ✕'}
+          </span>
+        </div>
+      )}
+      <div {...touchHandlers} style={cardStyle}>
+        {children}
+      </div>
     </div>
   );
 };
@@ -130,8 +169,7 @@ export const JobsPage = () => {
     }
   };
 
-  const handleSave = async (e: React.MouseEvent, job: Job) => {
-    e.stopPropagation();
+  const handleSave = async (job: Job) => {
     setActionLoading(job.id);
     try {
       await jobsService.updateStatus(job.id, 'saved');
@@ -146,8 +184,7 @@ export const JobsPage = () => {
     setActionLoading(null);
   };
 
-  const handleApply = async (e: React.MouseEvent, job: Job) => {
-    e.stopPropagation();
+  const handleApply = async (job: Job) => {
     setActionLoading(job.id);
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -163,8 +200,7 @@ export const JobsPage = () => {
     setActionLoading(null);
   };
 
-  const handleHide = async (e: React.MouseEvent, job: Job) => {
-    e.stopPropagation();
+  const handleHide = async (job: Job) => {
     setActionLoading(job.id);
     try {
       await jobsService.toggleHidden(job.id, true);
@@ -276,7 +312,6 @@ export const JobsPage = () => {
           {[
             { value: '',              label: t('allSources') },
             { value: 'bundesagentur', label: 'Bundesagentur' },
-            { value: 'stepstone',     label: 'StepStone' },
             { value: 'adzuna',        label: 'Adzuna' },
           ].map(opt => (
             <button
@@ -329,130 +364,135 @@ export const JobsPage = () => {
         ) : (
           <div className="space-y-2.5">
             {jobs.map(job => (
-              <div
+              <SwipeableCard
                 key={job.id}
-                onClick={() => navigate(`/jobs/${job.id}`)}
-                className={`bg-white rounded-xl border hover:shadow-md transition cursor-pointer group ${
-                  deadlineUrgency(job.deadline) || 'border-gray-200 hover:border-gray-300'
-                }`}
+                onSave={job.status === 'new' ? () => handleSave(job) : undefined}
+                onHide={() => handleHide(job)}
               >
-                <div className="p-4 sm:p-5">
-                  <div className="flex items-start gap-3">
-                    {/* Company avatar — hidden on small screens */}
-                    <div className="hidden sm:block shrink-0">
-                      <CompanyAvatar company={job.company} />
-                    </div>
+                <div
+                  onClick={() => navigate(`/jobs/${job.id}`)}
+                  className={`bg-white rounded-xl border hover:shadow-md transition cursor-pointer group ${
+                    deadlineUrgency(job.deadline) || 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="p-4 sm:p-5">
+                    <div className="flex items-start gap-3">
+                      {/* Company avatar — hidden on small screens */}
+                      <div className="hidden sm:block shrink-0">
+                        <CompanyAvatar company={job.company} />
+                      </div>
 
-                    {/* Main content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <h3 className="font-semibold text-gray-900 leading-snug group-hover:text-blue-700 transition-colors text-sm sm:text-base">
-                            {job.title}
-                          </h3>
-                          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-                            {job.company}
-                            {job.location && <span className="text-gray-400"> · {job.location}</span>}
-                          </p>
+                      {/* Main content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-gray-900 leading-snug group-hover:text-blue-700 transition-colors text-sm sm:text-base">
+                              {job.title}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                              {job.company}
+                              {job.location && <span className="text-gray-400"> · {job.location}</span>}
+                            </p>
+                          </div>
+                          {job.status !== 'new' && (
+                            <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[job.status]}`}>
+                              {t(job.status)}
+                            </span>
+                          )}
                         </div>
-                        {job.status !== 'new' && (
-                          <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[job.status]}`}>
-                            {t(job.status)}
-                          </span>
+
+                        {job.description && (
+                          <p className="text-xs sm:text-sm text-gray-400 mt-1.5 line-clamp-2 leading-relaxed">
+                            {stripHtml(job.description)}
+                          </p>
                         )}
+
+                        <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
+                          <SourceBadge source={job.source} />
+                          {job.posted_date && (
+                            <span className="hidden sm:inline">{t('posted')} {new Date(job.posted_date).toLocaleDateString('de-DE')}</span>
+                          )}
+                          {job.deadline && (
+                            <span className="text-orange-500 font-medium">
+                              ⏰ {new Date(job.deadline).toLocaleDateString('de-DE')}
+                            </span>
+                          )}
+                          {job.salary && (
+                            <span className="text-green-600 font-medium">{job.salary}</span>
+                          )}
+                        </div>
+
+                        {/* Actions — below content on mobile */}
+                        <div
+                          className="flex gap-2 mt-3 sm:hidden"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {job.status === 'new' && (
+                            <button
+                              onClick={e => { e.stopPropagation(); handleSave(job); }}
+                              disabled={actionLoading === job.id}
+                              className="flex-1 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40"
+                            >
+                              ⭐ {t('save')}
+                            </button>
+                          )}
+                          {(job.status === 'new' || job.status === 'saved') && (
+                            <button
+                              onClick={e => { e.stopPropagation(); handleApply(job); }}
+                              disabled={actionLoading === job.id}
+                              className="flex-1 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40"
+                            >
+                              ✓ {t('markApplied')}
+                            </button>
+                          )}
+                          <button
+                            onClick={e => { e.stopPropagation(); handleHide(job); }}
+                            disabled={actionLoading === job.id}
+                            className="flex-1 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
+                          >
+                            ✕ {t('hide')}
+                          </button>
+                        </div>
                       </div>
 
-                      {job.description && (
-                        <p className="text-xs sm:text-sm text-gray-400 mt-1.5 line-clamp-2 leading-relaxed">
-                          {stripHtml(job.description)}
-                        </p>
-                      )}
-
-                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
-                        <SourceBadge source={job.source} />
-                        {job.posted_date && (
-                          <span className="hidden sm:inline">{t('posted')} {new Date(job.posted_date).toLocaleDateString('de-DE')}</span>
-                        )}
-                        {job.deadline && (
-                          <span className="text-orange-500 font-medium">
-                            ⏰ {new Date(job.deadline).toLocaleDateString('de-DE')}
-                          </span>
-                        )}
-                        {job.salary && (
-                          <span className="text-green-600 font-medium">{job.salary}</span>
-                        )}
-                      </div>
-
-                      {/* Actions — below content on mobile, to the right on desktop */}
+                      {/* Actions — right column on sm+ screens */}
                       <div
-                        className="flex gap-2 mt-3 sm:hidden"
+                        className="hidden sm:flex flex-col gap-2 shrink-0"
                         onClick={e => e.stopPropagation()}
                       >
                         {job.status === 'new' && (
                           <button
-                            onClick={e => handleSave(e, job)}
+                            onClick={e => { e.stopPropagation(); handleSave(job); }}
                             disabled={actionLoading === job.id}
-                            className="flex-1 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40"
+                            title={t('saveJob')}
+                            className="px-3 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
                           >
                             ⭐ {t('save')}
                           </button>
                         )}
                         {(job.status === 'new' || job.status === 'saved') && (
                           <button
-                            onClick={e => handleApply(e, job)}
+                            onClick={e => { e.stopPropagation(); handleApply(job); }}
                             disabled={actionLoading === job.id}
-                            className="flex-1 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40"
+                            title="Mark as applied"
+                            className="px-3 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
                           >
                             ✓ {t('markApplied')}
                           </button>
                         )}
                         <button
-                          onClick={e => handleHide(e, job)}
+                          onClick={e => { e.stopPropagation(); handleHide(job); }}
                           disabled={actionLoading === job.id}
-                          className="flex-1 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
+                          title={t('hideJob')}
+                          className="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
                         >
                           ✕ {t('hide')}
                         </button>
                       </div>
                     </div>
-
-                    {/* Actions — right column on sm+ screens only */}
-                    <div
-                      className="hidden sm:flex flex-col gap-2 shrink-0"
-                      onClick={e => e.stopPropagation()}
-                    >
-                      {job.status === 'new' && (
-                        <button
-                          onClick={e => handleSave(e, job)}
-                          disabled={actionLoading === job.id}
-                          title={t('saveJob')}
-                          className="px-3 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
-                        >
-                          ⭐ {t('save')}
-                        </button>
-                      )}
-                      {(job.status === 'new' || job.status === 'saved') && (
-                        <button
-                          onClick={e => handleApply(e, job)}
-                          disabled={actionLoading === job.id}
-                          title="Mark as applied"
-                          className="px-3 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
-                        >
-                          ✓ {t('markApplied')}
-                        </button>
-                      )}
-                      <button
-                        onClick={e => handleHide(e, job)}
-                        disabled={actionLoading === job.id}
-                        title={t('hideJob')}
-                        className="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
-                      >
-                        ✕ {t('hide')}
-                      </button>
-                    </div>
                   </div>
                 </div>
-              </div>
+              </SwipeableCard>
             ))}
           </div>
         )}

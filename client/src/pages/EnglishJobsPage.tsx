@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
 import { useLanguage } from '../store/languageStore';
+import { useSwipeAction } from '../hooks/useSwipeAction';
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
@@ -36,6 +37,43 @@ const SourceBadge = ({ source }: { source: string }) => {
     <span className={`px-2 py-0.5 rounded text-xs font-medium border ${badge.cls}`}>
       {badge.label}
     </span>
+  );
+};
+
+/** Wraps a job card with swipe-to-save (right) and swipe-to-hide (left) gestures. */
+const SwipeableCard = ({
+  onSave,
+  onHide,
+  children,
+}: {
+  onSave?: () => void;
+  onHide: () => void;
+  children: React.ReactNode;
+}) => {
+  const { touchHandlers, cardStyle, bgOpacity, action } = useSwipeAction(
+    onSave ?? (() => {}),
+    onHide,
+  );
+  const visibleAction = action === 'save' && !onSave ? null : action;
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {visibleAction && (
+        <div
+          className={`absolute inset-0 flex items-center ${
+            visibleAction === 'save' ? 'pl-5 bg-yellow-400' : 'justify-end pr-5 bg-gray-400'
+          }`}
+          style={{ opacity: bgOpacity }}
+        >
+          <span className="text-white text-sm font-bold select-none">
+            {visibleAction === 'save' ? '⭐ Save' : 'Hide ✕'}
+          </span>
+        </div>
+      )}
+      <div {...touchHandlers} style={cardStyle}>
+        {children}
+      </div>
+    </div>
   );
 };
 
@@ -88,8 +126,7 @@ export const EnglishJobsPage = () => {
     }
   };
 
-  const handleSave = async (e: React.MouseEvent, job: Job) => {
-    e.stopPropagation();
+  const handleSave = async (job: Job) => {
     setActionLoading(job.id);
     try {
       await jobsService.updateStatus(job.id, 'saved');
@@ -98,8 +135,7 @@ export const EnglishJobsPage = () => {
     setActionLoading(null);
   };
 
-  const handleHide = async (e: React.MouseEvent, job: Job) => {
-    e.stopPropagation();
+  const handleHide = async (job: Job) => {
     setActionLoading(job.id);
     try {
       await jobsService.toggleHidden(job.id, true);
@@ -163,70 +199,75 @@ export const EnglishJobsPage = () => {
         ) : (
           <div className="space-y-2">
             {jobs.map(job => (
-              <div
+              <SwipeableCard
                 key={job.id}
-                onClick={() => navigate(`/jobs/${job.id}`)}
-                className={`bg-white rounded-xl border p-5 hover:shadow-md transition cursor-pointer ${deadlineUrgency(job.deadline) || 'border-gray-200 hover:border-gray-300'}`}
+                onSave={job.status === 'new' ? () => handleSave(job) : undefined}
+                onHide={() => handleHide(job)}
               >
-                <div className="flex items-start gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 leading-snug">{job.title}</h3>
-                        <p className="text-sm text-gray-500 mt-0.5">{job.company} · {job.location}</p>
+                <div
+                  onClick={() => navigate(`/jobs/${job.id}`)}
+                  className={`bg-white rounded-xl border p-5 hover:shadow-md transition cursor-pointer ${deadlineUrgency(job.deadline) || 'border-gray-200 hover:border-gray-300'}`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900 leading-snug">{job.title}</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">{job.company} · {job.location}</p>
+                        </div>
+                        {job.status !== 'new' && (
+                          <span className={`shrink-0 px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[job.status]}`}>
+                            {t(job.status)}
+                          </span>
+                        )}
                       </div>
-                      {job.status !== 'new' && (
-                        <span className={`shrink-0 px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[job.status]}`}>
-                          {t(job.status)}
-                        </span>
+
+                      {job.description && (
+                        <p className="text-sm text-gray-400 mt-2 line-clamp-2 leading-relaxed">
+                          {stripHtml(job.description)}
+                        </p>
                       )}
+
+                      <div className="flex items-center gap-3 mt-3 text-xs text-gray-400 flex-wrap">
+                        <SourceBadge source={job.source} />
+                        {job.posted_date && (
+                          <span>{t('posted')} {new Date(job.posted_date).toLocaleDateString('en-GB')}</span>
+                        )}
+                        {job.deadline && (
+                          <span className="text-orange-500 font-medium">
+                            {t('deadline')} {new Date(job.deadline).toLocaleDateString('en-GB')}
+                          </span>
+                        )}
+                        {job.salary && (
+                          <span className="text-green-600 font-medium">{job.salary}</span>
+                        )}
+                      </div>
                     </div>
 
-                    {job.description && (
-                      <p className="text-sm text-gray-400 mt-2 line-clamp-2 leading-relaxed">
-                        {stripHtml(job.description)}
-                      </p>
-                    )}
-
-                    <div className="flex items-center gap-3 mt-3 text-xs text-gray-400 flex-wrap">
-                      <SourceBadge source={job.source} />
-                      {job.posted_date && (
-                        <span>{t('posted')} {new Date(job.posted_date).toLocaleDateString('en-GB')}</span>
-                      )}
-                      {job.deadline && (
-                        <span className="text-orange-500 font-medium">
-                          {t('deadline')} {new Date(job.deadline).toLocaleDateString('en-GB')}
-                        </span>
-                      )}
-                      {job.salary && (
-                        <span className="text-green-600 font-medium">{job.salary}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div
-                    className="flex flex-col gap-2 shrink-0"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    {job.status === 'new' && (
-                      <button
-                        onClick={e => handleSave(e, job)}
-                        disabled={actionLoading === job.id}
-                        className="px-3 py-1.5 text-sm font-medium bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40"
-                      >
-                        ⭐ {t('save')}
-                      </button>
-                    )}
-                    <button
-                      onClick={e => handleHide(e, job)}
-                      disabled={actionLoading === job.id}
-                      className="px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
+                    <div
+                      className="flex flex-col gap-2 shrink-0"
+                      onClick={e => e.stopPropagation()}
                     >
-                      ✕ {t('hide')}
-                    </button>
+                      {job.status === 'new' && (
+                        <button
+                          onClick={e => { e.stopPropagation(); handleSave(job); }}
+                          disabled={actionLoading === job.id}
+                          className="px-3 py-1.5 text-sm font-medium bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40"
+                        >
+                          ⭐ {t('save')}
+                        </button>
+                      )}
+                      <button
+                        onClick={e => { e.stopPropagation(); handleHide(job); }}
+                        disabled={actionLoading === job.id}
+                        className="px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
+                      >
+                        ✕ {t('hide')}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </SwipeableCard>
             ))}
           </div>
         )}
