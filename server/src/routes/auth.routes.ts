@@ -19,4 +19,10 @@ router.post('/register', authController.createUser);
 // PATCH /api/auth/password - Change password (authenticated)
 router.patch('/password', authenticateToken, authController.changePassword);
 
+// POST /api/auth/forgot-password - Request password reset email
+router.post('/forgot-password', authController.forgotPassword);
+
+// POST /api/auth/reset-password - Reset password with token
+router.post('/reset-password', authController.resetPassword);
+
 export default router;
