@@ -18,7 +18,7 @@ const LOCATION_PRESETS = [
 
 export const SetupPage = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [keywords, setKeywords] = useState('');
   const [locations, setLocations] = useState('');
   const [selectedField, setSelectedField] = useState<string | null>(null);
@@ -57,21 +57,65 @@ export const SetupPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
       <div className="max-w-lg w-full">
 
-        {/* Progress bar */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          {[1, 2].map(s => (
-            <div
-              key={s}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                s < step  ? 'w-10 bg-blue-500' :
-                s === step ? 'w-14 bg-blue-500' :
-                             'w-6 bg-gray-200'
-              }`}
-            />
-          ))}
-        </div>
+        {/* Progress bar — only shown for steps 1 and 2 */}
+        {step > 0 && (
+          <div className="flex items-center justify-center gap-3 mb-8">
+            {[1, 2].map(s => (
+              <div
+                key={s}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  s < step  ? 'w-10 bg-blue-500' :
+                  s === step ? 'w-14 bg-blue-500' :
+                               'w-6 bg-gray-200'
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+
+          {/* ── STEP 0: Welcome ── */}
+          {step === 0 && (
+            <div className="p-8">
+              <div className="text-center mb-8">
+                <img
+                  src="/logo.png"
+                  alt="afavers"
+                  className="h-20 mx-auto mb-4"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+                <h1 className="text-2xl font-bold text-gray-900">Welcome to afavers</h1>
+                <p className="text-gray-500 text-sm mt-2">Your automated green job assistant for Germany</p>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                {[
+                  { icon: '⏱️', text: 'Jobs fetched every 2 hours from Bundesagentur für Arbeit' },
+                  { icon: '📋', text: 'Track your applications on a visual Kanban board' },
+                  { icon: '👆', text: 'Swipe to save or skip jobs on mobile' },
+                ].map(({ icon, text }) => (
+                  <div key={text} className="flex items-start gap-3">
+                    <span className="text-xl shrink-0 mt-0.5">{icon}</span>
+                    <p className="text-gray-700 text-sm leading-relaxed">{text}</p>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setStep(1)}
+                className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition shadow-md hover:shadow-lg"
+              >
+                Get started →
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full text-sm text-gray-400 hover:text-gray-600 transition mt-3 py-1"
+              >
+                Skip setup
+              </button>
+            </div>
+          )}
 
           {/* ── STEP 1: Keywords ── */}
           {step === 1 && (
