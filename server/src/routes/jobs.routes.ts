@@ -7,6 +7,11 @@ import * as jobModel from '../models/job.model.js';
 const router = express.Router();
 router.use(authenticateToken);
 
+function parseId(raw: unknown): number | null {
+  const n = parseInt(String(raw), 10);
+  return isNaN(n) || n <= 0 ? null : n;
+}
+
 /** Helper: get the logged-in user's keyword/location preferences */
 async function getUserSearchFilters(userId: number): Promise<{ userKeywords: string[]; userLocations: string[] }> {
   try {
@@ -153,7 +158,9 @@ router.get('/export', async (req: AuthRequest, res) => {
 /** GET /api/jobs/:id — single job with user-specific overlay */
 router.get('/:id', async (req: AuthRequest, res) => {
   try {
-    const job = await jobModel.findById(parseInt(req.params.id as string), req.userId);
+    const jobId = parseId(req.params.id);
+    if (!jobId) return res.status(400).json({ error: 'Invalid job ID' });
+    const job = await jobModel.findById(jobId, req.userId);
     if (!job) return res.status(404).json({ error: 'Job not found' });
     res.json(job);
   } catch (error) {
@@ -164,7 +171,8 @@ router.get('/:id', async (req: AuthRequest, res) => {
 /** PATCH /api/jobs/:id/status */
 router.patch('/:id/status', async (req: AuthRequest, res) => {
   try {
-    const jobId = parseInt(req.params.id as string);
+    const jobId = parseId(req.params.id);
+    if (!jobId) return res.status(400).json({ error: 'Invalid job ID' });
     const { status, appliedDate, followUpDate } = req.body;
 
     // Auto-set applied_date to today when marking as applied (if not already provided)
@@ -192,7 +200,8 @@ router.patch('/:id/status', async (req: AuthRequest, res) => {
 /** PATCH /api/jobs/:id/notes */
 router.patch('/:id/notes', async (req: AuthRequest, res) => {
   try {
-    const jobId = parseInt(req.params.id as string);
+    const jobId = parseId(req.params.id);
+    if (!jobId) return res.status(400).json({ error: 'Invalid job ID' });
     await jobModel.upsertUserJob(req.userId!, jobId, { notes: req.body.notes });
     const job = await jobModel.findById(jobId, req.userId);
     res.json({ success: true, job });
@@ -204,7 +213,8 @@ router.patch('/:id/notes', async (req: AuthRequest, res) => {
 /** PATCH /api/jobs/:id/cover-letter */
 router.patch('/:id/cover-letter', async (req: AuthRequest, res) => {
   try {
-    const jobId = parseInt(req.params.id as string);
+    const jobId = parseId(req.params.id);
+    if (!jobId) return res.status(400).json({ error: 'Invalid job ID' });
     await jobModel.upsertUserJob(req.userId!, jobId, { cover_letter: req.body.coverLetter });
     const job = await jobModel.findById(jobId, req.userId);
     res.json({ success: true, job });
@@ -216,7 +226,8 @@ router.patch('/:id/cover-letter', async (req: AuthRequest, res) => {
 /** PATCH /api/jobs/:id/interview-date */
 router.patch('/:id/interview-date', async (req: AuthRequest, res) => {
   try {
-    const jobId = parseInt(req.params.id as string);
+    const jobId = parseId(req.params.id);
+    if (!jobId) return res.status(400).json({ error: 'Invalid job ID' });
     const interview_date = req.body.interviewDate ? new Date(req.body.interviewDate) : null;
     await jobModel.upsertUserJob(req.userId!, jobId, { interview_date });
     const job = await jobModel.findById(jobId, req.userId);
@@ -229,7 +240,8 @@ router.patch('/:id/interview-date', async (req: AuthRequest, res) => {
 /** PATCH /api/jobs/:id/hide */
 router.patch('/:id/hide', async (req: AuthRequest, res) => {
   try {
-    const jobId = parseInt(req.params.id as string);
+    const jobId = parseId(req.params.id);
+    if (!jobId) return res.status(400).json({ error: 'Invalid job ID' });
     await jobModel.upsertUserJob(req.userId!, jobId, { is_hidden: req.body.isHidden });
     const job = await jobModel.findById(jobId, req.userId);
     res.json({ success: true, job });
@@ -241,7 +253,9 @@ router.patch('/:id/hide', async (req: AuthRequest, res) => {
 /** DELETE /api/jobs/:id */
 router.delete('/:id', async (req: AuthRequest, res) => {
   try {
-    const success = await jobModel.deleteById(parseInt(req.params.id as string));
+    const jobId = parseId(req.params.id);
+    if (!jobId) return res.status(400).json({ error: 'Invalid job ID' });
+    const success = await jobModel.deleteById(jobId);
     if (!success) return res.status(404).json({ error: 'Job not found' });
     res.json({ success: true, message: 'Job deleted' });
   } catch (error) {

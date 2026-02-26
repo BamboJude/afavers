@@ -1,5 +1,6 @@
 import express, { Application } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import { env } from './config/env.js';
 import authRoutes from './routes/auth.routes.js';
 import jobsRoutes from './routes/jobs.routes.js';
@@ -8,13 +9,18 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app: Application = express();
 
-// Middleware
+// Security headers
+app.use(helmet());
+
+// CORS
 app.use(cors({
   origin: env.CLIENT_URL,
   credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Body parsing with size limits
+app.use(express.json({ limit: '50kb' }));
+app.use(express.urlencoded({ extended: true, limit: '50kb' }));
 
 // Request logging in development
 if (env.NODE_ENV === 'development') {
