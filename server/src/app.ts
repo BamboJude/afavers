@@ -30,6 +30,7 @@ app.get('/health', (req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     environment: env.NODE_ENV,
+    build: process.env.RAILWAY_GIT_COMMIT_SHA?.substring(0, 7) || 'local',
   });
 });
 
