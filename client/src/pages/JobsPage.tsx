@@ -33,6 +33,16 @@ const SourceBadge = ({ source }: { source: string }) => {
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
+function timeAgo(dateStr: string): string {
+  const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7)  return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
+}
+
 const deadlineUrgency = (deadline: string | null): string => {
   if (!deadline) return '';
   const days = Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
@@ -44,24 +54,24 @@ const deadlineUrgency = (deadline: string | null): string => {
 
 const JobSkeleton = ({ delay = 0 }: { delay?: number }) => (
   <div
-    className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 animate-pulse"
+    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 animate-pulse"
     style={{ animationDelay: `${delay}ms` }}
   >
     <div className="flex gap-3">
-      <div className="hidden sm:block w-11 h-11 rounded-xl bg-gray-200 shrink-0" />
+      <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gray-200 dark:bg-gray-700 shrink-0" />
       <div className="flex-1">
-        <div className="h-4 bg-gray-200 rounded-full w-3/4 mb-2" />
-        <div className="h-3 bg-gray-100 rounded-full w-1/2 mb-3" />
-        <div className="h-3 bg-gray-100 rounded-full w-full mb-1.5" />
-        <div className="h-3 bg-gray-100 rounded-full w-4/5 mb-3" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-3/4 mb-2" />
+        <div className="h-3 bg-gray-100 dark:bg-gray-700/60 rounded-full w-1/2 mb-3" />
+        <div className="h-3 bg-gray-100 dark:bg-gray-700/60 rounded-full w-full mb-1.5" />
+        <div className="h-3 bg-gray-100 dark:bg-gray-700/60 rounded-full w-4/5 mb-3" />
         <div className="flex gap-2">
-          <div className="h-5 w-20 bg-gray-100 rounded-md" />
-          <div className="h-5 w-16 bg-gray-100 rounded-md" />
+          <div className="h-5 w-20 bg-gray-100 dark:bg-gray-700/60 rounded-md" />
+          <div className="h-5 w-16 bg-gray-100 dark:bg-gray-700/60 rounded-md" />
         </div>
       </div>
       <div className="hidden sm:flex flex-col gap-2 shrink-0">
-        <div className="h-7 w-16 bg-gray-100 rounded-lg" />
-        <div className="h-7 w-16 bg-gray-100 rounded-lg" />
+        <div className="h-7 w-16 bg-gray-100 dark:bg-gray-700/60 rounded-lg" />
+        <div className="h-7 w-16 bg-gray-100 dark:bg-gray-700/60 rounded-lg" />
       </div>
     </div>
   </div>
@@ -70,17 +80,17 @@ const JobSkeleton = ({ delay = 0 }: { delay?: number }) => (
 const CompanyAvatar = ({ company }: { company: string }) => {
   const letter = company?.trim()?.[0]?.toUpperCase() ?? '?';
   const colors = [
-    'bg-blue-100 text-blue-700',
-    'bg-green-100 text-green-700',
-    'bg-purple-100 text-purple-700',
-    'bg-orange-100 text-orange-700',
-    'bg-pink-100 text-pink-700',
-    'bg-teal-100 text-teal-700',
-    'bg-indigo-100 text-indigo-700',
+    'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+    'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+    'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
+    'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400',
+    'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-400',
+    'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400',
+    'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400',
   ];
   const idx = letter.charCodeAt(0) % colors.length;
   return (
-    <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-base font-bold shrink-0 ${colors[idx]}`}>
+    <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-sm sm:text-base font-bold shrink-0 ${colors[idx]}`}>
       {letter}
     </div>
   );
@@ -270,16 +280,16 @@ export const JobsPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full">
       {/* Page header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-5">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700/60 px-6 py-5">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900">{t('jobs')}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('jobs')}</h1>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700/60 sticky top-0 z-10 overflow-hidden">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
             {tabs.map(tab => (
@@ -289,13 +299,13 @@ export const JobsPage = () => {
                 className={`px-5 py-3.5 text-sm font-medium border-b-2 whitespace-nowrap transition ${
                   activeTab === tab.id
                     ? tab.activeColor
-                    : `border-transparent text-gray-400 ${tab.color}`
+                    : `border-transparent text-gray-400 dark:text-gray-500 ${tab.color}`
                 }`}
               >
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 ${
-                    activeTab === tab.id ? 'text-gray-700' : 'text-gray-400'
+                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-800 ${
+                    activeTab === tab.id ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-600'
                   }`}>
                     {tab.count.toLocaleString()}
                   </span>
@@ -318,13 +328,13 @@ export const JobsPage = () => {
               placeholder={t('searchPlaceholder')}
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm bg-white"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm bg-white dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500"
             />
           </div>
           <select
             value={sortBy}
             onChange={e => { setSortBy(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+            className="px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-200 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
           >
             <option value="posted_date">{t('newestFirst')}</option>
             <option value="created_at">{t('recentlyAdded')}</option>
@@ -344,8 +354,8 @@ export const JobsPage = () => {
               onClick={() => { setSourceFilter(opt.value); setPage(1); }}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
                 sourceFilter === opt.value
-                  ? 'bg-gray-800 text-white border-gray-800'
-                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
+                  ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 border-gray-800 dark:border-gray-200'
+                  : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:border-gray-400 hover:text-gray-700 dark:hover:border-gray-500 dark:hover:text-gray-200'
               }`}
             >
               {opt.label}
@@ -360,15 +370,15 @@ export const JobsPage = () => {
               onClick={() => { setDateFilter(dateFromForDays(opt.value)); setPage(1); }}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
                 dateFilter === dateFromForDays(opt.value)
-                  ? 'bg-green-700 text-white border-green-700'
-                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
+                  ? 'bg-green-700 dark:bg-green-600 text-white border-green-700 dark:border-green-600'
+                  : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:border-gray-400 hover:text-gray-700 dark:hover:border-gray-500 dark:hover:text-gray-200'
               }`}
             >
               {opt.label}
             </button>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-2">{total.toLocaleString()} {t('jobs').toLowerCase()}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{total.toLocaleString()} {t('jobs').toLowerCase()}</p>
       </div>
 
       {/* Jobs list */}
@@ -378,11 +388,11 @@ export const JobsPage = () => {
             {[...Array(6)].map((_, i) => <JobSkeleton key={i} delay={i * 50} />)}
           </div>
         ) : jobs.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-16 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-16 text-center">
             <div className="text-4xl mb-4">🔍</div>
-            <p className="text-gray-500 text-base font-medium">{t('noJobsFound')}</p>
+            <p className="text-gray-500 dark:text-gray-400 text-base font-medium">{t('noJobsFound')}</p>
             {activeTab === 'new' && (
-              <p className="text-gray-400 text-sm mt-1">{t('allCaughtUp')} 🎉</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">{t('allCaughtUp')} 🎉</p>
             )}
           </div>
         ) : (
@@ -395,14 +405,14 @@ export const JobsPage = () => {
               >
                 <div
                   onClick={() => navigate(`/jobs/${job.id}`)}
-                  className={`bg-white rounded-xl border hover:shadow-md transition cursor-pointer group ${
-                    deadlineUrgency(job.deadline) || 'border-gray-200 hover:border-gray-300'
+                  className={`bg-white dark:bg-gray-800 rounded-xl border hover:shadow-md transition cursor-pointer group ${
+                    deadlineUrgency(job.deadline) || 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
                   <div className="p-4 sm:p-5">
                     <div className="flex items-start gap-3">
-                      {/* Company avatar — hidden on small screens */}
-                      <div className="hidden sm:block shrink-0">
+                      {/* Company avatar */}
+                      <div className="shrink-0">
                         <CompanyAvatar company={job.company} />
                       </div>
 
@@ -410,12 +420,12 @@ export const JobsPage = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <h3 className="font-semibold text-gray-900 leading-snug group-hover:text-blue-700 transition-colors text-sm sm:text-base">
+                            <h3 className="font-semibold text-gray-900 dark:text-white leading-snug group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors text-sm sm:text-base">
                               {job.title}
                             </h3>
-                            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                               {job.company}
-                              {job.location && <span className="text-gray-400"> · {job.location}</span>}
+                              {job.location && <span className="text-gray-400 dark:text-gray-500"> · {job.location}</span>}
                             </p>
                           </div>
                           {job.status !== 'new' && (
@@ -426,15 +436,15 @@ export const JobsPage = () => {
                         </div>
 
                         {job.description && (
-                          <p className="text-xs sm:text-sm text-gray-400 mt-1.5 line-clamp-2 leading-relaxed">
+                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5 line-clamp-2 leading-relaxed">
                             {stripHtml(job.description)}
                           </p>
                         )}
 
-                        <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
+                        <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 dark:text-gray-500 flex-wrap">
                           <SourceBadge source={job.source} />
                           {job.posted_date && (
-                            <span className="hidden sm:inline">{t('posted')} {new Date(job.posted_date).toLocaleDateString('de-DE')}</span>
+                            <span>{timeAgo(job.posted_date)}</span>
                           )}
                           {job.deadline && (
                             <span className="text-orange-500 font-medium">
@@ -442,7 +452,7 @@ export const JobsPage = () => {
                             </span>
                           )}
                           {job.salary && (
-                            <span className="text-green-600 font-medium">{job.salary}</span>
+                            <span className="text-green-600 dark:text-green-400 font-medium">{job.salary}</span>
                           )}
                         </div>
 
@@ -455,7 +465,7 @@ export const JobsPage = () => {
                             <button
                               onClick={e => { e.stopPropagation(); handleSave(job); }}
                               disabled={actionLoading === job.id}
-                              className="flex-1 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40"
+                              className="flex-1 py-2 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800 rounded-lg transition disabled:opacity-40"
                             >
                               ⭐ {t('save')}
                             </button>
@@ -464,7 +474,7 @@ export const JobsPage = () => {
                             <button
                               onClick={e => { e.stopPropagation(); handleApply(job); }}
                               disabled={actionLoading === job.id}
-                              className="flex-1 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40"
+                              className="flex-1 py-2 text-xs font-semibold bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-lg transition disabled:opacity-40"
                             >
                               ✓ {t('markApplied')}
                             </button>
@@ -472,7 +482,7 @@ export const JobsPage = () => {
                           <button
                             onClick={e => { e.stopPropagation(); handleHide(job); }}
                             disabled={actionLoading === job.id}
-                            className="flex-1 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
+                            className="flex-1 py-2 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 dark:bg-gray-700/50 dark:hover:bg-red-900/20 border border-gray-200 dark:border-gray-600 hover:border-red-200 dark:hover:border-red-800 rounded-lg transition disabled:opacity-40"
                           >
                             ✕ {t('hide')}
                           </button>
@@ -489,7 +499,7 @@ export const JobsPage = () => {
                             onClick={e => { e.stopPropagation(); handleSave(job); }}
                             disabled={actionLoading === job.id}
                             title={t('saveJob')}
-                            className="px-3 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+                            className="px-3 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
                           >
                             ⭐ {t('save')}
                           </button>
@@ -499,7 +509,7 @@ export const JobsPage = () => {
                             onClick={e => { e.stopPropagation(); handleApply(job); }}
                             disabled={actionLoading === job.id}
                             title="Mark as applied"
-                            className="px-3 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+                            className="px-3 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
                           >
                             ✓ {t('markApplied')}
                           </button>
@@ -508,7 +518,7 @@ export const JobsPage = () => {
                           onClick={e => { e.stopPropagation(); handleHide(job); }}
                           disabled={actionLoading === job.id}
                           title={t('hideJob')}
-                          className="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
+                          className="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 dark:bg-gray-700/50 dark:hover:bg-red-900/20 border border-gray-200 dark:border-gray-600 hover:border-red-200 dark:hover:border-red-800 rounded-lg transition disabled:opacity-40"
                         >
                           ✕ {t('hide')}
                         </button>
@@ -528,17 +538,17 @@ export const JobsPage = () => {
             <button
               onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0); }}
               disabled={page === 1}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               ← {t('prev')}
             </button>
-            <span className="text-sm text-gray-500 font-medium">
+            <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
               {t('page')} {page} {t('of')} {totalPages}
             </span>
             <button
               onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0); }}
               disabled={page === totalPages}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               {t('next')} →
             </button>
