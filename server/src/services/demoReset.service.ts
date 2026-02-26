@@ -1,5 +1,5 @@
 import { pool } from '../config/database.js';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const DEMO_EMAIL = 'demo@afavers.com';
 const DEMO_PASSWORD = 'demo1234';
