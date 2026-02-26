@@ -48,8 +48,8 @@ router.post('/login', authLimiter, authController.login);
 // POST /api/auth/demo - One-click demo login (no credentials needed)
 router.post('/demo', demoLimiter, authController.loginDemo);
 
-// POST /api/auth/logout - Logout (client-side token removal)
-router.post('/logout', authController.logout);
+// POST /api/auth/logout - Logout (blacklists token server-side)
+router.post('/logout', authenticateToken, authController.logout);
 
 // Middleware: require X-Register-Secret header if REGISTER_SECRET env var is set
 function requireRegisterSecret(req: Request, res: Response, next: NextFunction): void {
