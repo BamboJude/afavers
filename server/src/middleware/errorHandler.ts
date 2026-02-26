@@ -13,11 +13,16 @@ export const errorHandler = (
   console.error('Error:', err);
 
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal server error';
+  const isProd = process.env.NODE_ENV === 'production';
+
+  // In production, hide internal 500 details to avoid leaking implementation info
+  const message = isProd && statusCode >= 500
+    ? 'Internal server error'
+    : (err.message || 'Internal server error');
 
   res.status(statusCode).json({
     error: message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    ...(!isProd && { stack: err.stack }),
   });
 };
 

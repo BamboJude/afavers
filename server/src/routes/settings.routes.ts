@@ -34,6 +34,15 @@ router.put('/', async (req: AuthRequest, res) => {
     if (!keywords || !locations) {
       return res.status(400).json({ error: 'keywords and locations are required' });
     }
+    if (typeof keywords !== 'string' || typeof locations !== 'string') {
+      return res.status(400).json({ error: 'keywords and locations must be strings' });
+    }
+    if (keywords.length > 500) {
+      return res.status(400).json({ error: 'keywords must be 500 characters or fewer' });
+    }
+    if (locations.length > 300) {
+      return res.status(400).json({ error: 'locations must be 300 characters or fewer' });
+    }
     await pool.query(
       `INSERT INTO user_settings (user_id, keywords, locations, updated_at)
        VALUES ($1, $2, $3, NOW())
