@@ -1,6 +1,5 @@
 import { ExternalJob } from '../../types/index.js';
 import { fetchBundesagenturJobs } from './bundesagentur.fetcher.js';
-import { fetchStepstoneJobs } from './stepstone.fetcher.js';
 import { fetchAdzunaJobs } from './adzuna.fetcher.js';
 import { deduplicateJobs } from './deduplication.service.js';
 import * as jobModel from '../../models/job.model.js';
@@ -13,14 +12,13 @@ export interface FetchResult {
   failed: number;
   sources: {
     bundesagentur: number;
-    stepstone: number;
     adzuna: number;
   };
 }
 
 /**
  * Main job fetcher orchestrator
- * Fetches jobs from Bundesagentur für Arbeit, deduplicates, and saves to database
+ * Fetches jobs from Bundesagentur für Arbeit and Adzuna, deduplicates, and saves to database
  */
 export async function fetchAndSaveJobs(): Promise<FetchResult> {
   const startTime = Date.now();
@@ -28,7 +26,6 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
   console.log('\n🚀 Starting job fetch from all sources...\n');
 
   let bundesagenturJobs: ExternalJob[] = [];
-  let stepstoneJobs: ExternalJob[] = [];
   let adzunaJobs: ExternalJob[] = [];
 
   try {
@@ -38,22 +35,15 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
   }
 
   try {
-    stepstoneJobs = await fetchStepstoneJobs();
-  } catch (error) {
-    console.error('❌ StepStone fetcher failed:', error);
-  }
-
-  try {
     adzunaJobs = await fetchAdzunaJobs();
   } catch (error) {
     console.error('❌ Adzuna fetcher failed:', error);
   }
 
-  const allJobs = [...bundesagenturJobs, ...stepstoneJobs, ...adzunaJobs];
+  const allJobs = [...bundesagenturJobs, ...adzunaJobs];
 
   console.log(`\n📊 Fetch Summary:`);
   console.log(`   Bundesagentur: ${bundesagenturJobs.length} jobs`);
-  console.log(`   StepStone:     ${stepstoneJobs.length} jobs`);
   console.log(`   Adzuna:        ${adzunaJobs.length} jobs`);
 
   // Deduplicate across all sources
@@ -66,19 +56,16 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
 
   // Remove stale jobs (no longer returned by source, user hasn't interacted)
   console.log('\n🧹 Cleaning up stale jobs...');
-  const staleDeleted = { bundesagentur: 0, stepstone: 0, adzuna: 0 };
+  const staleDeleted = { bundesagentur: 0, adzuna: 0 };
   if (bundesagenturJobs.length > 0) {
     staleDeleted.bundesagentur = await jobModel.deleteStaleJobs('bundesagentur', bundesagenturJobs.map(j => j.id));
-  }
-  if (stepstoneJobs.length > 0) {
-    staleDeleted.stepstone = await jobModel.deleteStaleJobs('stepstone', stepstoneJobs.map(j => j.id));
   }
   if (adzunaJobs.length > 0) {
     staleDeleted.adzuna = await jobModel.deleteStaleJobs('adzuna', adzunaJobs.map(j => j.id));
   }
-  const totalDeleted = staleDeleted.bundesagentur + staleDeleted.stepstone + staleDeleted.adzuna;
+  const totalDeleted = staleDeleted.bundesagentur + staleDeleted.adzuna;
   if (totalDeleted > 0) {
-    console.log(`   Deleted ${totalDeleted} stale jobs (bundesagentur: ${staleDeleted.bundesagentur}, stepstone: ${staleDeleted.stepstone}, adzuna: ${staleDeleted.adzuna})`);
+    console.log(`   Deleted ${totalDeleted} stale jobs (bundesagentur: ${staleDeleted.bundesagentur}, adzuna: ${staleDeleted.adzuna})`);
   }
 
   const duration = Math.round((Date.now() - startTime) / 1000);
@@ -97,7 +84,6 @@ export async function fetchAndSaveJobs(): Promise<FetchResult> {
     failed: saveResult.failed,
     sources: {
       bundesagentur: bundesagenturJobs.length,
-      stepstone: stepstoneJobs.length,
       adzuna: adzunaJobs.length,
     },
   };
