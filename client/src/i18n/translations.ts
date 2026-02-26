@@ -83,6 +83,13 @@ export const translations: Record<Lang, Record<string, string>> = {
     noJobsTracked: 'No jobs tracked yet',
     noJobsTrackedHint: 'Go to Jobs and save jobs you\'re interested in to track them here',
     browseJobs2: 'Browse Jobs →',
+    daysWaiting: 'd waiting',
+
+    // Quick actions
+    markApplied: 'Applied',
+
+    // Dashboard widgets
+    upcomingInterviews: 'Upcoming Interviews',
 
     // Auth
     signIn: 'Sign In',
@@ -174,6 +181,13 @@ export const translations: Record<Lang, Record<string, string>> = {
     noJobsTracked: 'Noch keine Stellen verfolgt',
     noJobsTrackedHint: 'Gehe zu Stellen und speichere interessante Angebote, um sie hier zu verfolgen',
     browseJobs2: 'Stellen durchsuchen →',
+    daysWaiting: 'T. in Bearb.',
+
+    // Quick actions
+    markApplied: 'Beworben',
+
+    // Dashboard widgets
+    upcomingInterviews: 'Anstehende Gespräche',
 
     // Auth
     signIn: 'Anmelden',
