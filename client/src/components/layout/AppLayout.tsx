@@ -70,12 +70,12 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? 'ME';
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-gray-50 flex">
 
       {/* ── Sidebar ── */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-60 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700/60
+          fixed inset-y-0 left-0 z-50 w-60 bg-white border-r border-gray-200
           flex flex-col shadow-sm
           transition-transform duration-200 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -83,7 +83,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         `}
       >
         {/* Logo */}
-        <div className="h-32 flex items-center px-5 border-b border-gray-100 dark:border-gray-700/60 shrink-0">
+        <div className="h-32 flex items-center px-5 border-b border-gray-100 shrink-0">
           <img
             src="/logo.png"
             alt="afavers"
@@ -102,8 +102,8 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-150 active:scale-95 ${
                   isActive
-                    ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 font-semibold shadow-sm ring-1 ring-green-100 dark:ring-green-900/40'
-                    : 'font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 hover:translate-x-0.5'
+                    ? 'bg-green-50 text-green-700 font-semibold shadow-sm ring-1 ring-green-100'
+                    : 'font-medium text-gray-500 hover:bg-gray-50:bg-gray-800 hover:text-gray-900:text-gray-100 hover:translate-x-0.5'
                 }`
               }
             >
@@ -114,17 +114,17 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </nav>
 
         {/* Bottom: language + user */}
-        <div className="border-t border-gray-100 dark:border-gray-700/60 p-4 space-y-3 shrink-0">
+        <div className="border-t border-gray-100 p-4 space-y-3 shrink-0">
           <LanguageToggle />
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
               {initials}
             </div>
-            <span className="text-xs text-gray-500 dark:text-gray-400 truncate flex-1 min-w-0">{user?.email}</span>
+            <span className="text-xs text-gray-500 truncate flex-1 min-w-0">{user?.email}</span>
             <button
               onClick={handleLogout}
               title={t('logout')}
-              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50:bg-red-900/20 rounded transition-colors"
             >
               <IconLogout />
             </button>
@@ -143,7 +143,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       {/* ── Main content ── */}
       <div className="flex-1 lg:ml-60 flex flex-col min-h-screen w-full overflow-x-hidden">
         {/* Mobile topbar */}
-        <div className="lg:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700/60 h-14 flex items-center justify-center px-4 sticky top-0 z-30 shadow-sm dark:shadow-gray-800/20">
+        <div className="lg:hidden bg-white border-b border-gray-200 h-14 flex items-center justify-center px-4 sticky top-0 z-30 shadow-sm">
           <img
             src="/logo.png"
             alt="afavers"
@@ -160,7 +160,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       {/* ── Mobile bottom navigation ── */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700/60 flex items-stretch" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 flex items-stretch" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {[
           { to: '/dashboard', icon: <IconDashboard />, label: 'Home' },
           { to: '/jobs',      icon: <IconJobs />,      label: 'Browse' },
@@ -172,7 +172,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             to={item.to}
             className={({ isActive }) =>
               `flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors ${
-                isActive ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
+                isActive ? 'text-green-600' : 'text-gray-400'
               }`
             }
           >
@@ -183,7 +183,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         {/* More — opens sidebar overlay */}
         <button
           onClick={() => setSidebarOpen(true)}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium text-gray-400 dark:text-gray-500 transition-colors"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium text-gray-400 transition-colors"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M5 12h.01M12 12h.01M19 12h.01" />
@@ -195,14 +195,14 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       {/* ── Idle timeout warning modal ── */}
       {showWarning && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
             <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Still there?</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+            <h2 className="text-lg font-bold text-gray-900 mb-1">Still there?</h2>
+            <p className="text-sm text-gray-500 mb-2">
               You'll be signed out due to inactivity in
             </p>
             <p className="text-4xl font-bold text-amber-500 mb-6 tabular-nums">
@@ -211,7 +211,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="flex gap-3">
               <button
                 onClick={handleLogout}
-                className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium rounded-xl transition"
+                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50:bg-gray-700 text-sm font-medium rounded-xl transition"
               >
                 Sign out
               </button>
