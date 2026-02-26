@@ -146,6 +146,23 @@ export const JobsPage = () => {
     setActionLoading(null);
   };
 
+  const handleApply = async (e: React.MouseEvent, job: Job) => {
+    e.stopPropagation();
+    setActionLoading(job.id);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      await jobsService.updateStatus(job.id, 'applied', today);
+      setJobs(prev => prev.filter(j => j.id !== job.id));
+      setTotal(prev => prev - 1);
+      setStats(prev => prev ? {
+        ...prev,
+        ...(job.status === 'new' ? { new: Math.max(0, prev.new - 1) } : { saved: Math.max(0, prev.saved - 1) }),
+        applied: prev.applied + 1,
+      } : prev);
+    } catch {}
+    setActionLoading(null);
+  };
+
   const handleHide = async (e: React.MouseEvent, job: Job) => {
     e.stopPropagation();
     setActionLoading(job.id);
@@ -380,6 +397,15 @@ export const JobsPage = () => {
                             ⭐ {t('save')}
                           </button>
                         )}
+                        {(job.status === 'new' || job.status === 'saved') && (
+                          <button
+                            onClick={e => handleApply(e, job)}
+                            disabled={actionLoading === job.id}
+                            className="flex-1 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40"
+                          >
+                            ✓ {t('markApplied')}
+                          </button>
+                        )}
                         <button
                           onClick={e => handleHide(e, job)}
                           disabled={actionLoading === job.id}
@@ -403,6 +429,16 @@ export const JobsPage = () => {
                           className="px-3 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
                         >
                           ⭐ {t('save')}
+                        </button>
+                      )}
+                      {(job.status === 'new' || job.status === 'saved') && (
+                        <button
+                          onClick={e => handleApply(e, job)}
+                          disabled={actionLoading === job.id}
+                          title="Mark as applied"
+                          className="px-3 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+                        >
+                          ✓ {t('markApplied')}
                         </button>
                       )}
                       <button

@@ -49,8 +49,13 @@ export const KanbanPage = () => {
       return;
     }
     try {
-      setJobs(prev => prev.map(j => j.id === dragging.id ? { ...j, status: newStatus } : j));
-      await jobsService.updateStatus(dragging.id, newStatus);
+      const today = new Date().toISOString().split('T')[0];
+      const appliedDate = newStatus === 'applied' && !dragging.applied_date ? today : undefined;
+      setJobs(prev => prev.map(j => j.id === dragging.id ? {
+        ...j, status: newStatus,
+        ...(appliedDate ? { applied_date: appliedDate } : {}),
+      } : j));
+      await jobsService.updateStatus(dragging.id, newStatus, appliedDate);
     } catch {
       fetchTrackedJobs();
     } finally {
@@ -157,9 +162,19 @@ export const KanbanPage = () => {
                             </p>
                           )}
                           {job.applied_date && (
-                            <p className="text-xs text-green-600 mt-1.5 font-medium">
-                              ✓ {new Date(job.applied_date).toLocaleDateString('de-DE')}
-                            </p>
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                              <p className="text-xs text-green-600 font-medium">
+                                ✓ {new Date(job.applied_date).toLocaleDateString('de-DE')}
+                              </p>
+                              {(job.status === 'applied' || job.status === 'interviewing') && (() => {
+                                const days = Math.floor((Date.now() - new Date(job.applied_date!).getTime()) / 86400000);
+                                return days > 0 ? (
+                                  <span className="text-xs bg-green-100 text-green-700 rounded-full px-2 py-0.5">
+                                    {days}{t('daysWaiting')}
+                                  </span>
+                                ) : null;
+                              })()}
+                            </div>
                           )}
                           {job.interview_date && (
                             <p className="text-xs text-purple-600 mt-1 font-medium">

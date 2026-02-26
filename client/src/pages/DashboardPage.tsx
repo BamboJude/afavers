@@ -2,7 +2,7 @@ import { useAuthStore } from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { jobsService } from '../services/jobs.service';
-import type { DashboardStats, FollowUpAlert } from '../types';
+import type { DashboardStats, FollowUpAlert, Job } from '../types';
 import { useLanguage } from '../store/languageStore';
 
 export const DashboardPage = () => {
@@ -11,6 +11,7 @@ export const DashboardPage = () => {
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [followUps, setFollowUps] = useState<FollowUpAlert[]>([]);
+  const [upcomingInterviews, setUpcomingInterviews] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [fetchMsg, setFetchMsg] = useState('');
@@ -18,6 +19,14 @@ export const DashboardPage = () => {
   useEffect(() => {
     loadStats();
     jobsService.getFollowUps().then(setFollowUps).catch(() => {});
+    jobsService.getJobs({ status: 'interviewing', limit: 20 })
+      .then(r => {
+        const withDate = r.jobs
+          .filter(j => j.interview_date)
+          .sort((a, b) => new Date(a.interview_date!).getTime() - new Date(b.interview_date!).getTime());
+        setUpcomingInterviews(withDate);
+      })
+      .catch(() => {});
   }, []);
 
   const loadStats = async () => {
@@ -99,6 +108,25 @@ export const DashboardPage = () => {
               >
                 <span className="text-amber-900 font-medium truncate">{f.title} · {f.company}</span>
                 <span className="text-amber-600 shrink-0 ml-3">{new Date(f.follow_up_date).toLocaleDateString('de-DE')}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming interviews */}
+      {upcomingInterviews.length > 0 && (
+        <div className="mb-6 bg-purple-50 border border-purple-200 rounded-xl p-4">
+          <p className="text-sm font-semibold text-purple-800 mb-2.5">📞 {t('upcomingInterviews')} ({upcomingInterviews.length})</p>
+          <div className="space-y-1">
+            {upcomingInterviews.map(j => (
+              <div
+                key={j.id}
+                onClick={() => navigate(`/jobs/${j.id}`)}
+                className="flex justify-between items-center text-sm cursor-pointer hover:bg-purple-100 rounded-lg px-3 py-1.5 transition"
+              >
+                <span className="text-purple-900 font-medium truncate">{j.title} · {j.company}</span>
+                <span className="text-purple-600 shrink-0 ml-3">{new Date(j.interview_date!).toLocaleDateString('de-DE')}</span>
               </div>
             ))}
           </div>
