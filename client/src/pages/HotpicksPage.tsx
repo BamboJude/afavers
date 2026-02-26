@@ -211,7 +211,7 @@ export const HotpicksPage = () => {
           <p className="text-xs text-gray-400">{queue.length} fresh jobs</p>
         </div>
         {lastAction && (
-          <span className={`text-sm font-bold px-3 py-1 rounded-full animate-pulse ${
+          <span className={`text-base font-bold px-4 py-1.5 rounded-full animate-pulse ${
             lastAction === 'saved' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'
           }`}>
             {lastAction === 'saved' ? '⭐ Saved!' : '✕ Passed'}
@@ -337,8 +337,8 @@ export const HotpicksPage = () => {
         </button>
 
         <div className="text-center">
-          <p className="text-xs text-gray-400 font-medium">{queue.length}</p>
-          <p className="text-xs text-gray-300">left</p>
+          <p className="text-xl font-bold text-gray-500 tabular-nums">{queue.length}</p>
+          <p className="text-sm text-gray-300 font-medium">left</p>
         </div>
 
         {/* Save */}
