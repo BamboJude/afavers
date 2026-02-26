@@ -2,7 +2,13 @@ import Parser from 'rss-parser';
 import { ExternalJob } from '../../types/index.js';
 import { pool } from '../../config/database.js';
 
-const parser = new Parser({ timeout: 10000 });
+const parser = new Parser({
+  timeout: 10000,
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+  },
+});
 
 const BASE_URL = 'https://www.stepstone.de/rss-stellenmarkt';
 
