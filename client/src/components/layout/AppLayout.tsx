@@ -64,6 +64,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const navItems = [
     { to: '/dashboard',    icon: <IconDashboard />,  label: t('dashboard') },
     { to: '/jobs',         icon: <IconJobs />,        label: t('browseJobs') },
+    { to: '/hotpicks',     icon: <span className="text-lg leading-none">🔥</span>, label: 'Hot Picks' },
     { to: '/english-jobs', icon: <IconGlobe />,       label: t('englishJobs') },
     { to: '/kanban',       icon: <IconKanban />,      label: t('applicationsBoard') },
     { to: '/analytics',    icon: <IconAnalytics />,   label: 'Analytics' },
