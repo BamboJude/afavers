@@ -9,6 +9,36 @@ import { User, UserResponse } from '../types/index.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 import { ensureDemoUser } from '../services/demoReset.service.js';
 
+// ── Account lockout (in-memory) ────────────────────────────────────────────
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS   = 30 * 60 * 1000; // 30 minutes
+
+interface LockEntry { count: number; lockedUntil: number; }
+const lockMap = new Map<string, LockEntry>();
+
+function isLocked(email: string): boolean {
+  const e = lockMap.get(email);
+  if (!e) return false;
+  if (e.lockedUntil > Date.now()) return true;
+  lockMap.delete(email); // lock expired
+  return false;
+}
+
+function recordFailure(email: string): void {
+  const e = lockMap.get(email) ?? { count: 0, lockedUntil: 0 };
+  e.count += 1;
+  if (e.count >= MAX_ATTEMPTS) {
+    e.lockedUntil = Date.now() + LOCKOUT_MS;
+    e.count = 0;
+  }
+  lockMap.set(email, e);
+}
+
+function clearFailures(email: string): void {
+  lockMap.delete(email);
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validateEmail(email: string): string | null {
@@ -42,13 +72,20 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const passErr = validatePassword(password);
     if (passErr) { res.status(400).json({ error: passErr }); return; }
 
+    // Check account lockout before hitting the DB
+    if (isLocked(email.toLowerCase().trim())) {
+      res.status(429).json({ error: 'Account temporarily locked due to too many failed attempts. Try again in 30 minutes.' });
+      return;
+    }
+
     // Find user by email
     const result = await pool.query<User>(
       'SELECT * FROM users WHERE email = $1',
-      [email]
+      [email.toLowerCase().trim()]
     );
 
     if (result.rows.length === 0) {
+      recordFailure(email.toLowerCase().trim());
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
@@ -59,15 +96,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
 
     if (!isValidPassword) {
+      recordFailure(email.toLowerCase().trim());
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
+
+    clearFailures(email.toLowerCase().trim());
 
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '24h' }
     );
 
     // Return user data (without password) and token

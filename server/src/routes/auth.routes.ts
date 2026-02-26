@@ -1,7 +1,8 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import * as authController from '../controllers/auth.controller.js';
 import { authenticateToken } from '../middleware/auth.middleware.js';
+import { env } from '../config/env.js';
 
 const router = express.Router();
 
@@ -50,8 +51,19 @@ router.post('/demo', demoLimiter, authController.loginDemo);
 // POST /api/auth/logout - Logout (client-side token removal)
 router.post('/logout', authController.logout);
 
-// POST /api/auth/register - Create new user (for initial setup)
-router.post('/register', registerLimiter, authController.createUser);
+// Middleware: require X-Register-Secret header if REGISTER_SECRET env var is set
+function requireRegisterSecret(req: Request, res: Response, next: NextFunction): void {
+  if (!env.REGISTER_SECRET) { next(); return; } // secret not configured → open (dev mode)
+  const provided = req.headers['x-register-secret'];
+  if (!provided || provided !== env.REGISTER_SECRET) {
+    res.status(403).json({ error: 'Registration is not open.' });
+    return;
+  }
+  next();
+}
+
+// POST /api/auth/register - Create new user (protected by secret key in production)
+router.post('/register', registerLimiter, requireRegisterSecret, authController.createUser);
 
 // PATCH /api/auth/password - Change password (authenticated)
 router.patch('/password', authenticateToken, authController.changePassword);
