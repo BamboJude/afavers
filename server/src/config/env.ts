@@ -13,6 +13,7 @@ interface EnvConfig {
   CLIENT_URL: string;
   SMTP_USER?: string;
   SMTP_PASS?: string;
+  REGISTER_SECRET?: string;
 }
 
 // Validate required environment variables
@@ -45,6 +46,7 @@ export const env: EnvConfig = {
   CLIENT_URL: (process.env.CLIENT_URL || 'http://localhost:5173').trim(),
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASS: process.env.SMTP_PASS,
+  REGISTER_SECRET: process.env.REGISTER_SECRET,
 };
 
 // Log configuration (without sensitive data)
