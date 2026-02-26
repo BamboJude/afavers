@@ -9,6 +9,22 @@ import { User, UserResponse } from '../types/index.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 import { ensureDemoUser } from '../services/demoReset.service.js';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateEmail(email: string): string | null {
+  if (!email || typeof email !== 'string') return 'Email is required';
+  if (!EMAIL_REGEX.test(email.trim())) return 'Invalid email address';
+  if (email.length > 254) return 'Email address is too long';
+  return null;
+}
+
+function validatePassword(password: string): string | null {
+  if (!password || typeof password !== 'string') return 'Password is required';
+  if (password.length < 8) return 'Password must be at least 8 characters';
+  if (password.length > 128) return 'Password is too long';
+  return null;
+}
+
 function getMailTransporter() {
   if (!env.SMTP_USER || !env.SMTP_PASS) return null;
   return nodemailer.createTransport({
@@ -21,10 +37,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      res.status(400).json({ error: 'Email and password are required' });
-      return;
-    }
+    const emailErr = validateEmail(email);
+    if (emailErr) { res.status(400).json({ error: emailErr }); return; }
+    const passErr = validatePassword(password);
+    if (passErr) { res.status(400).json({ error: passErr }); return; }
 
     // Find user by email
     const result = await pool.query<User>(
@@ -105,10 +121,8 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    if (newPassword.length < 8) {
-      res.status(400).json({ error: 'New password must be at least 8 characters' });
-      return;
-    }
+    const passErr = validatePassword(newPassword);
+    if (passErr) { res.status(400).json({ error: passErr }); return; }
 
     const result = await pool.query<User>('SELECT * FROM users WHERE id = $1', [req.userId]);
     if (result.rows.length === 0) {
@@ -201,10 +215,8 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       res.status(400).json({ error: 'Token and new password are required' });
       return;
     }
-    if (newPassword.length < 8) {
-      res.status(400).json({ error: 'Password must be at least 8 characters' });
-      return;
-    }
+    const passErr = validatePassword(newPassword);
+    if (passErr) { res.status(400).json({ error: passErr }); return; }
 
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const result = await pool.query(
@@ -236,10 +248,10 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      res.status(400).json({ error: 'Email and password are required' });
-      return;
-    }
+    const emailErr = validateEmail(email);
+    if (emailErr) { res.status(400).json({ error: emailErr }); return; }
+    const passErr = validatePassword(password);
+    if (passErr) { res.status(400).json({ error: passErr }); return; }
 
     // Check if user already exists
     const existing = await pool.query(
