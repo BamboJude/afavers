@@ -7,6 +7,7 @@ const BASE_URL = 'https://api.adzuna.com/v1/api/jobs/de/search';
 
 // Search configuration
 const KEYWORDS = ['consulting', 'beratung', 'nachhaltigkeit', 'umwelt', 'gis', 'energy', 'renewable energy'];
+const ENGLISH_KEYWORDS = ['english speaking', 'international', 'sustainability', 'climate', 'data analyst'];
 const LOCATIONS = ['Düsseldorf', 'Köln', 'Essen', 'Bochum', 'Dortmund'];
 const PAGES_PER_SEARCH = 2; // Fetch 2 pages per keyword/location combination
 
@@ -54,12 +55,23 @@ export async function fetchAdzunaJobs(): Promise<ExternalJob[]> {
         try {
           const jobs = await fetchJobsForKeywordAndLocation(keyword, location);
           allJobs.push(...jobs);
-
-          // Rate limiting: wait 1 second between requests
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
           console.error(`Error fetching ${keyword} in ${location}:`, error);
-          // Continue with next combination
+        }
+      }
+    }
+
+    // English-focused pass: search English keywords with what_and=english to find
+    // jobs that explicitly mention English (i.e. English-language or English-required roles)
+    for (const keyword of ENGLISH_KEYWORDS) {
+      for (const location of LOCATIONS) {
+        try {
+          const jobs = await fetchJobsForKeywordAndLocation(keyword, location, 'english');
+          allJobs.push(...jobs);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error(`Error fetching English jobs (${keyword}, ${location}):`, error);
         }
       }
     }
@@ -74,24 +86,29 @@ export async function fetchAdzunaJobs(): Promise<ExternalJob[]> {
 
 /**
  * Fetch jobs for a specific keyword and location (with pagination)
+ * @param whatAnd - optional word that must appear in the job posting (e.g. 'english')
  */
 async function fetchJobsForKeywordAndLocation(
   keyword: string,
-  location: string
+  location: string,
+  whatAnd?: string
 ): Promise<ExternalJob[]> {
   const jobs: ExternalJob[] = [];
 
   // Fetch multiple pages
   for (let page = 1; page <= PAGES_PER_SEARCH; page++) {
     try {
+      const params: Record<string, string | number> = {
+        app_id: env.ADZUNA_APP_ID!,
+        app_key: env.ADZUNA_APP_KEY!,
+        results_per_page: 50,
+        what: keyword,
+        where: location,
+      };
+      if (whatAnd) params['what_and'] = whatAnd;
+
       const response = await axios.get<AdzunaResponse>(`${BASE_URL}/${page}`, {
-        params: {
-          app_id: env.ADZUNA_APP_ID,
-          app_key: env.ADZUNA_APP_KEY,
-          results_per_page: 50,
-          what: keyword,
-          where: location
-        },
+        params,
         timeout: 10000
       });
 
