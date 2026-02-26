@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useLanguage } from '../store/languageStore';
 import { useAuthStore } from '../store/authStore';
+import { useDarkMode } from '../hooks/useDarkMode';
 
 interface Settings {
   keywords: string;
@@ -11,6 +12,7 @@ interface Settings {
 export const SettingsPage = () => {
   const { t } = useLanguage();
   const isDemo = useAuthStore((s) => s.isDemo);
+  const { isDark, toggle: toggleDark } = useDarkMode();
   const [settings, setSettings] = useState<Settings>({ keywords: '', locations: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -67,8 +69,8 @@ export const SettingsPage = () => {
     <div className="px-6 py-8 max-w-3xl mx-auto">
       {/* Page title */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{t('settings')}</h1>
-        <p className="text-sm text-gray-500 mt-1">Configure your job search preferences</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('settings')}</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Configure your job search preferences</p>
       </div>
 
       {loading ? (
@@ -78,49 +80,74 @@ export const SettingsPage = () => {
       ) : (
         <div className="space-y-6">
           {/* Info banner */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800 flex gap-3">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-800 dark:text-blue-300 flex gap-3">
             <span className="text-lg shrink-0">ℹ️</span>
             <div>
               <strong>How it works:</strong> Jobs are fetched from Bundesagentur für Arbeit every 2 hours using your keywords and locations. Separate values with commas. Changes apply on the next fetch.
             </div>
           </div>
 
+          {/* Appearance */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Appearance</h2>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Dark mode</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Switch between light and dark theme</p>
+              </div>
+              <button
+                onClick={toggleDark}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  isDark ? 'bg-blue-600' : 'bg-gray-200'
+                }`}
+                role="switch"
+                aria-checked={isDark}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                    isDark ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
           {/* Search settings */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
-            <h2 className="text-base font-semibold text-gray-900">Search Settings</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 space-y-5">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Search Settings</h2>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">{t('keywords')}</label>
-              <p className="text-xs text-gray-400 mb-2">
-                What to search for — e.g. <span className="font-mono bg-gray-100 px-1 rounded">developer, data analyst, marketing</span>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">{t('keywords')}</label>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
+                What to search for — e.g. <span className="font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded">developer, data analyst, marketing</span>
               </p>
               <textarea
                 rows={3}
                 value={settings.keywords}
                 onChange={e => setSettings(s => ({ ...s, keywords: e.target.value }))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm resize-none"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm resize-none bg-white dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-500"
                 placeholder="e.g. developer, data analyst, project manager"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">{t('locations')}</label>
-              <p className="text-xs text-gray-400 mb-2">
-                Cities or regions — e.g. <span className="font-mono bg-gray-100 px-1 rounded">Berlin, München, Hamburg</span>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">{t('locations')}</label>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
+                Cities or regions — e.g. <span className="font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded">Berlin, München, Hamburg</span>
               </p>
               <textarea
                 rows={2}
                 value={settings.locations}
                 onChange={e => setSettings(s => ({ ...s, locations: e.target.value }))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm resize-none"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm resize-none bg-white dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-500"
                 placeholder="e.g. Düsseldorf, Köln, Dortmund"
               />
             </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
             <div className="flex justify-between items-center pt-1">
-              <span className={`text-sm transition ${saved ? 'text-green-600' : 'text-transparent'}`}>
+              <span className={`text-sm transition ${saved ? 'text-green-600 dark:text-green-400' : 'text-transparent'}`}>
                 ✓ {t('settingsSaved')}
               </span>
               <button
@@ -135,8 +162,8 @@ export const SettingsPage = () => {
           </div>
 
           {/* Keyword presets */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-4">Keyword ideas by field</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Keyword ideas by field</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 { field: 'Tech / IT',    icon: '💻', kw: 'developer, software engineer, data analyst, DevOps, IT' },
@@ -149,46 +176,46 @@ export const SettingsPage = () => {
                 <button
                   key={field}
                   onClick={() => setSettings(s => ({ ...s, keywords: kw }))}
-                  className="text-left px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition group"
+                  className="text-left px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition group"
                 >
                   <div className="flex items-center gap-2 mb-0.5">
                     <span>{icon}</span>
-                    <span className="font-semibold text-sm text-gray-800 group-hover:text-blue-700">{field}</span>
+                    <span className="font-semibold text-sm text-gray-800 dark:text-gray-200 group-hover:text-blue-700 dark:group-hover:text-blue-400">{field}</span>
                   </div>
-                  <p className="text-xs text-gray-400 truncate">{kw}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{kw}</p>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Change Password */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="text-base font-semibold text-gray-900">Change Password</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Change Password</h2>
             {[
               { key: 'current', label: 'Current password', placeholder: '••••••••' },
               { key: 'next',    label: 'New password',     placeholder: 'Min. 8 characters' },
               { key: 'confirm', label: 'Confirm new password', placeholder: '••••••••' },
             ].map(f => (
               <div key={f.key}>
-                <label className="block text-sm font-medium text-gray-600 mb-1">{f.label}</label>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{f.label}</label>
                 <input
                   type="password"
                   value={pwForm[f.key as keyof typeof pwForm]}
                   onChange={e => setPwForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm bg-white dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-500"
                   placeholder={f.placeholder}
                 />
               </div>
             ))}
             {pwMsg && (
-              <p className={`text-sm ${pwMsg.ok ? 'text-green-600' : 'text-red-600'}`}>{pwMsg.text}</p>
+              <p className={`text-sm ${pwMsg.ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{pwMsg.text}</p>
             )}
             <div className="flex justify-end pt-1">
               <button
                 onClick={handleChangePassword}
                 disabled={pwSaving || !pwForm.current || !pwForm.next || !pwForm.confirm || isDemo}
                 title={isDemo ? 'Not available in demo mode' : undefined}
-                className="px-6 py-2.5 bg-gray-900 hover:bg-black disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition"
+                className="px-6 py-2.5 bg-gray-900 dark:bg-gray-700 hover:bg-black dark:hover:bg-gray-600 disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition"
               >
                 {pwSaving ? 'Saving...' : 'Update Password'}
               </button>
