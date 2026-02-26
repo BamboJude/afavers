@@ -3,15 +3,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Enable SSL for Supabase or any remote DATABASE_URL (not localhost)
+const dbUrl = process.env.DATABASE_URL || '';
+const isRemoteDB = dbUrl.includes('supabase') || dbUrl.includes('railway') ||
+  (process.env.NODE_ENV === 'production' && !dbUrl.includes('localhost'));
+
 // PostgreSQL connection pool
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false }
-    : false,
-  max: 20, // Maximum number of clients in the pool
+  connectionString: dbUrl,
+  ssl: isRemoteDB ? { rejectUnauthorized: false } : false,
+  max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // 10s — allows for Railway→Supabase cross-region latency
 });
 
 // Test database connection
@@ -29,10 +32,9 @@ export const connectDB = async (): Promise<void> => {
   }
 };
 
-// Handle pool errors
+// Handle pool errors — log but don't crash; pg will remove broken connections
 pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-  process.exit(-1);
+  console.error('Unexpected error on idle client:', err.message);
 });
 
 // Graceful shutdown
