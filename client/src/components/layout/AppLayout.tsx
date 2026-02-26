@@ -105,10 +105,10 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
               to={item.to}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${
+                `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-150 active:scale-95 ${
                   isActive
-                    ? 'bg-green-50 text-green-700 border border-green-100'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-green-50 text-green-700 font-semibold shadow-sm ring-1 ring-green-100'
+                    : 'font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-0.5'
                 }`
               }
             >
