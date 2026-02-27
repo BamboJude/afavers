@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { DemoBanner } from '../common/DemoBanner';
 import { LanguageToggle } from '../common/LanguageToggle';
@@ -84,12 +84,14 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       >
         {/* Logo */}
         <div className="h-32 flex items-center px-5 border-b border-gray-100 shrink-0">
-          <img
-            src="/logo.png"
-            alt="afavers"
-            className="h-28 w-auto"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          />
+          <Link to="/dashboard" onClick={() => setSidebarOpen(false)}>
+            <img
+              src="/logo.png"
+              alt="afavers"
+              className="h-28 w-auto"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          </Link>
         </div>
 
         {/* Nav items */}
@@ -144,12 +146,14 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="flex-1 lg:ml-60 flex flex-col min-h-screen w-full overflow-x-hidden">
         {/* Mobile topbar */}
         <div className="lg:hidden bg-white border-b border-gray-200 h-20 flex items-center justify-center px-4 sticky top-0 z-30 shadow-sm">
-          <img
-            src="/logo.png"
-            alt="afavers"
-            className="h-16 w-auto"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          />
+          <Link to="/dashboard">
+            <img
+              src="/logo.png"
+              alt="afavers"
+              className="h-16 w-auto"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          </Link>
         </div>
 
         <DemoBanner />
