@@ -143,11 +143,11 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       {/* ── Main content ── */}
       <div className="flex-1 lg:ml-60 flex flex-col min-h-screen w-full overflow-x-hidden">
         {/* Mobile topbar */}
-        <div className="lg:hidden bg-white border-b border-gray-200 h-14 flex items-center justify-center px-4 sticky top-0 z-30 shadow-sm">
+        <div className="lg:hidden bg-white border-b border-gray-200 h-20 flex items-center justify-center px-4 sticky top-0 z-30 shadow-sm">
           <img
             src="/logo.png"
             alt="afavers"
-            className="h-12 w-auto"
+            className="h-16 w-auto"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         </div>

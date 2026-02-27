@@ -149,11 +149,11 @@ export const SettingsPage = () => {
                 <button
                   key={field}
                   onClick={() => setSettings(s => ({ ...s, keywords: kw }))}
-                  className="text-left px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300:border-blue-500 hover:bg-blue-50:bg-blue-900/20 transition group"
+                  className="text-left px-4 py-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition group"
                 >
                   <div className="flex items-center gap-2 mb-0.5">
                     <span>{icon}</span>
-                    <span className="font-semibold text-sm text-gray-800 group-hover:text-blue-700:text-blue-400">{field}</span>
+                    <span className="font-semibold text-sm text-gray-800 group-hover:text-blue-700">{field}</span>
                   </div>
                   <p className="text-xs text-gray-400 truncate">{kw}</p>
                 </button>
@@ -188,7 +188,7 @@ export const SettingsPage = () => {
                 onClick={handleChangePassword}
                 disabled={pwSaving || !pwForm.current || !pwForm.next || !pwForm.confirm || isDemo}
                 title={isDemo ? 'Not available in demo mode' : undefined}
-                className="px-6 py-2.5 bg-gray-900 hover:bg-black:bg-gray-600 disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition"
+                className="px-6 py-2.5 bg-gray-900 hover:bg-black disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition"
               >
                 {pwSaving ? 'Saving...' : 'Update Password'}
               </button>
