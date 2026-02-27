@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { useLanguage } from '../store/languageStore';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -12,6 +13,7 @@ export const LoginPage = () => {
   const login = useAuthStore((state) => state.login);
   const loginDemo = useAuthStore((state) => state.loginDemo);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleDemo = async () => {
     setError('');
@@ -20,7 +22,7 @@ export const LoginPage = () => {
       await loginDemo();
       navigate('/dashboard');
     } catch {
-      setError('Demo account unavailable. Try again later.');
+      setError(t('demoUnavailable'));
     } finally {
       setDemoLoading(false);
     }
@@ -34,7 +36,7 @@ export const LoginPage = () => {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid email or password');
+      setError(err instanceof Error ? err.message : t('invalidCredentials'));
     } finally {
       setLoading(false);
     }
@@ -46,7 +48,7 @@ export const LoginPage = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <img src="/logo.png" alt="afavers" className="h-24 mx-auto mb-4" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
-            <p className="text-gray-500 text-sm">Your automated job search assistant</p>
+            <p className="text-gray-500 text-sm">{t('loginSubtitle')}</p>
           </div>
 
           {error && (
@@ -57,7 +59,7 @@ export const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
               <input
                 id="email"
                 type="email"
@@ -71,9 +73,9 @@ export const LoginPage = () => {
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">{t('password')}</label>
                 <Link to="/forgot-password" className="text-xs text-green-600 hover:text-green-700 font-medium">
-                  Forgot password?
+                  {t('forgotPassword')}
                 </Link>
               </div>
               <input
@@ -98,16 +100,16 @@ export const LoginPage = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                   </svg>
-                  Signing in...
+                  {t('signingIn')}
                 </span>
-              ) : 'Sign In'}
+              ) : t('signIn')}
             </button>
           </form>
 
           <div className="mt-5">
             <div className="relative flex items-center">
               <div className="flex-grow border-t border-gray-200" />
-              <span className="px-3 text-sm text-gray-400">or</span>
+              <span className="px-3 text-sm text-gray-400">{t('or')}</span>
               <div className="flex-grow border-t border-gray-200" />
             </div>
             <button
@@ -115,20 +117,20 @@ export const LoginPage = () => {
               disabled={demoLoading}
               className="mt-4 w-full bg-amber-400 hover:bg-amber-500 disabled:opacity-50 text-amber-900 font-semibold py-3 px-4 rounded-lg transition"
             >
-              {demoLoading ? 'Loading demo...' : '⚡ Try Demo — no sign-up needed'}
+              {demoLoading ? t('loadingDemo') : t('tryDemo')}
             </button>
           </div>
 
           <p className="text-center text-sm text-gray-500 mt-4">
-            Don't have an account?{' '}
+            {t('noAccount')}{' '}
             <Link to="/register" className="text-green-600 hover:text-green-700 font-medium">
-              Create one free
+              {t('createOneFree')}
             </Link>
           </p>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-5">
-          afavers.com · Jobs auto-fetched from Bundesagentur für Arbeit every 2h
+          {t('loginFooter')}
         </p>
       </div>
     </div>

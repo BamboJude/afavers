@@ -23,20 +23,20 @@ export const SettingsPage = () => {
   const handleChangePassword = async () => {
     setPwMsg(null);
     if (pwForm.next !== pwForm.confirm) {
-      setPwMsg({ text: 'New passwords do not match.', ok: false });
+      setPwMsg({ text: t('pwMismatch'), ok: false });
       return;
     }
     if (pwForm.next.length < 8) {
-      setPwMsg({ text: 'New password must be at least 8 characters.', ok: false });
+      setPwMsg({ text: t('pwTooShort'), ok: false });
       return;
     }
     setPwSaving(true);
     try {
       await api.patch('/auth/password', { currentPassword: pwForm.current, newPassword: pwForm.next });
-      setPwMsg({ text: 'Password changed successfully.', ok: true });
+      setPwMsg({ text: t('pwChanged'), ok: true });
       setPwForm({ current: '', next: '', confirm: '' });
     } catch (err: any) {
-      setPwMsg({ text: err?.response?.data?.error || 'Failed to change password.', ok: false });
+      setPwMsg({ text: err?.response?.data?.error || t('pwChangeFailed'), ok: false });
     } finally {
       setPwSaving(false);
     }
@@ -57,7 +57,7 @@ export const SettingsPage = () => {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch {
-      setError('Failed to save. Please try again.');
+      setError(t('failedToSave'));
     } finally {
       setSaving(false);
     }
@@ -68,7 +68,7 @@ export const SettingsPage = () => {
       {/* Page title */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">{t('settings')}</h1>
-        <p className="text-sm text-gray-500 mt-1">Configure your job search preferences</p>
+        <p className="text-sm text-gray-500 mt-1">{t('settingsSubtitle')}</p>
       </div>
 
       {loading ? (
@@ -87,33 +87,29 @@ export const SettingsPage = () => {
 
           {/* Search settings */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
-            <h2 className="text-base font-semibold text-gray-900">Search Settings</h2>
+            <h2 className="text-base font-semibold text-gray-900">{t('searchSettings')}</h2>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{t('keywords')}</label>
-              <p className="text-xs text-gray-400 mb-2">
-                What to search for — e.g. <span className="font-mono bg-gray-100 px-1 rounded">developer, data analyst, marketing</span>
-              </p>
+              <p className="text-xs text-gray-400 mb-2">{t('keywordsDesc')}</p>
               <textarea
                 rows={3}
                 value={settings.keywords}
                 onChange={e => setSettings(s => ({ ...s, keywords: e.target.value }))}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm resize-none bg-white"
-                placeholder="e.g. developer, data analyst, project manager"
+                placeholder={t('keywordsPlaceholder')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">{t('locations')}</label>
-              <p className="text-xs text-gray-400 mb-2">
-                Cities or regions — e.g. <span className="font-mono bg-gray-100 px-1 rounded">Berlin, München, Hamburg</span>
-              </p>
+              <p className="text-xs text-gray-400 mb-2">{t('locationsDesc')}</p>
               <textarea
                 rows={2}
                 value={settings.locations}
                 onChange={e => setSettings(s => ({ ...s, locations: e.target.value }))}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm resize-none bg-white"
-                placeholder="e.g. Düsseldorf, Köln, Dortmund"
+                placeholder={t('locationsPlaceholder')}
               />
             </div>
 
@@ -126,17 +122,17 @@ export const SettingsPage = () => {
               <button
                 onClick={handleSave}
                 disabled={saving || isDemo}
-                title={isDemo ? 'Not available in demo mode' : undefined}
+                title={isDemo ? t('notAvailableDemo') : undefined}
                 className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition"
               >
-                {saving ? 'Saving...' : t('saveSettings')}
+                {saving ? t('saving') : t('saveSettings')}
               </button>
             </div>
           </div>
 
           {/* Keyword presets */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-4">Keyword ideas by field</h2>
+            <h2 className="text-base font-semibold text-gray-900 mb-4">{t('keywordIdeas')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 { field: 'Tech / IT',    icon: '💻', kw: 'developer, software engineer, data analyst, DevOps, IT' },
@@ -163,20 +159,20 @@ export const SettingsPage = () => {
 
           {/* Change Password */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="text-base font-semibold text-gray-900">Change Password</h2>
+            <h2 className="text-base font-semibold text-gray-900">{t('changePassword')}</h2>
             {[
-              { key: 'current', label: 'Current password', placeholder: '••••••••' },
-              { key: 'next',    label: 'New password',     placeholder: 'Min. 8 characters' },
-              { key: 'confirm', label: 'Confirm new password', placeholder: '••••••••' },
+              { key: 'current', labelKey: 'currentPassword', placeholder: '••••••••' },
+              { key: 'next',    labelKey: 'newPassword',     placeholderKey: 'minCharsHint' },
+              { key: 'confirm', labelKey: 'confirmNewPassword', placeholder: '••••••••' },
             ].map(f => (
               <div key={f.key}>
-                <label className="block text-sm font-medium text-gray-600 mb-1">{f.label}</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">{t(f.labelKey)}</label>
                 <input
                   type="password"
                   value={pwForm[f.key as keyof typeof pwForm]}
                   onChange={e => setPwForm(prev => ({ ...prev, [f.key]: e.target.value }))}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm bg-white"
-                  placeholder={f.placeholder}
+                  placeholder={f.placeholderKey ? t(f.placeholderKey) : f.placeholder}
                 />
               </div>
             ))}
@@ -187,10 +183,10 @@ export const SettingsPage = () => {
               <button
                 onClick={handleChangePassword}
                 disabled={pwSaving || !pwForm.current || !pwForm.next || !pwForm.confirm || isDemo}
-                title={isDemo ? 'Not available in demo mode' : undefined}
+                title={isDemo ? t('notAvailableDemo') : undefined}
                 className="px-6 py-2.5 bg-gray-900 hover:bg-black disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition"
               >
-                {pwSaving ? 'Saving...' : 'Update Password'}
+                {pwSaving ? t('saving') : t('updatePassword')}
               </button>
             </div>
           </div>

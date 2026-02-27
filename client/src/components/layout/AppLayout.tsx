@@ -59,10 +59,10 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const navItems = [
     { to: '/dashboard',    icon: <IconDashboard />,  label: t('dashboard') },
     { to: '/jobs',         icon: <IconJobs />,        label: t('browseJobs') },
-    { to: '/hotpicks',     icon: <span className="text-xl leading-none">🔥</span>, label: 'Hot Picks' },
+    { to: '/hotpicks',     icon: <span className="text-xl leading-none">🔥</span>, label: t('hotPicks') },
     { to: '/english-jobs', icon: <IconGlobe />,       label: t('englishJobs') },
     { to: '/kanban',       icon: <IconKanban />,      label: t('applicationsBoard') },
-    { to: '/analytics',    icon: <IconAnalytics />,   label: 'Analytics' },
+    { to: '/analytics',    icon: <IconAnalytics />,   label: t('analytics') },
     { to: '/settings',     icon: <IconSettings />,    label: t('settings') },
   ];
 
@@ -166,10 +166,10 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       {/* ── Mobile bottom navigation ── */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 flex items-stretch" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {[
-          { to: '/dashboard', icon: <IconDashboard />, label: 'Home' },
-          { to: '/jobs',      icon: <IconJobs />,      label: 'Browse' },
-          { to: '/hotpicks',  icon: <span className="text-xl leading-none">🔥</span>, label: 'Hot Picks' },
-          { to: '/kanban',    icon: <IconKanban />,    label: 'Board' },
+          { to: '/dashboard', icon: <IconDashboard />, label: t('home') },
+          { to: '/jobs',      icon: <IconJobs />,      label: t('browse') },
+          { to: '/hotpicks',  icon: <span className="text-xl leading-none">🔥</span>, label: t('hotPicks') },
+          { to: '/kanban',    icon: <IconKanban />,    label: t('board') },
         ].map(item => (
           <NavLink
             key={item.to}
@@ -192,7 +192,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M5 12h.01M12 12h.01M19 12h.01" />
           </svg>
-          <span>More</span>
+          <span>{t('more')}</span>
         </button>
       </nav>
 
@@ -205,9 +205,9 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-gray-900 mb-1">Still there?</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-1">{t('stillThere')}</h2>
             <p className="text-sm text-gray-500 mb-2">
-              You'll be signed out due to inactivity in
+              {t('idleWarningMsg')}
             </p>
             <p className="text-4xl font-bold text-amber-500 mb-6 tabular-nums">
               {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
@@ -217,13 +217,13 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 onClick={handleLogout}
                 className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50:bg-gray-700 text-sm font-medium rounded-xl transition"
               >
-                Sign out
+                {t('signOut')}
               </button>
               <button
                 onClick={stayLoggedIn}
                 className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition"
               >
-                Stay logged in
+                {t('stayLoggedIn')}
               </button>
             </div>
           </div>

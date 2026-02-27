@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { jobsService } from '../services/jobs.service';
 import type { AnalyticsData } from '../types';
+import { useLanguage } from '../store/languageStore';
 
 const SOURCE_LABELS: Record<string, string> = {
   bundesagentur: 'Bundesagentur',
@@ -31,13 +32,14 @@ export const AnalyticsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const { t } = useLanguage();
 
   const handleExport = async () => {
     setExporting(true);
     try {
       await jobsService.exportCsv();
     } catch {
-      alert('Export failed — try again');
+      alert(t('exportFailed'));
     } finally {
       setExporting(false);
     }
@@ -68,13 +70,13 @@ export const AnalyticsPage = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Page header */}
       <div className="bg-white border-b border-gray-200 px-6 py-5 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('analytics')}</h1>
         <button
           onClick={handleExport}
           disabled={exporting}
           className="text-sm text-green-700 hover:text-green-900 border border-green-300 hover:border-green-500 bg-green-50 hover:bg-green-100 px-4 py-2 rounded-lg transition disabled:opacity-50 font-medium"
         >
-          {exporting ? 'Exporting...' : '⬇ Export CSV'}
+          {exporting ? t('exporting') : t('exportCsv')}
         </button>
       </div>
 
@@ -85,7 +87,7 @@ export const AnalyticsPage = () => {
           </div>
         ) : error ? (
           <div className="bg-red-50 border border-red-300 rounded-xl p-6 text-center">
-            <p className="text-red-700 font-semibold mb-1">Failed to load analytics</p>
+            <p className="text-red-700 font-semibold mb-1">{t('failedToLoadAnalytics')}</p>
             <p className="text-red-500 text-sm font-mono">{error}</p>
           </div>
         ) : (
@@ -93,13 +95,13 @@ export const AnalyticsPage = () => {
             {/* Summary cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { label: 'Applied',      value: totalApplied,      color: 'text-green-700',  bg: 'bg-green-50 border-green-200' },
-                { label: 'Interviewing', value: totalInterviewing, color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
-                { label: 'Offered',      value: totalOffered,      color: 'text-emerald-700',bg: 'bg-emerald-50 border-emerald-200' },
-                { label: 'Response rate',value: `${responseRate}%`,color: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200' },
+                { labelKey: 'applied',      value: totalApplied,      color: 'text-green-700',  bg: 'bg-green-50 border-green-200' },
+                { labelKey: 'interviewing', value: totalInterviewing, color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
+                { labelKey: 'offered',      value: totalOffered,      color: 'text-emerald-700',bg: 'bg-emerald-50 border-emerald-200' },
+                { labelKey: 'responseRate', value: `${responseRate}%`,color: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200' },
               ].map(card => (
-                <div key={card.label} className={`rounded-xl border-2 ${card.bg} p-4`}>
-                  <p className={`text-xs font-medium ${card.color}`}>{card.label}</p>
+                <div key={card.labelKey} className={`rounded-xl border-2 ${card.bg} p-4`}>
+                  <p className={`text-xs font-medium ${card.color}`}>{t(card.labelKey)}</p>
                   <p className="text-3xl font-bold text-gray-900 mt-1">{card.value}</p>
                 </div>
               ))}
@@ -107,9 +109,9 @@ export const AnalyticsPage = () => {
 
             {/* Applications per week */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Applications per Week</h2>
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">{t('applicationsPerWeek')}</h2>
               {data?.byWeek.length === 0 ? (
-                <p className="text-sm text-gray-400">No application data yet — mark some jobs as Applied to see your weekly pace.</p>
+                <p className="text-sm text-gray-400">{t('noApplicationData')}</p>
               ) : (
                 <div className="space-y-3">
                   {data?.byWeek.map(w => (
@@ -127,7 +129,7 @@ export const AnalyticsPage = () => {
 
             {/* Jobs by source */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Jobs by Source</h2>
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">{t('jobsBySource')}</h2>
               <div className="space-y-3">
                 {data?.bySource.map(s => (
                   <div key={s.source} className="flex items-center gap-3">
@@ -143,13 +145,13 @@ export const AnalyticsPage = () => {
 
             {/* Status breakdown */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Status Breakdown</h2>
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">{t('statusBreakdown')}</h2>
               <div className="space-y-3">
                 {data?.byStatus
                   .sort((a, b) => b.count - a.count)
                   .map(s => (
                     <div key={s.status} className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500 w-24 shrink-0 capitalize">{s.status}</span>
+                      <span className="text-xs text-gray-500 w-24 shrink-0 capitalize">{t(s.status)}</span>
                       <Bar value={s.count} max={maxStatus} color={STATUS_COLORS[s.status] ?? 'bg-gray-400'} />
                       <span className="text-sm font-semibold text-gray-700 w-10 text-right">{s.count.toLocaleString()}</span>
                     </div>
