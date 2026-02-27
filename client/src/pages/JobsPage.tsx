@@ -150,7 +150,6 @@ export const JobsPage = () => {
   const [sortBy, setSortBy] = useState('posted_date');
   const [sourceFilter, setSourceFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
-  const [langFilter, setLangFilter] = useState<'' | 'en' | 'de'>('');
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -173,7 +172,7 @@ export const JobsPage = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, [activeTab, search, sortBy, sourceFilter, dateFilter, langFilter, remoteOnly, page]);
+  }, [activeTab, search, sortBy, sourceFilter, dateFilter, remoteOnly, page]);
 
   const loadStats = async () => {
     try {
@@ -195,7 +194,6 @@ export const JobsPage = () => {
         noFilter: activeTab === 'all' ? true : undefined,
         source: sourceFilter || undefined,
         dateFrom: dateFilter || undefined,
-        language: langFilter || undefined,
         remoteOnly: remoteOnly || undefined,
       };
       const response = await jobsService.getJobs(filters);
@@ -256,7 +254,6 @@ export const JobsPage = () => {
     setActiveTab(tab);
     setSourceFilter('');
     setDateFilter('');
-    setLangFilter('');
     setRemoteOnly(false);
     setPage(1);
   };
@@ -385,25 +382,8 @@ export const JobsPage = () => {
             </button>
           ))}
         </div>
-        {/* Language + Remote filter pills */}
-        <div className="flex items-center gap-2 mt-2 flex-wrap">
-          {([
-            { value: '' as const,   label: '🌐 All' },
-            { value: 'de' as const, label: '🇩🇪 Deutsch' },
-            { value: 'en' as const, label: '🇬🇧 English' },
-          ] as { value: '' | 'en' | 'de'; label: string }[]).map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => { setLangFilter(opt.value); setPage(1); }}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
-                langFilter === opt.value
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        {/* Remote filter pill */}
+        <div className="flex items-center gap-2 mt-2">
           <button
             onClick={() => { setRemoteOnly(r => !r); setPage(1); }}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
