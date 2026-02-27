@@ -71,4 +71,5 @@ export interface JobFilters {
   language?: 'en' | 'de';
   noFilter?: boolean;
   dateFrom?: string;
+  remoteOnly?: boolean;
 }

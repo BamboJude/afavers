@@ -174,6 +174,16 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
     p++;
   }
 
+  if (filters?.remoteOnly) {
+    conditions.push(`(
+      j.location ILIKE '%remote%' OR
+      j.location ILIKE '%homeoffice%' OR
+      j.location ILIKE '%home office%' OR
+      j.description ILIKE '%remote%' OR
+      j.description ILIKE '%homeoffice%'
+    )`);
+  }
+
   // Always exclude hidden jobs
   conditions.push(`COALESCE(uj.is_hidden, FALSE) = FALSE`);
 
@@ -185,6 +195,7 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
     posted_date: 'j.posted_date',
     title: 'j.title',
     company: 'j.company',
+    deadline: 'j.deadline',
   };
   const sortCol = allowedSortCols[filters?.sortBy || 'posted_date'] || 'j.posted_date';
   const sortOrder = filters?.sortOrder === 'ASC' ? 'ASC' : 'DESC';
@@ -220,7 +231,7 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
  * Count jobs matching filters for a given user
  */
 export async function count(
-  filters?: Pick<JobFilters, 'status' | 'source' | 'search' | 'userKeywords' | 'userLocations' | 'language' | 'dateFrom'>,
+  filters?: Pick<JobFilters, 'status' | 'source' | 'search' | 'userKeywords' | 'userLocations' | 'language' | 'dateFrom' | 'remoteOnly'>,
   userId?: number
 ): Promise<number> {
   const conditions: string[] = [];
@@ -278,6 +289,16 @@ export async function count(
     conditions.push(`j.posted_date >= $${p}`);
     values.push(filters.dateFrom);
     p++;
+  }
+
+  if (filters?.remoteOnly) {
+    conditions.push(`(
+      j.location ILIKE '%remote%' OR
+      j.location ILIKE '%homeoffice%' OR
+      j.location ILIKE '%home office%' OR
+      j.description ILIKE '%remote%' OR
+      j.description ILIKE '%homeoffice%'
+    )`);
   }
 
   conditions.push(`COALESCE(uj.is_hidden, FALSE) = FALSE`);

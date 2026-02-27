@@ -57,6 +57,7 @@ export interface JobFilters {
   language?: 'en' | 'de';   // Filter by detected language
   noFilter?: boolean;        // Bypass user keyword/location filters — show all jobs
   dateFrom?: string;         // ISO date string — only show jobs posted on/after this date
+  remoteOnly?: boolean;      // Only show remote/homeoffice jobs
 }
 
 // External job fetcher types

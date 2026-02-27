@@ -150,6 +150,8 @@ export const JobsPage = () => {
   const [sortBy, setSortBy] = useState('posted_date');
   const [sourceFilter, setSourceFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
+  const [langFilter, setLangFilter] = useState<'' | 'en' | 'de'>('');
+  const [remoteOnly, setRemoteOnly] = useState(false);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -171,7 +173,7 @@ export const JobsPage = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, [activeTab, search, sortBy, sourceFilter, dateFilter, page]);
+  }, [activeTab, search, sortBy, sourceFilter, dateFilter, langFilter, remoteOnly, page]);
 
   const loadStats = async () => {
     try {
@@ -187,12 +189,14 @@ export const JobsPage = () => {
         limit: LIMIT,
         offset: (page - 1) * LIMIT,
         sortBy,
-        sortOrder: (sortBy === 'title' || sortBy === 'company') ? 'ASC' : 'DESC',
+        sortOrder: (sortBy === 'title' || sortBy === 'company' || sortBy === 'deadline') ? 'ASC' : 'DESC',
         search: search || undefined,
         status: activeTab !== 'all' ? activeTab : undefined,
         noFilter: activeTab === 'all' ? true : undefined,
         source: sourceFilter || undefined,
         dateFrom: dateFilter || undefined,
+        language: langFilter || undefined,
+        remoteOnly: remoteOnly || undefined,
       };
       const response = await jobsService.getJobs(filters);
       setJobs(response.jobs);
@@ -252,6 +256,8 @@ export const JobsPage = () => {
     setActiveTab(tab);
     setSourceFilter('');
     setDateFilter('');
+    setLangFilter('');
+    setRemoteOnly(false);
     setPage(1);
   };
 
@@ -338,6 +344,7 @@ export const JobsPage = () => {
           >
             <option value="posted_date">{t('newestFirst')}</option>
             <option value="created_at">{t('recentlyAdded')}</option>
+            <option value="deadline">Expiring soon</option>
             <option value="title">{t('titleAZ')}</option>
             <option value="company">{t('companyAZ')}</option>
           </select>
@@ -355,7 +362,7 @@ export const JobsPage = () => {
               className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
                 sourceFilter === opt.value
                   ? 'bg-gray-800 text-white border-gray-800'
-                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700:border-gray-500:text-gray-200'
+                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
               }`}
             >
               {opt.label}
@@ -371,12 +378,42 @@ export const JobsPage = () => {
               className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
                 dateFilter === dateFromForDays(opt.value)
                   ? 'bg-green-700 text-white border-green-700'
-                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700:border-gray-500:text-gray-200'
+                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
               }`}
             >
               {opt.label}
             </button>
           ))}
+        </div>
+        {/* Language + Remote filter pills */}
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          {([
+            { value: '' as const,   label: '🌐 All' },
+            { value: 'de' as const, label: '🇩🇪 Deutsch' },
+            { value: 'en' as const, label: '🇬🇧 English' },
+          ] as { value: '' | 'en' | 'de'; label: string }[]).map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => { setLangFilter(opt.value); setPage(1); }}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
+                langFilter === opt.value
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+          <button
+            onClick={() => { setRemoteOnly(r => !r); setPage(1); }}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
+              remoteOnly
+                ? 'bg-teal-600 text-white border-teal-600'
+                : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
+            }`}
+          >
+            🏠 Remote
+          </button>
         </div>
         <p className="text-xs text-gray-400 mt-2">{total.toLocaleString()} {t('jobs').toLowerCase()}</p>
       </div>
@@ -406,7 +443,7 @@ export const JobsPage = () => {
                 <div
                   onClick={() => navigate(`/jobs/${job.id}`)}
                   className={`bg-white rounded-xl border hover:shadow-md transition cursor-pointer group ${
-                    deadlineUrgency(job.deadline) || 'border-gray-200 hover:border-gray-300:border-gray-600'
+                    deadlineUrgency(job.deadline) || 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   <div className="p-4 sm:p-5">
@@ -420,7 +457,7 @@ export const JobsPage = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <h3 className="font-semibold text-gray-900 leading-snug group-hover:text-blue-700:text-blue-400 transition-colors text-sm sm:text-base">
+                            <h3 className="font-semibold text-gray-900 leading-snug group-hover:text-blue-700 transition-colors text-sm sm:text-base">
                               {job.title}
                             </h3>
                             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
@@ -465,7 +502,7 @@ export const JobsPage = () => {
                             <button
                               onClick={e => { e.stopPropagation(); handleSave(job); }}
                               disabled={actionLoading === job.id}
-                              className="flex-1 py-2 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100:bg-yellow-900/30 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40"
+                              className="flex-1 py-2 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40"
                             >
                               ⭐ {t('save')}
                             </button>
@@ -474,7 +511,7 @@ export const JobsPage = () => {
                             <button
                               onClick={e => { e.stopPropagation(); handleApply(job); }}
                               disabled={actionLoading === job.id}
-                              className="flex-1 py-2 text-xs font-semibold bg-green-50 hover:bg-green-100:bg-green-900/30 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40"
+                              className="flex-1 py-2 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40"
                             >
                               ✓ {t('markApplied')}
                             </button>
@@ -482,10 +519,21 @@ export const JobsPage = () => {
                           <button
                             onClick={e => { e.stopPropagation(); handleHide(job); }}
                             disabled={actionLoading === job.id}
-                            className="flex-1 py-2 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50:bg-red-900/20 border border-gray-200 hover:border-red-200:border-red-800 rounded-lg transition disabled:opacity-40"
+                            className="flex-1 py-2 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
                           >
                             ✕ {t('hide')}
                           </button>
+                          {job.url && (
+                            <a
+                              href={job.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="flex-1 py-2 text-xs font-semibold text-center bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg transition"
+                            >
+                              ↗ Apply
+                            </a>
+                          )}
                         </div>
                       </div>
 
@@ -499,7 +547,7 @@ export const JobsPage = () => {
                             onClick={e => { e.stopPropagation(); handleSave(job); }}
                             disabled={actionLoading === job.id}
                             title={t('saveJob')}
-                            className="px-3 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100:bg-yellow-900/30 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+                            className="px-3 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
                           >
                             ⭐ {t('save')}
                           </button>
@@ -509,7 +557,7 @@ export const JobsPage = () => {
                             onClick={e => { e.stopPropagation(); handleApply(job); }}
                             disabled={actionLoading === job.id}
                             title="Mark as applied"
-                            className="px-3 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100:bg-green-900/30 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+                            className="px-3 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
                           >
                             ✓ {t('markApplied')}
                           </button>
@@ -518,10 +566,22 @@ export const JobsPage = () => {
                           onClick={e => { e.stopPropagation(); handleHide(job); }}
                           disabled={actionLoading === job.id}
                           title={t('hideJob')}
-                          className="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50:bg-red-900/20 border border-gray-200 hover:border-red-200:border-red-800 rounded-lg transition disabled:opacity-40"
+                          className="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
                         >
                           ✕ {t('hide')}
                         </button>
+                        {job.url && (
+                          <a
+                            href={job.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            title="Open job posting"
+                            className="px-3 py-1.5 text-xs font-semibold text-center bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg transition whitespace-nowrap"
+                          >
+                            ↗ Apply
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -538,7 +598,7 @@ export const JobsPage = () => {
             <button
               onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0); }}
               disabled={page === 1}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               ← {t('prev')}
             </button>
@@ -548,7 +608,7 @@ export const JobsPage = () => {
             <button
               onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0); }}
               disabled={page === totalPages}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               {t('next')} →
             </button>
