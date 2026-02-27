@@ -9,15 +9,16 @@ import { useGoalStore, type GoalType } from '../store/goalStore';
 // ── Stress check-up ──────────────────────────────────────────────────────────
 
 const STRESS_LEVELS = [
-  { level: 1 as const, emoji: '😰', label: 'Overwhelmed', card: 'bg-red-50 border-red-200 text-red-700',    tip: 'Take it easy today. Even opening one job listing is progress. Maybe a short walk first.' },
-  { level: 2 as const, emoji: '😟', label: 'Struggling',  card: 'bg-orange-50 border-orange-200 text-orange-700', tip: 'Job searching is genuinely hard. Be kind to yourself — focus on just one small thing today.' },
-  { level: 3 as const, emoji: '😐', label: 'Okay',        card: 'bg-gray-100 border-gray-200 text-gray-700',  tip: 'Steady as it goes. Consistency beats intensity every time.' },
-  { level: 4 as const, emoji: '🙂', label: 'Good',        card: 'bg-blue-50 border-blue-200 text-blue-700',   tip: 'Great energy! Use it to polish an application or reach out to someone in your network.' },
-  { level: 5 as const, emoji: '😊', label: 'Thriving',    card: 'bg-green-50 border-green-200 text-green-700', tip: 'Love this mindset! Perfect time to tackle that application you\'ve been putting off.' },
+  { level: 1 as const, emoji: '😰', labelKey: 'stressOverwhelmed', card: 'bg-red-50 border-red-200 text-red-700',    tipKey: 'stressTip1' },
+  { level: 2 as const, emoji: '😟', labelKey: 'stressStruggling',  card: 'bg-orange-50 border-orange-200 text-orange-700', tipKey: 'stressTip2' },
+  { level: 3 as const, emoji: '😐', labelKey: 'stressOkay',        card: 'bg-gray-100 border-gray-200 text-gray-700',  tipKey: 'stressTip3' },
+  { level: 4 as const, emoji: '🙂', labelKey: 'stressGood',        card: 'bg-blue-50 border-blue-200 text-blue-700',   tipKey: 'stressTip4' },
+  { level: 5 as const, emoji: '😊', labelKey: 'stressThriving',    card: 'bg-green-50 border-green-200 text-green-700', tipKey: 'stressTip5' },
 ];
 
 const StressCheckup = () => {
   const { logStress, todayStress } = useGoalStore();
+  const { t } = useLanguage();
   const today = todayStress();
   const [dismissed, setDismissed] = useState(false);
 
@@ -29,8 +30,8 @@ const StressCheckup = () => {
       <div className={`mb-5 rounded-xl border px-4 py-2.5 flex items-center gap-3 animate-fade-in ${info.card}`}>
         <span className="text-xl">{info.emoji}</span>
         <div className="flex-1 min-w-0">
-          <span className="text-xs font-semibold">{info.label} today · </span>
-          <span className="text-xs opacity-75 line-clamp-1">{info.tip}</span>
+          <span className="text-xs font-semibold">{t(info.labelKey)} today · </span>
+          <span className="text-xs opacity-75 line-clamp-1">{t(info.tipKey)}</span>
         </div>
         <button
           onClick={() => logStress(today.level)}
@@ -49,7 +50,7 @@ const StressCheckup = () => {
   return (
     <div className="mb-5 bg-white border border-gray-200 rounded-xl p-4 animate-fade-in">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-semibold text-gray-700">How are you holding up today? 🤔</p>
+        <p className="text-sm font-semibold text-gray-700">{t('howAreYouHoldingUp')}</p>
         <button onClick={() => setDismissed(true)} className="text-gray-300 hover:text-gray-500 transition text-sm">✕</button>
       </div>
       <div className="flex gap-2 flex-wrap">
@@ -60,7 +61,7 @@ const StressCheckup = () => {
             className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:scale-95 transition"
           >
             <span className="text-2xl">{s.emoji}</span>
-            <span className="text-xs text-gray-500 font-medium">{s.label}</span>
+            <span className="text-xs text-gray-500 font-medium">{t(s.labelKey)}</span>
           </button>
         ))}
       </div>
@@ -77,6 +78,7 @@ const GOAL_PRESETS: Record<GoalType, number[]> = {
 
 const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
   const { goal, setGoal, clearGoal } = useGoalStore();
+  const { t } = useLanguage();
   const [setting, setSetting] = useState(false);
   const [type, setType]       = useState<GoalType>('applications');
   const [target, setTarget]   = useState(10);
@@ -91,10 +93,10 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
       <div className="mb-6 bg-white border border-dashed border-gray-300 rounded-xl p-4 flex items-center gap-4 hover:border-gray-400 transition-colors animate-fade-in cursor-pointer group" onClick={() => setSetting(true)}>
         <div className="text-2xl">🎯</div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-gray-700 group-hover:text-gray-900">Set a goal</p>
-          <p className="text-xs text-gray-400">Stay motivated with a clear target</p>
+          <p className="text-sm font-semibold text-gray-700 group-hover:text-gray-900">{t('setAGoal')}</p>
+          <p className="text-xs text-gray-400">{t('stayMotivated')}</p>
         </div>
-        <span className="text-xs font-semibold text-gray-400 group-hover:text-gray-700 transition-colors">Set →</span>
+        <span className="text-xs font-semibold text-gray-400 group-hover:text-gray-700 transition-colors">{t('setArrow')}</span>
       </div>
     );
   }
@@ -103,7 +105,7 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
   if (setting) {
     return (
       <div className="mb-6 bg-white border border-gray-200 rounded-xl p-4 animate-scale-in">
-        <p className="text-sm font-semibold text-gray-700 mb-3">🎯 What's your goal?</p>
+        <p className="text-sm font-semibold text-gray-700 mb-3">{t('whatsYourGoal')}</p>
         {/* Type */}
         <div className="flex gap-2 mb-3">
           {(['applications', 'interviews'] as const).map(tp => (
@@ -114,7 +116,7 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
                 type === tp ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
               }`}
             >
-              {tp === 'applications' ? '✅ Applications sent' : '📞 Interviews reached'}
+              {tp === 'applications' ? t('applicationsSentGoal') : t('interviewsReachedGoal')}
             </button>
           ))}
         </div>
@@ -137,7 +139,6 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
             value={target}
             onChange={e => setTarget(Math.max(1, parseInt(e.target.value) || 1))}
             className="w-16 px-2 py-2 text-sm text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-            placeholder="Custom"
           />
         </div>
         <div className="flex gap-2">
@@ -145,13 +146,13 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
             onClick={() => { setGoal({ type, target }); setSetting(false); }}
             className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition active:scale-95"
           >
-            Save goal
+            {t('saveGoal')}
           </button>
           <button
             onClick={() => setSetting(false)}
             className="px-4 py-2 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50 transition"
           >
-            Cancel
+            {t('cancel')}
           </button>
         </div>
       </div>
@@ -160,11 +161,7 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
 
   // ── Active goal ──
   const barColor  = done ? 'bg-green-500' : pct >= 60 ? 'bg-blue-500' : 'bg-orange-400';
-  const message   = done
-    ? '🎉 Goal reached! Incredible work — time to set a new one.'
-    : pct >= 60
-    ? "You're almost there! Keep the momentum going."
-    : 'Every application counts. You\'ve got this.';
+  const messageKey = done ? 'goalReached' : pct >= 60 ? 'almostThere' : 'everyApplicationCounts';
 
   return (
     <div className="mb-6 bg-white border border-gray-200 rounded-xl p-4 animate-fade-in">
@@ -172,7 +169,7 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
         <div className="flex items-center gap-2">
           <span className="text-lg">🎯</span>
           <span className="text-sm font-semibold text-gray-700">
-            {goal!.type === 'applications' ? 'Applications goal' : 'Interviews goal'}
+            {goal!.type === 'applications' ? t('applicationsGoal') : t('interviewsGoal')}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -180,7 +177,7 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
           <button
             onClick={() => clearGoal()}
             className="text-xs text-gray-300 hover:text-gray-500 transition"
-            title="Clear goal"
+            title={t('clearGoal')}
           >
             ✕
           </button>
@@ -193,12 +190,12 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
         />
       </div>
       <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-400">{message}</p>
+        <p className="text-xs text-gray-400">{t(messageKey)}</p>
         <button
           onClick={() => { setSetting(true); setType(goal!.type); setTarget(goal!.target); }}
           className="text-xs text-gray-300 hover:text-gray-500 transition ml-3 shrink-0"
         >
-          Edit
+          {t('edit')}
         </button>
       </div>
     </div>
@@ -310,7 +307,7 @@ export const DashboardPage = () => {
       {/* Page title */}
       <div className="mb-5 animate-fade-in">
         <h1 className="text-2xl font-bold text-gray-900">{t('dashboard')}</h1>
-        <p className="text-sm text-gray-500 mt-1">Your job search at a glance</p>
+        <p className="text-sm text-gray-500 mt-1">{t('yourJobSearchGlance')}</p>
       </div>
 
       {/* Daily stress check-up */}
@@ -342,7 +339,7 @@ export const DashboardPage = () => {
       {/* Follow-up reminders */}
       {followUps.length > 0 && (
         <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 animate-fade-in" style={{ animationDelay: '60ms' }}>
-          <p className="text-sm font-semibold text-amber-800 mb-2.5">⏰ Follow-ups due ({followUps.length})</p>
+          <p className="text-sm font-semibold text-amber-800 mb-2.5">⏰ {t('followUpsDue')} ({followUps.length})</p>
           <div className="space-y-1">
             {followUps.map(f => (
               <div
@@ -479,8 +476,8 @@ export const DashboardPage = () => {
           },
           {
             icon: '📊',
-            label: 'Analytics',
-            desc: 'Track your progress',
+            label: t('analytics'),
+            desc: t('analyticsDesc'),
             color: 'hover:border-pink-300 hover:bg-pink-50/40',
             iconBg: 'bg-pink-50',
             onClick: () => navigate('/analytics'),
@@ -511,7 +508,7 @@ export const DashboardPage = () => {
           <button
             onClick={handleFetchJobs}
             disabled={fetching || isDemo}
-            title={isDemo ? 'Not available in demo mode' : undefined}
+            title={isDemo ? t('notAvailableDemo') : undefined}
             className="w-full px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition active:scale-95"
           >
             {fetching ? t('fetching') : t('fetchNow')}
