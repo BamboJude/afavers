@@ -6,8 +6,11 @@ import * as jobModel from '../models/job.model.js';
 
 const router = express.Router();
 
-// ── Public endpoint (no auth required) ──────────────────────────────────────
-router.get('/public', async (_req, res) => {
+// ── Public endpoint (no auth required, open CORS) ───────────────────────────
+router.get('/public', (_req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+}, async (_req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, title, company, location, url, salary, source, posted_date
