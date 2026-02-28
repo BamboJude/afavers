@@ -5,6 +5,24 @@ import { pool } from '../config/database.js';
 import * as jobModel from '../models/job.model.js';
 
 const router = express.Router();
+
+// ── Public endpoint (no auth required) ──────────────────────────────────────
+router.get('/public', async (_req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, title, company, location, url, salary, source, posted_date
+       FROM jobs
+       WHERE url IS NOT NULL
+       ORDER BY created_at DESC
+       LIMIT 10`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch public jobs' });
+  }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
 router.use(authenticateToken);
 
 function parseId(raw: unknown): number | null {
