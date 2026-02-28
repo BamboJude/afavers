@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ExternalJob } from '../../types/index.js';
 import { pool } from '../../config/database.js';
+import { env } from '../../config/env.js';
 
 // API endpoint for Bundesagentur für Arbeit
 const BASE_URL = 'https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/app/jobs';
@@ -104,7 +105,7 @@ async function fetchJobsForKeywordAndLocation(
       },
       headers: {
         'User-Agent': 'Jobsuche/2.9.2 (de.arbeitsagentur.jobboerse; build:1077; iOS 15.1.0) Alamofire/5.4.4',
-        'X-API-Key': 'jobboerse-jobsuche',
+        'X-API-Key': env.BUNDESAGENTUR_API_KEY || 'jobboerse-jobsuche',
         'Host': 'rest.arbeitsagentur.de',
         'Connection': 'keep-alive'
       },
