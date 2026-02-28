@@ -9,6 +9,16 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app: Application = express();
 
+// HTTPS redirect (production only — Railway terminates SSL and sets x-forwarded-proto)
+if (env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      return res.redirect(301, `https://${req.header('host')}${req.url}`);
+    }
+    next();
+  });
+}
+
 // Security headers
 app.use(helmet());
 
