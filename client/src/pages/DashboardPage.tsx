@@ -1,10 +1,11 @@
 import { useAuthStore } from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { jobsService } from '../services/jobs.service';
 import type { DashboardStats, FollowUpAlert, Job } from '../types';
 import { useLanguage } from '../store/languageStore';
 import { useGoalStore, type GoalType } from '../store/goalStore';
+import { GermanyJobMap } from '../components/common/GermanyJobMap';
 
 // ── Stress check-up ──────────────────────────────────────────────────────────
 
@@ -76,16 +77,37 @@ const GOAL_PRESETS: Record<GoalType, number[]> = {
   interviews:   [2, 5, 10],
 };
 
+const CONFETTI_COLORS = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#F7DC6F','#BB8FCE','#F1948A','#98D8C8'];
+const CONFETTI_PIECES = Array.from({ length: 30 }, (_, i) => ({
+  color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+  left: `${3 + (i / 30) * 94}%`,
+  size: 6 + (i % 3) * 4,
+  round: i % 3 !== 0,
+  delay: `${(i * 0.07).toFixed(2)}s`,
+  duration: `${1.4 + (i % 5) * 0.2}s`,
+}));
+
 const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
   const { goal, setGoal, clearGoal } = useGoalStore();
   const { t } = useLanguage();
   const [setting, setSetting] = useState(false);
   const [type, setType]       = useState<GoalType>('applications');
   const [target, setTarget]   = useState(10);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const confettiFired = useRef(false);
 
   const current = goal?.type === 'applications' ? stats.applied : stats.interviewing;
   const pct     = goal ? Math.min(Math.round((current / goal.target) * 100), 100) : 0;
   const done    = goal ? current >= goal.target : false;
+
+  useEffect(() => {
+    if (done && !confettiFired.current) {
+      confettiFired.current = true;
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 2800);
+    }
+    if (!done) confettiFired.current = false;
+  }, [done]);
 
   // ── No goal, not setting ──
   if (!goal && !setting) {
@@ -164,6 +186,27 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
   const messageKey = done ? 'goalReached' : pct >= 60 ? 'almostThere' : 'everyApplicationCounts';
 
   return (
+    <>
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-[150] overflow-hidden">
+          {CONFETTI_PIECES.map((p, i) => (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                left: p.left,
+                top: '8%',
+                width: p.size,
+                height: p.size,
+                borderRadius: p.round ? '50%' : '3px',
+                backgroundColor: p.color,
+                animation: `confetti-fall ${p.duration} ease-in forwards`,
+                animationDelay: p.delay,
+              }}
+            />
+          ))}
+        </div>
+      )}
     <div className="mb-6 bg-white border border-gray-200 rounded-xl p-4 animate-fade-in">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -198,6 +241,148 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
           {t('edit')}
         </button>
       </div>
+    </div>
+    </>
+  );
+};
+
+// ── Mini calendar ─────────────────────────────────────────────────────────────
+
+const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: Job[]; followUps: FollowUpAlert[] }) => {
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const today = new Date();
+  const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
+  const year  = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+
+  const toKey = (y: number, m: number, d: number) =>
+    `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+  const todayKey = toKey(today.getFullYear(), today.getMonth(), today.getDate());
+
+  // Build event maps keyed by YYYY-MM-DD
+  const interviewMap = new Map<string, Job[]>();
+  upcomingInterviews.forEach(j => {
+    const k = j.interview_date!.slice(0, 10);
+    interviewMap.set(k, [...(interviewMap.get(k) || []), j]);
+  });
+  const followUpMap = new Map<string, FollowUpAlert[]>();
+  followUps.forEach(f => {
+    const k = f.follow_up_date.slice(0, 10);
+    followUpMap.set(k, [...(followUpMap.get(k) || []), f]);
+  });
+
+  // Build day grid (Mon-first)
+  const firstDow = new Date(year, month, 1).getDay();
+  const blanks   = firstDow === 0 ? 6 : firstDow - 1;
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const cells: (number | null)[] = [
+    ...Array(blanks).fill(null),
+    ...Array.from({ length: totalDays }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const monthLabel = new Date(year, month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' });
+
+  const selInterviews = selectedDay ? (interviewMap.get(selectedDay) || []) : [];
+  const selFollowUps  = selectedDay ? (followUpMap.get(selectedDay) || []) : [];
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5 animate-fade-in" style={{ animationDelay: '500ms' }}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{t('calendar')}</h3>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setViewDate(new Date(year, month - 1, 1))}
+            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition text-base leading-none"
+          >‹</button>
+          <span className="text-sm font-semibold text-gray-700 px-2 min-w-[150px] text-center capitalize">{monthLabel}</span>
+          <button
+            onClick={() => setViewDate(new Date(year, month + 1, 1))}
+            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition text-base leading-none"
+          >›</button>
+        </div>
+      </div>
+
+      {/* Weekday row */}
+      <div className="grid grid-cols-7 mb-1">
+        {WEEKDAYS.map(d => (
+          <div key={d} className="text-center text-xs font-semibold text-gray-400 py-1">{d}</div>
+        ))}
+      </div>
+
+      {/* Day cells */}
+      <div className="grid grid-cols-7 gap-y-0.5">
+        {cells.map((day, idx) => {
+          if (day === null) return <div key={idx} />;
+          const key         = toKey(year, month, day);
+          const isToday     = key === todayKey;
+          const isSelected  = key === selectedDay;
+          const hasInterview = interviewMap.has(key);
+          const hasFollowUp  = followUpMap.has(key);
+
+          return (
+            <button
+              key={idx}
+              onClick={() => setSelectedDay(isSelected ? null : key)}
+              className={`relative flex flex-col items-center justify-center py-1.5 rounded-lg transition-all active:scale-95 ${
+                isSelected
+                  ? 'bg-gray-900 text-white'
+                  : isToday
+                  ? 'bg-green-50 text-green-700 font-bold ring-2 ring-green-400'
+                  : 'hover:bg-gray-50 text-gray-700'
+              }`}
+            >
+              <span className="text-xs font-medium leading-none mb-0.5">{day}</span>
+              {(hasInterview || hasFollowUp) && (
+                <div className="flex gap-0.5 mt-0.5">
+                  {hasInterview && <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-purple-300' : 'bg-purple-500'}`} />}
+                  {hasFollowUp  && <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-amber-300'  : 'bg-amber-500'}`} />}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div className="flex gap-4 mt-3 pt-3 border-t border-gray-100">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+          <span className="text-xs text-gray-400">{t('calendarInterview')}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+          <span className="text-xs text-gray-400">{t('calendarFollowUp')}</span>
+        </div>
+      </div>
+
+      {/* Selected day events */}
+      {selectedDay && (selInterviews.length > 0 || selFollowUps.length > 0) && (
+        <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5 animate-fade-in">
+          {selInterviews.map(j => (
+            <div key={j.id} onClick={() => navigate(`/jobs/${j.id}`)} className="flex items-center gap-2 text-xs cursor-pointer hover:opacity-70 transition">
+              <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+              <span className="text-gray-700 font-medium truncate">{j.title} · {j.company}</span>
+            </div>
+          ))}
+          {selFollowUps.map(f => (
+            <div key={f.id} onClick={() => navigate(`/jobs/${f.id}`)} className="flex items-center gap-2 text-xs cursor-pointer hover:opacity-70 transition">
+              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+              <span className="text-gray-700 font-medium truncate">{f.title} · {f.company}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {selectedDay && selInterviews.length === 0 && selFollowUps.length === 0 && (
+        <p className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400 text-center animate-fade-in">{t('noEventsDay')}</p>
+      )}
     </div>
   );
 };
@@ -256,6 +441,7 @@ export const DashboardPage = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [followUps, setFollowUps] = useState<FollowUpAlert[]>([]);
   const [upcomingInterviews, setUpcomingInterviews] = useState<Job[]>([]);
+  const [locationData, setLocationData] = useState<{ location: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [fetchMsg, setFetchMsg] = useState('');
@@ -263,6 +449,7 @@ export const DashboardPage = () => {
   useEffect(() => {
     loadStats();
     jobsService.getFollowUps().then(setFollowUps).catch(() => {});
+    jobsService.getAnalytics().then(d => setLocationData(d.byLocation)).catch(() => {});
     jobsService.getJobs({ status: 'interviewing', limit: 20 })
       .then(r => {
         const withDate = r.jobs
@@ -447,6 +634,19 @@ export const DashboardPage = () => {
         ))}
       </div>
 
+      {/* Germany job map (compact) */}
+      {locationData.length > 0 && (
+        <div className="mb-8 bg-white rounded-xl border border-gray-200 p-5 animate-fade-in" style={{ animationDelay: '350ms' }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Jobs by Region</h3>
+            <button onClick={() => navigate('/analytics')} className="text-xs text-green-600 hover:text-green-800 font-medium transition">
+              View analytics →
+            </button>
+          </div>
+          <GermanyJobMap byLocation={locationData} compact />
+        </div>
+      )}
+
       {/* Quick-action grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
         {[
@@ -542,6 +742,11 @@ export const DashboardPage = () => {
           </div>
         </div>
       )}
+
+      {/* Calendar */}
+      <div className="mt-6">
+        <MiniCalendar upcomingInterviews={upcomingInterviews} followUps={followUps} />
+      </div>
     </div>
   );
 };

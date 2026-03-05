@@ -429,7 +429,7 @@ export async function getAnalytics(userId: number): Promise<{
   byWeek: { week: string; count: number }[];
   byStatus: { status: string; count: number }[];
 }> {
-  const [sourceRes, weekRes, statusRes] = await Promise.all([
+  const [sourceRes, weekRes, statusRes, locationRes] = await Promise.all([
     pool.query(
       `SELECT j.source, COUNT(*) AS count
        FROM jobs j
@@ -455,12 +455,24 @@ export async function getAnalytics(userId: number): Promise<{
        GROUP BY 1`,
       [userId]
     ),
+    pool.query(
+      `SELECT j.location, COUNT(*) AS count
+       FROM jobs j
+       LEFT JOIN user_jobs uj ON j.id = uj.job_id AND uj.user_id = $1
+       WHERE COALESCE(uj.is_hidden, FALSE) = FALSE
+         AND j.location IS NOT NULL
+       GROUP BY j.location
+       ORDER BY count DESC
+       LIMIT 20`,
+      [userId]
+    ),
   ]);
 
   return {
-    bySource: sourceRes.rows.map(r => ({ source: r.source, count: parseInt(r.count) })),
-    byWeek:   weekRes.rows.map(r   => ({ week: r.week,     count: parseInt(r.count) })),
-    byStatus: statusRes.rows.map(r => ({ status: r.status, count: parseInt(r.count) })),
+    bySource:   sourceRes.rows.map(r   => ({ source:   r.source,   count: parseInt(r.count) })),
+    byWeek:     weekRes.rows.map(r     => ({ week:     r.week,     count: parseInt(r.count) })),
+    byStatus:   statusRes.rows.map(r   => ({ status:   r.status,   count: parseInt(r.count) })),
+    byLocation: locationRes.rows.map(r => ({ location: r.location, count: parseInt(r.count) })),
   };
 }
 
