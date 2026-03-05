@@ -7,7 +7,8 @@ import { ExternalJob } from '../../types/index.js';
  * - Remove extra spaces
  * - Remove special characters
  */
-function normalizeString(str: string): string {
+function normalizeString(str: string | undefined | null): string {
+  if (!str) return '';
   return str
     .toLowerCase()
     .trim()
@@ -19,7 +20,7 @@ function normalizeString(str: string): string {
 /**
  * Generate a deduplication key from title, company, and location
  */
-function generateDeduplicationKey(title: string, company: string, location: string): string {
+function generateDeduplicationKey(title: string | undefined | null, company: string | undefined | null, location: string | undefined | null): string {
   return `${normalizeString(title)}_${normalizeString(company)}_${normalizeString(location)}`;
 }
 
@@ -107,7 +108,7 @@ export function findSourceDuplicates(jobs: ExternalJob[]): ExternalJob[][] {
   const groups = groupDuplicates(jobs);
   const duplicates: ExternalJob[][] = [];
 
-  for (const [key, group] of groups.entries()) {
+  for (const [, group] of groups.entries()) {
     if (group.length > 1) {
       duplicates.push(group);
     }
