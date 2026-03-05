@@ -1,1 +1,15 @@
 @import 'tailwindcss';
+
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  80%  { opacity: 0.9; }
+  100% { transform: translateY(70vh) rotate(600deg) scale(0.6); opacity: 0; }
+}

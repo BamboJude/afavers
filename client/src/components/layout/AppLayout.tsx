@@ -3,6 +3,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { DemoBanner } from '../common/DemoBanner';
 import { LanguageToggle } from '../common/LanguageToggle';
+import { ToastContainer } from '../common/Toast';
 import { useLanguage } from '../../store/languageStore';
 import { useIdleTimer } from '../../hooks/useIdleTimer';
 
@@ -37,6 +38,12 @@ const IconSettings = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 );
+const IconVideo = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
 const IconLogout = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -62,8 +69,9 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     { to: '/hotpicks',     icon: <span className="text-xl leading-none">🔥</span>, label: t('hotPicks') },
     { to: '/english-jobs', icon: <IconGlobe />,       label: t('englishJobs') },
     { to: '/kanban',       icon: <IconKanban />,      label: t('applicationsBoard') },
-    { to: '/analytics',    icon: <IconAnalytics />,   label: t('analytics') },
-    { to: '/settings',     icon: <IconSettings />,    label: t('settings') },
+    { to: '/analytics',      icon: <IconAnalytics />,   label: t('analytics') },
+    { to: '/interview-prep', icon: <IconVideo />,       label: t('interviewPrep') },
+    { to: '/settings',       icon: <IconSettings />,    label: t('settings') },
   ];
 
   // User initials for avatar
@@ -105,7 +113,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-150 active:scale-95 ${
                   isActive
                     ? 'bg-green-50 text-green-700 font-semibold shadow-sm ring-1 ring-green-100'
-                    : 'font-medium text-gray-500 hover:bg-gray-50:bg-gray-800 hover:text-gray-900:text-gray-100 hover:translate-x-0.5'
+                    : 'font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-0.5'
                 }`
               }
             >
@@ -126,7 +134,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <button
               onClick={handleLogout}
               title={t('logout')}
-              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50:bg-red-900/20 rounded transition-colors"
+              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
             >
               <IconLogout />
             </button>
@@ -196,6 +204,9 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </button>
       </nav>
 
+      {/* ── Toast notifications ── */}
+      <ToastContainer />
+
       {/* ── Idle timeout warning modal ── */}
       {showWarning && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
@@ -215,7 +226,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="flex gap-3">
               <button
                 onClick={handleLogout}
-                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50:bg-gray-700 text-sm font-medium rounded-xl transition"
+                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium rounded-xl transition"
               >
                 {t('signOut')}
               </button>

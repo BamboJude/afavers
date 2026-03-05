@@ -449,7 +449,7 @@ export const DashboardPage = () => {
   useEffect(() => {
     loadStats();
     jobsService.getFollowUps().then(setFollowUps).catch(() => {});
-    jobsService.getAnalytics().then(d => setLocationData(d.byLocation)).catch(() => {});
+    jobsService.getAnalytics().then(d => setLocationData(d.byLocation ?? [])).catch(() => {});
     jobsService.getJobs({ status: 'interviewing', limit: 20 })
       .then(r => {
         const withDate = r.jobs
