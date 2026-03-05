@@ -48,9 +48,10 @@ export interface FollowUpAlert {
 }
 
 export interface AnalyticsData {
-  bySource: { source: string; count: number }[];
-  byWeek:   { week: string;   count: number }[];
-  byStatus: { status: string; count: number }[];
+  bySource:   { source: string;   count: number }[];
+  byWeek:     { week: string;     count: number }[];
+  byStatus:   { status: string;   count: number }[];
+  byLocation: { location: string; count: number }[];
 }
 
 export interface JobsResponse {
