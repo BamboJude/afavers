@@ -42,6 +42,17 @@ export const HotpicksPage = () => {
     }
   }, [queue.length, exhausted]);
 
+  // Keyboard navigation (desktop)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (flying || queue.length === 0) return;
+      if (e.key === 'ArrowRight' || e.key === 'd') triggerAction('right');
+      if (e.key === 'ArrowLeft'  || e.key === 'a') triggerAction('left');
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [flying, queue.length]);
+
   const fetchMore = async () => {
     if (fetchingRef.current || exhausted) return;
     fetchingRef.current = true;

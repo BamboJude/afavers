@@ -4,6 +4,7 @@ import type { Job, JobFilters, DashboardStats } from '../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../store/languageStore';
 import { useSwipeAction } from '../hooks/useSwipeAction';
+import { useToastStore } from '../store/toastStore';
 
 type Tab = 'new' | 'saved' | 'applied' | 'interviewing' | 'all';
 
@@ -33,14 +34,14 @@ const SourceBadge = ({ source }: { source: string }) => {
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, locale = 'en'): string {
   const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Yesterday';
-  if (days < 7)  return `${days}d ago`;
-  if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
-  return `${Math.floor(days / 365)}y ago`;
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  if (days === 0)  return rtf.format(0, 'day');
+  if (days < 7)   return rtf.format(-days, 'day');
+  if (days < 30)  return rtf.format(-Math.floor(days / 7), 'week');
+  if (days < 365) return rtf.format(-Math.floor(days / 30), 'month');
+  return rtf.format(-Math.floor(days / 365), 'year');
 }
 
 const deadlineUrgency = (deadline: string | null): string => {
@@ -137,7 +138,8 @@ const SwipeableCard = ({
 export const JobsPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const { show: showToast } = useToastStore();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -172,6 +174,7 @@ export const JobsPage = () => {
 
   useEffect(() => {
     fetchJobs();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab, search, sortBy, sourceFilter, dateFilter, remoteOnly, page]);
 
   const loadStats = async () => {
@@ -217,6 +220,7 @@ export const JobsPage = () => {
         setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'saved' } : j));
       }
       setStats(prev => prev ? { ...prev, new: Math.max(0, prev.new - 1), saved: prev.saved + 1 } : prev);
+      showToast(t('toastJobSaved'));
     } catch {}
     setActionLoading(null);
   };
@@ -233,6 +237,7 @@ export const JobsPage = () => {
         ...(job.status === 'new' ? { new: Math.max(0, prev.new - 1) } : { saved: Math.max(0, prev.saved - 1) }),
         applied: prev.applied + 1,
       } : prev);
+      showToast(t('toastJobApplied'));
     } catch {}
     setActionLoading(null);
   };
@@ -246,6 +251,7 @@ export const JobsPage = () => {
       if (job.status === 'new') {
         setStats(prev => prev ? { ...prev, new: Math.max(0, prev.new - 1), total: Math.max(0, prev.total - 1) } : prev);
       }
+      showToast(t('toastJobHidden'), 'info');
     } catch {}
     setActionLoading(null);
   };
@@ -257,6 +263,17 @@ export const JobsPage = () => {
     setRemoteOnly(false);
     setPage(1);
   };
+
+  const clearAllFilters = () => {
+    setSearchInput('');
+    setSearch('');
+    setSourceFilter('');
+    setDateFilter('');
+    setRemoteOnly(false);
+    setPage(1);
+  };
+
+  const filterCount = [search, sourceFilter, dateFilter, remoteOnly ? 'r' : ''].filter(Boolean).length;
 
   const totalPages = Math.ceil(total / LIMIT);
 
@@ -331,8 +348,19 @@ export const JobsPage = () => {
               placeholder={t('searchPlaceholder')}
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm bg-white"
+              className="w-full pl-10 pr-9 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm bg-white"
             />
+            {searchInput && (
+              <button
+                onClick={() => { setSearchInput(''); setPage(1); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                aria-label="Clear search"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
           <select
             value={sortBy}
@@ -395,6 +423,20 @@ export const JobsPage = () => {
             {t('remote')}
           </button>
         </div>
+        {/* Active filter indicator */}
+        {filterCount > 0 && (
+          <div className="flex items-center gap-2 mt-3">
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+              {filterCount} {t('activeFilters')}
+            </span>
+            <button
+              onClick={clearAllFilters}
+              className="text-xs text-gray-400 hover:text-gray-700 transition font-medium underline underline-offset-2"
+            >
+              {t('clearAll')}
+            </button>
+          </div>
+        )}
         <p className="text-xs text-gray-400 mt-2">{total.toLocaleString()} {t('jobs').toLowerCase()}</p>
       </div>
 
@@ -461,7 +503,7 @@ export const JobsPage = () => {
                         <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
                           <SourceBadge source={job.source} />
                           {job.posted_date && (
-                            <span>{timeAgo(job.posted_date)}</span>
+                            <span>{timeAgo(job.posted_date, lang)}</span>
                           )}
                           {job.deadline && (
                             <span className="text-orange-500 font-medium">

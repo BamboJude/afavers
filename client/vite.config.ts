@@ -4,6 +4,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  resolve: {
+    dedupe: ['react', 'react-dom', 'react-router-dom', 'react-router'],
+  },
   plugins: [
     react(),
     VitePWA({

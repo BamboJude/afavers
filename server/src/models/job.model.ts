@@ -428,6 +428,7 @@ export async function getAnalytics(userId: number): Promise<{
   bySource: { source: string; count: number }[];
   byWeek: { week: string; count: number }[];
   byStatus: { status: string; count: number }[];
+  byLocation: { location: string; count: number }[];
 }> {
   const [sourceRes, weekRes, statusRes, locationRes] = await Promise.all([
     pool.query(

@@ -224,6 +224,32 @@ export const translations: Record<Lang, Record<string, string>> = {
     email: 'Email',
     password: 'Password',
     confirmPassword: 'Confirm Password',
+
+    // Interview Prep
+    interviewPrep: 'Interview Prep',
+    interviewPrepSubtitle: 'Curated videos to help you ace your next interview',
+    allVideos: 'All',
+    generalTips: 'General Tips',
+    behavioralStar: 'Behavioral & STAR',
+    salaryNeg: 'Salary',
+    confidenceMindset: 'Confidence',
+    germanySpecific: '🇩🇪 Germany Tips',
+    aufDeutsch: 'Auf Deutsch',
+
+    // Calendar
+    calendar: 'Calendar',
+    noEventsDay: 'No events on this day',
+    calendarInterview: 'Interview',
+    calendarFollowUp: 'Follow-up',
+
+    // Toast notifications
+    toastJobSaved: 'Job saved ⭐',
+    toastJobApplied: 'Marked as applied ✓',
+    toastJobHidden: 'Job hidden',
+
+    // Filter indicator
+    activeFilters: 'filter(s) active',
+    clearAll: 'Clear all',
   },
 
   de: {
@@ -449,5 +475,31 @@ export const translations: Record<Lang, Record<string, string>> = {
     email: 'E-Mail',
     password: 'Passwort',
     confirmPassword: 'Passwort bestätigen',
+
+    // Interview Prep
+    interviewPrep: 'Interview-Vorbereitung',
+    interviewPrepSubtitle: 'Kuratierte Videos, damit du dein nächstes Interview meisterst',
+    allVideos: 'Alle',
+    generalTips: 'Allgemeine Tipps',
+    behavioralStar: 'Behavioral & STAR',
+    salaryNeg: 'Gehalt',
+    confidenceMindset: 'Selbstvertrauen',
+    germanySpecific: '🇩🇪 Deutschland',
+    aufDeutsch: 'Auf Deutsch',
+
+    // Calendar
+    calendar: 'Kalender',
+    noEventsDay: 'Keine Ereignisse an diesem Tag',
+    calendarInterview: 'Interview',
+    calendarFollowUp: 'Nachfassaktion',
+
+    // Toast notifications
+    toastJobSaved: 'Stelle gespeichert ⭐',
+    toastJobApplied: 'Als beworben markiert ✓',
+    toastJobHidden: 'Stelle ausgeblendet',
+
+    // Filter indicator
+    activeFilters: 'Filter aktiv',
+    clearAll: 'Alle löschen',
   },
 };

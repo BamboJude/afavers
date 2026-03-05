@@ -66,7 +66,7 @@ export const AnalyticsPage = () => {
   const maxSource   = Math.max(...(data?.bySource.map(s => s.count)   ?? [1]));
   const maxWeek     = Math.max(...(data?.byWeek.map(w => w.count)     ?? [1]));
   const maxStatus   = Math.max(...(data?.byStatus.map(s => s.count)   ?? [1]));
-  const maxLocation = Math.max(...(data?.byLocation.map(l => l.count) ?? [1]));
+  const maxLocation = Math.max(...(data?.byLocation?.map(l => l.count) ?? [1]));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -146,7 +146,7 @@ export const AnalyticsPage = () => {
             </div>
 
             {/* Jobs by region — Germany map */}
-            {(data?.byLocation.length ?? 0) > 0 && (
+            {(data?.byLocation?.length ?? 0) > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Jobs by Region</h2>
                 <div className="flex flex-col lg:flex-row gap-6 items-start">
