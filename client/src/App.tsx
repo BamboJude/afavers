@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useAuthStore } from './store/authStore';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
@@ -18,6 +20,34 @@ import { DemoJobsPage } from './pages/DemoJobsPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 
+const TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+
+function SessionGuard() {
+  const { isAuthenticated, updateActivity, logout } = useAuthStore();
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll'];
+    const onActivity = () => updateActivity();
+    events.forEach(e => window.addEventListener(e, onActivity, { passive: true }));
+
+    const interval = setInterval(() => {
+      const { lastActivity: current } = useAuthStore.getState();
+      if (current && Date.now() - current > TIMEOUT_MS) {
+        logout();
+      }
+    }, 60_000);
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, onActivity));
+      clearInterval(interval);
+    };
+  }, [isAuthenticated, updateActivity, logout]);
+
+  return null;
+}
+
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute>
     <AppLayout>{children}</AppLayout>
@@ -27,6 +57,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => (
 function App() {
   return (
     <BrowserRouter>
+      <SessionGuard />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
