@@ -9,6 +9,8 @@ const router = express.Router();
 // ── Public endpoint (no auth required, open CORS) ───────────────────────────
 router.get('/public', (_req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Vary', 'Origin');
   next();
 }, async (_req, res) => {
   try {

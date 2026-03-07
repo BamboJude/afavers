@@ -6,6 +6,7 @@ import type { DashboardStats, FollowUpAlert, Job } from '../types';
 import { useLanguage } from '../store/languageStore';
 import { useGoalStore, type GoalType } from '../store/goalStore';
 import { GermanyJobMap } from '../components/common/GermanyJobMap';
+import { useCalendarStore, type CalendarEventType } from '../store/calendarStore';
 
 // ── Stress check-up ──────────────────────────────────────────────────────────
 
@@ -250,12 +251,24 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
+const EVENT_TYPE_META: Record<CalendarEventType, { label: string; dot: string; dotSel: string }> = {
+  interview: { label: 'Interview',  dot: 'bg-purple-500', dotSel: 'bg-purple-300' },
+  followup:  { label: 'Follow-up',  dot: 'bg-amber-500',  dotSel: 'bg-amber-300'  },
+  deadline:  { label: 'Deadline',   dot: 'bg-red-500',    dotSel: 'bg-red-300'    },
+  note:      { label: 'Note',       dot: 'bg-blue-400',   dotSel: 'bg-blue-200'   },
+};
+
 const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: Job[]; followUps: FollowUpAlert[] }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { events: customEvents, addEvent, removeEvent } = useCalendarStore();
   const today = new Date();
-  const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [viewDate, setViewDate]   = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [showForm, setShowForm]   = useState(false);
+  const [formTitle, setFormTitle] = useState('');
+  const [formType, setFormType]   = useState<CalendarEventType>('interview');
+  const [formTime, setFormTime]   = useState('');
 
   const year  = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -276,10 +289,14 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
     const k = f.follow_up_date.slice(0, 10);
     followUpMap.set(k, [...(followUpMap.get(k) || []), f]);
   });
+  const customMap = new Map<string, typeof customEvents>();
+  customEvents.forEach(e => {
+    customMap.set(e.date, [...(customMap.get(e.date) || []), e]);
+  });
 
   // Build day grid (Mon-first)
-  const firstDow = new Date(year, month, 1).getDay();
-  const blanks   = firstDow === 0 ? 6 : firstDow - 1;
+  const firstDow  = new Date(year, month, 1).getDay();
+  const blanks    = firstDow === 0 ? 6 : firstDow - 1;
   const totalDays = new Date(year, month + 1, 0).getDate();
   const cells: (number | null)[] = [
     ...Array(blanks).fill(null),
@@ -291,6 +308,28 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
 
   const selInterviews = selectedDay ? (interviewMap.get(selectedDay) || []) : [];
   const selFollowUps  = selectedDay ? (followUpMap.get(selectedDay) || []) : [];
+  const selCustom     = selectedDay ? (customMap.get(selectedDay) || []) : [];
+
+  const handleSelectDay = (key: string) => {
+    if (key === selectedDay) {
+      setSelectedDay(null);
+      setShowForm(false);
+    } else {
+      setSelectedDay(key);
+      setShowForm(false);
+    }
+  };
+
+  const handleAddEvent = () => {
+    if (!formTitle.trim() || !selectedDay) return;
+    addEvent({ date: selectedDay, title: formTitle.trim(), type: formType, time: formTime || undefined });
+    setFormTitle('');
+    setFormTime('');
+    setShowForm(false);
+  };
+
+  const formatSelectedDay = (key: string) =>
+    new Date(key + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5 animate-fade-in" style={{ animationDelay: '500ms' }}>
@@ -321,16 +360,17 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
       <div className="grid grid-cols-7 gap-y-0.5">
         {cells.map((day, idx) => {
           if (day === null) return <div key={idx} />;
-          const key         = toKey(year, month, day);
-          const isToday     = key === todayKey;
-          const isSelected  = key === selectedDay;
+          const key          = toKey(year, month, day);
+          const isToday      = key === todayKey;
+          const isSelected   = key === selectedDay;
           const hasInterview = interviewMap.has(key);
           const hasFollowUp  = followUpMap.has(key);
+          const hasCustom    = customMap.has(key);
 
           return (
             <button
               key={idx}
-              onClick={() => setSelectedDay(isSelected ? null : key)}
+              onClick={() => handleSelectDay(key)}
               className={`relative flex flex-col items-center justify-center py-1.5 rounded-lg transition-all active:scale-95 ${
                 isSelected
                   ? 'bg-gray-900 text-white'
@@ -340,10 +380,13 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
               }`}
             >
               <span className="text-xs font-medium leading-none mb-0.5">{day}</span>
-              {(hasInterview || hasFollowUp) && (
-                <div className="flex gap-0.5 mt-0.5">
+              {(hasInterview || hasFollowUp || hasCustom) && (
+                <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center max-w-[24px]">
                   {hasInterview && <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-purple-300' : 'bg-purple-500'}`} />}
                   {hasFollowUp  && <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-amber-300'  : 'bg-amber-500'}`} />}
+                  {hasCustom && customMap.get(key)!.slice(0, 2).map(e => (
+                    <span key={e.id} className={`w-1 h-1 rounded-full ${isSelected ? EVENT_TYPE_META[e.type].dotSel : EVENT_TYPE_META[e.type].dot}`} />
+                  ))}
                 </div>
               )}
             </button>
@@ -352,7 +395,7 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
       </div>
 
       {/* Legend */}
-      <div className="flex gap-4 mt-3 pt-3 border-t border-gray-100">
+      <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-gray-100">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
           <span className="text-xs text-gray-400">{t('calendarInterview')}</span>
@@ -361,27 +404,110 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
           <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
           <span className="text-xs text-gray-400">{t('calendarFollowUp')}</span>
         </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
+          <span className="text-xs text-gray-400">Custom</span>
+        </div>
       </div>
 
-      {/* Selected day events */}
-      {selectedDay && (selInterviews.length > 0 || selFollowUps.length > 0) && (
-        <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5 animate-fade-in">
-          {selInterviews.map(j => (
-            <div key={j.id} onClick={() => navigate(`/jobs/${j.id}`)} className="flex items-center gap-2 text-xs cursor-pointer hover:opacity-70 transition">
-              <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-              <span className="text-gray-700 font-medium truncate">{j.title} · {j.company}</span>
+      {/* Selected day panel */}
+      {selectedDay && (
+        <div className="mt-3 pt-3 border-t border-gray-100 animate-fade-in">
+          {/* Day header */}
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-gray-700">{formatSelectedDay(selectedDay)}</p>
+            <button
+              onClick={() => { setShowForm(f => !f); setFormTitle(''); setFormTime(''); }}
+              className="flex items-center gap-1 px-2 py-1 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition active:scale-95"
+            >
+              + Add event
+            </button>
+          </div>
+
+          {/* Add event form */}
+          {showForm && (
+            <div className="mb-3 p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2 animate-fade-in">
+              <input
+                type="text"
+                placeholder="Event title..."
+                value={formTitle}
+                onChange={e => setFormTitle(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddEvent()}
+                autoFocus
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white"
+              />
+              <div className="flex gap-2">
+                <select
+                  value={formType}
+                  onChange={e => setFormType(e.target.value as CalendarEventType)}
+                  className="flex-1 px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-gray-700"
+                >
+                  {(Object.entries(EVENT_TYPE_META) as [CalendarEventType, { label: string }][]).map(([k, v]) => (
+                    <option key={k} value={k}>{v.label}</option>
+                  ))}
+                </select>
+                <input
+                  type="time"
+                  value={formTime}
+                  onChange={e => setFormTime(e.target.value)}
+                  className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-gray-700"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddEvent}
+                  disabled={!formTitle.trim()}
+                  className="flex-1 py-1.5 text-xs font-semibold bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white rounded-lg transition"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          ))}
-          {selFollowUps.map(f => (
-            <div key={f.id} onClick={() => navigate(`/jobs/${f.id}`)} className="flex items-center gap-2 text-xs cursor-pointer hover:opacity-70 transition">
-              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-              <span className="text-gray-700 font-medium truncate">{f.title} · {f.company}</span>
-            </div>
-          ))}
+          )}
+
+          {/* Job-derived events */}
+          <div className="space-y-1.5">
+            {selInterviews.map(j => (
+              <div key={j.id} onClick={() => navigate(`/jobs/${j.id}`)} className="flex items-center gap-2 text-xs cursor-pointer hover:opacity-70 transition group">
+                <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                <span className="text-gray-700 font-medium truncate flex-1">{j.title} · {j.company}</span>
+                <span className="text-gray-400 text-[10px] shrink-0">Interview</span>
+              </div>
+            ))}
+            {selFollowUps.map(f => (
+              <div key={f.id} onClick={() => navigate(`/jobs/${f.id}`)} className="flex items-center gap-2 text-xs cursor-pointer hover:opacity-70 transition">
+                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                <span className="text-gray-700 font-medium truncate flex-1">{f.title} · {f.company}</span>
+                <span className="text-gray-400 text-[10px] shrink-0">Follow-up</span>
+              </div>
+            ))}
+            {/* Custom events */}
+            {selCustom.map(e => (
+              <div key={e.id} className="flex items-center gap-2 text-xs group">
+                <span className={`w-2 h-2 rounded-full shrink-0 ${EVENT_TYPE_META[e.type].dot}`} />
+                <span className="text-gray-700 font-medium truncate flex-1">
+                  {e.time && <span className="text-gray-400 mr-1">{e.time}</span>}
+                  {e.title}
+                </span>
+                <span className="text-gray-400 text-[10px] shrink-0">{EVENT_TYPE_META[e.type].label}</span>
+                <button
+                  onClick={() => removeEvent(e.id)}
+                  className="ml-1 text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100 text-base leading-none shrink-0"
+                  title="Delete event"
+                >×</button>
+              </div>
+            ))}
+            {selInterviews.length === 0 && selFollowUps.length === 0 && selCustom.length === 0 && (
+              <p className="text-xs text-gray-400 text-center py-1">{t('noEventsDay')}</p>
+            )}
+          </div>
         </div>
-      )}
-      {selectedDay && selInterviews.length === 0 && selFollowUps.length === 0 && (
-        <p className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400 text-center animate-fade-in">{t('noEventsDay')}</p>
       )}
     </div>
   );
@@ -434,10 +560,20 @@ const DashboardSkeleton = () => (
   </div>
 );
 
+function useGreeting(email: string | undefined) {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const raw = email?.split('@')[0] ?? '';
+  const displayName = raw.charAt(0).toUpperCase() + raw.slice(1);
+  const todayFormatted = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  return { greeting, displayName, todayFormatted };
+}
+
 export const DashboardPage = () => {
-  const { isDemo } = useAuthStore();
+  const { isDemo, user } = useAuthStore();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { greeting, displayName, todayFormatted } = useGreeting(user?.email);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [followUps, setFollowUps] = useState<FollowUpAlert[]>([]);
   const [upcomingInterviews, setUpcomingInterviews] = useState<Job[]>([]);
@@ -493,8 +629,8 @@ export const DashboardPage = () => {
 
       {/* Page title */}
       <div className="mb-5 animate-fade-in">
-        <h1 className="text-2xl font-bold text-gray-900">{t('dashboard')}</h1>
-        <p className="text-sm text-gray-500 mt-1">{t('yourJobSearchGlance')}</p>
+        <h1 className="text-2xl font-bold text-gray-900">{greeting}, {displayName} 👋</h1>
+        <p className="text-sm text-gray-500 mt-1">{todayFormatted}</p>
       </div>
 
       {/* Daily stress check-up */}
@@ -634,16 +770,90 @@ export const DashboardPage = () => {
         ))}
       </div>
 
+      {/* At a glance strip */}
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
+          {[
+            {
+              label: 'Total tracked',
+              value: stats.total,
+              color: 'text-gray-800',
+              bg: 'bg-white',
+            },
+            {
+              label: 'Added today',
+              value: stats.new_today,
+              prefix: stats.new_today > 0 ? '+' : '',
+              color: stats.new_today > 0 ? 'text-blue-600' : 'text-gray-400',
+              bg: 'bg-white',
+            },
+            {
+              label: 'Applied today',
+              value: stats.applied_today,
+              prefix: stats.applied_today > 0 ? '+' : '',
+              color: stats.applied_today > 0 ? 'text-green-600' : 'text-gray-400',
+              bg: 'bg-white',
+            },
+            {
+              label: 'Response rate',
+              value: stats.applied > 0 ? Math.round(((stats.interviewing + (stats.offered || 0)) / stats.applied) * 100) : 0,
+              suffix: '%',
+              color: 'text-purple-600',
+              bg: 'bg-white',
+            },
+          ].map(item => (
+            <div key={item.label} className={`${item.bg} rounded-xl border border-gray-100 px-4 py-3`}>
+              <p className="text-xs text-gray-400 mb-0.5">{item.label}</p>
+              <p className={`text-xl font-bold tabular-nums ${item.color}`}>
+                {item.prefix ?? ''}{item.value}{item.suffix ?? ''}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Germany job map (compact) */}
       {locationData.length > 0 && (
-        <div className="mb-8 bg-white rounded-xl border border-gray-200 p-5 animate-fade-in" style={{ animationDelay: '350ms' }}>
-          <div className="flex items-center justify-between mb-3">
+        <div className="mb-8 bg-white rounded-xl border border-gray-200 overflow-hidden animate-fade-in" style={{ animationDelay: '350ms' }}>
+          <div className="flex items-center justify-between px-5 pt-4 pb-3">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Jobs by Region</h3>
             <button onClick={() => navigate('/analytics')} className="text-xs text-green-600 hover:text-green-800 font-medium transition">
-              View analytics →
+              View all →
             </button>
           </div>
-          <GermanyJobMap byLocation={locationData} compact />
+          <div className="flex flex-col sm:flex-row">
+            {/* Map */}
+            <div className="flex-1 min-w-0">
+              <GermanyJobMap
+                byLocation={locationData}
+                compact
+                onCityClick={loc => navigate(`/jobs?search=${encodeURIComponent(loc.split(/[,/(]/)[0].trim())}`)}
+              />
+            </div>
+            {/* City list */}
+            <div className="sm:w-44 shrink-0 px-4 py-3 sm:py-4 border-t sm:border-t-0 sm:border-l border-gray-100 space-y-2.5">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Top cities</p>
+              {locationData.slice(0, 6).map((loc, i) => {
+                const max = locationData[0]?.count || 1;
+                return (
+                  <div key={loc.location}>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs text-gray-600 font-medium truncate max-w-[90px]">
+                        {i + 1}. {loc.location.split(/[,/(]/)[0].trim()}
+                      </span>
+                      <span className="text-xs font-bold text-green-700 ml-1">{loc.count}</span>
+                    </div>
+                    <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-green-400 rounded-full"
+                        style={{ width: `${Math.round((loc.count / max) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
@@ -721,27 +931,47 @@ export const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Pipeline summary */}
-      {((stats?.applied || 0) + (stats?.interviewing || 0) + (stats?.offered || 0) + (stats?.rejected || 0)) > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5 animate-fade-in" style={{ animationDelay: '450ms' }}>
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">{t('applicationPipeline')}</h3>
-          <div className="flex flex-wrap gap-5">
-            {[
-              { label: t('saved'),        value: stats?.saved || 0,        dot: 'bg-yellow-400' },
-              { label: t('applied'),      value: stats?.applied || 0,      dot: 'bg-green-500' },
-              { label: t('interviewing'), value: stats?.interviewing || 0, dot: 'bg-purple-500' },
-              { label: t('offered'),      value: stats?.offered || 0,      dot: 'bg-emerald-500' },
-              { label: t('rejected'),     value: stats?.rejected || 0,     dot: 'bg-red-400' },
-            ].map(s => (
-              <div key={s.label} className="flex items-center gap-2.5">
-                <div className={`w-2.5 h-2.5 rounded-full ${s.dot} shrink-0`}></div>
-                <span className="text-sm text-gray-500">{s.label}</span>
-                <span className="text-sm font-bold text-gray-800 tabular-nums">{s.value}</span>
-              </div>
-            ))}
+      {/* Pipeline — visual funnel */}
+      {stats && ((stats.applied || 0) + (stats.interviewing || 0) + (stats.offered || 0) + (stats.rejected || 0)) > 0 && (() => {
+        const stages = [
+          { label: t('saved'),        value: stats.saved || 0,        bar: 'bg-yellow-400', text: 'text-yellow-700' },
+          { label: t('applied'),      value: stats.applied || 0,      bar: 'bg-green-500',  text: 'text-green-700' },
+          { label: t('interviewing'), value: stats.interviewing || 0, bar: 'bg-purple-500', text: 'text-purple-700' },
+          { label: t('offered'),      value: stats.offered || 0,      bar: 'bg-emerald-500',text: 'text-emerald-700' },
+          { label: t('rejected'),     value: stats.rejected || 0,     bar: 'bg-red-400',    text: 'text-red-600' },
+        ];
+        const maxVal = Math.max(...stages.map(s => s.value), 1);
+        return (
+          <div className="bg-white rounded-xl border border-gray-200 p-5 animate-fade-in" style={{ animationDelay: '450ms' }}>
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">{t('applicationPipeline')}</h3>
+            <div className="space-y-3">
+              {stages.map((s, i) => {
+                const prev = i > 0 ? stages[i - 1].value : null;
+                const conv = prev && prev > 0 ? Math.round((s.value / prev) * 100) : null;
+                return (
+                  <div key={s.label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-gray-600">{s.label}</span>
+                      <div className="flex items-center gap-3">
+                        {conv !== null && (
+                          <span className="text-xs text-gray-400">{conv}% of prev</span>
+                        )}
+                        <span className={`text-xs font-bold tabular-nums ${s.text}`}>{s.value}</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${s.bar} rounded-full transition-all duration-700`}
+                        style={{ width: `${Math.round((s.value / maxVal) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Calendar */}
       <div className="mt-6">
