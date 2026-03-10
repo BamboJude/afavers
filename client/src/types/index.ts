@@ -73,4 +73,5 @@ export interface JobFilters {
   noFilter?: boolean;
   dateFrom?: string;
   remoteOnly?: boolean;
+  location?: string;
 }

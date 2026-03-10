@@ -5,17 +5,52 @@ import { jobsService } from '../services/jobs.service';
 import type { DashboardStats, FollowUpAlert, Job } from '../types';
 import { useLanguage } from '../store/languageStore';
 import { useGoalStore, type GoalType } from '../store/goalStore';
-import { GermanyJobMap } from '../components/common/GermanyJobMap';
 import { useCalendarStore, type CalendarEventType } from '../store/calendarStore';
 
 // ── Stress check-up ──────────────────────────────────────────────────────────
 
+const StressFace = ({ level, size = 28 }: { level: 1|2|3|4|5; size?: number }) => {
+  type Cfg = { bg: string; stroke: string; mouth: string; brows?: boolean };
+  const configs: Record<number, Cfg> = {
+    1: { bg: '#fee2e2', stroke: '#ef4444', mouth: 'M9 15.5 Q12 13 15 15.5', brows: true },
+    2: { bg: '#ffedd5', stroke: '#f97316', mouth: 'M9.5 14.5 Q12 13 14.5 14.5', brows: false },
+    3: { bg: '#f3f4f6', stroke: '#6b7280', mouth: 'M9.5 14 H14.5', brows: false },
+    4: { bg: '#dbeafe', stroke: '#3b82f6', mouth: 'M9.5 13.5 Q12 15.5 14.5 13.5', brows: false },
+    5: { bg: '#dcfce7', stroke: '#16a34a', mouth: 'M8.5 13 Q12 16.5 15.5 13', brows: false },
+  };
+  const c = configs[level];
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" style={{ flexShrink: 0 }}>
+      <circle cx="12" cy="12" r="10" fill={c.bg} stroke={c.stroke} strokeWidth="1.5"/>
+      <circle cx="9" cy="10" r="1.1" fill={c.stroke}/>
+      <circle cx="15" cy="10" r="1.1" fill={c.stroke}/>
+      {c.brows && <path d="M7 7.5 L9.5 8.5 M17 7.5 L14.5 8.5" stroke={c.stroke} strokeWidth="1.5" strokeLinecap="round"/>}
+      <path d={c.mouth} stroke={c.stroke} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+    </svg>
+  );
+};
+
+const IconTarget = ({ className = 'w-5 h-5' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <circle cx="12" cy="12" r="10" strokeWidth="1.5"/>
+    <circle cx="12" cy="12" r="6" strokeWidth="1.5"/>
+    <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+  </svg>
+);
+
+const IconClock = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <circle cx="12" cy="12" r="10" strokeWidth="1.5"/>
+    <path d="M12 7v5l3 3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 const STRESS_LEVELS = [
-  { level: 1 as const, emoji: '😰', labelKey: 'stressOverwhelmed', card: 'bg-red-50 border-red-200 text-red-700',    tipKey: 'stressTip1' },
-  { level: 2 as const, emoji: '😟', labelKey: 'stressStruggling',  card: 'bg-orange-50 border-orange-200 text-orange-700', tipKey: 'stressTip2' },
-  { level: 3 as const, emoji: '😐', labelKey: 'stressOkay',        card: 'bg-gray-100 border-gray-200 text-gray-700',  tipKey: 'stressTip3' },
-  { level: 4 as const, emoji: '🙂', labelKey: 'stressGood',        card: 'bg-blue-50 border-blue-200 text-blue-700',   tipKey: 'stressTip4' },
-  { level: 5 as const, emoji: '😊', labelKey: 'stressThriving',    card: 'bg-green-50 border-green-200 text-green-700', tipKey: 'stressTip5' },
+  { level: 1 as const, labelKey: 'stressOverwhelmed', card: 'bg-red-50 border-red-200 text-red-700',    tipKey: 'stressTip1' },
+  { level: 2 as const, labelKey: 'stressStruggling',  card: 'bg-orange-50 border-orange-200 text-orange-700', tipKey: 'stressTip2' },
+  { level: 3 as const, labelKey: 'stressOkay',        card: 'bg-gray-100 border-gray-200 text-gray-700',  tipKey: 'stressTip3' },
+  { level: 4 as const, labelKey: 'stressGood',        card: 'bg-blue-50 border-blue-200 text-blue-700',   tipKey: 'stressTip4' },
+  { level: 5 as const, labelKey: 'stressThriving',    card: 'bg-green-50 border-green-200 text-green-700', tipKey: 'stressTip5' },
 ];
 
 const StressCheckup = () => {
@@ -30,7 +65,7 @@ const StressCheckup = () => {
   if (today && info) {
     return (
       <div className={`mb-5 rounded-xl border px-4 py-2.5 flex items-center gap-3 animate-fade-in ${info.card}`}>
-        <span className="text-xl">{info.emoji}</span>
+        <StressFace level={info.level} size={24} />
         <div className="flex-1 min-w-0">
           <span className="text-xs font-semibold">{t(info.labelKey)} today · </span>
           <span className="text-xs opacity-75 line-clamp-1">{t(info.tipKey)}</span>
@@ -62,7 +97,7 @@ const StressCheckup = () => {
             onClick={() => logStress(s.level)}
             className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:scale-95 transition"
           >
-            <span className="text-2xl">{s.emoji}</span>
+            <StressFace level={s.level} size={32} />
             <span className="text-xs text-gray-500 font-medium">{t(s.labelKey)}</span>
           </button>
         ))}
@@ -114,7 +149,7 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
   if (!goal && !setting) {
     return (
       <div className="mb-6 bg-white border border-dashed border-gray-300 rounded-xl p-4 flex items-center gap-4 hover:border-gray-400 transition-colors animate-fade-in cursor-pointer group" onClick={() => setSetting(true)}>
-        <div className="text-2xl">🎯</div>
+        <IconTarget className="w-6 h-6 text-gray-400" />
         <div className="flex-1">
           <p className="text-sm font-semibold text-gray-700 group-hover:text-gray-900">{t('setAGoal')}</p>
           <p className="text-xs text-gray-400">{t('stayMotivated')}</p>
@@ -211,7 +246,7 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
     <div className="mb-6 bg-white border border-gray-200 rounded-xl p-4 animate-fade-in">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-lg">🎯</span>
+          <IconTarget className="w-4 h-4" />
           <span className="text-sm font-semibold text-gray-700">
             {goal!.type === 'applications' ? t('applicationsGoal') : t('interviewsGoal')}
           </span>
@@ -577,7 +612,6 @@ export const DashboardPage = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [followUps, setFollowUps] = useState<FollowUpAlert[]>([]);
   const [upcomingInterviews, setUpcomingInterviews] = useState<Job[]>([]);
-  const [locationData, setLocationData] = useState<{ location: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [fetchMsg, setFetchMsg] = useState('');
@@ -585,7 +619,6 @@ export const DashboardPage = () => {
   useEffect(() => {
     loadStats();
     jobsService.getFollowUps().then(setFollowUps).catch(() => {});
-    jobsService.getAnalytics().then(d => setLocationData(d.byLocation ?? [])).catch(() => {});
     jobsService.getJobs({ status: 'interviewing', limit: 20 })
       .then(r => {
         const withDate = r.jobs
@@ -629,7 +662,7 @@ export const DashboardPage = () => {
 
       {/* Page title */}
       <div className="mb-5 animate-fade-in">
-        <h1 className="text-2xl font-bold text-gray-900">{greeting}, {displayName} 👋</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{greeting}, {displayName}</h1>
         <p className="text-sm text-gray-500 mt-1">{todayFormatted}</p>
       </div>
 
@@ -662,7 +695,7 @@ export const DashboardPage = () => {
       {/* Follow-up reminders */}
       {followUps.length > 0 && (
         <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 animate-fade-in" style={{ animationDelay: '60ms' }}>
-          <p className="text-sm font-semibold text-amber-800 mb-2.5">⏰ {t('followUpsDue')} ({followUps.length})</p>
+          <p className="text-sm font-semibold text-amber-800 mb-2.5 flex items-center gap-1.5"><IconClock className="w-4 h-4" /> {t('followUpsDue')} ({followUps.length})</p>
           <div className="space-y-1">
             {followUps.map(f => (
               <div
@@ -772,90 +805,16 @@ export const DashboardPage = () => {
 
       {/* At a glance strip */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
-          {[
-            {
-              label: 'Total tracked',
-              value: stats.total,
-              color: 'text-gray-800',
-              bg: 'bg-white',
-            },
-            {
-              label: 'Added today',
-              value: stats.new_today,
-              prefix: stats.new_today > 0 ? '+' : '',
-              color: stats.new_today > 0 ? 'text-blue-600' : 'text-gray-400',
-              bg: 'bg-white',
-            },
-            {
-              label: 'Applied today',
-              value: stats.applied_today,
-              prefix: stats.applied_today > 0 ? '+' : '',
-              color: stats.applied_today > 0 ? 'text-green-600' : 'text-gray-400',
-              bg: 'bg-white',
-            },
-            {
-              label: 'Response rate',
-              value: stats.applied > 0 ? Math.round(((stats.interviewing + (stats.offered || 0)) / stats.applied) * 100) : 0,
-              suffix: '%',
-              color: 'text-purple-600',
-              bg: 'bg-white',
-            },
-          ].map(item => (
-            <div key={item.label} className={`${item.bg} rounded-xl border border-gray-100 px-4 py-3`}>
-              <p className="text-xs text-gray-400 mb-0.5">{item.label}</p>
-              <p className={`text-xl font-bold tabular-nums ${item.color}`}>
-                {item.prefix ?? ''}{item.value}{item.suffix ?? ''}
-              </p>
-            </div>
-          ))}
+        <div className="mb-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
+          <div className="bg-white rounded-xl border border-gray-100 px-4 py-3 inline-block">
+            <p className="text-xs text-gray-400 mb-0.5">Applied today</p>
+            <p className={`text-xl font-bold tabular-nums ${stats.applied_today > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+              {stats.applied_today > 0 ? '+' : ''}{stats.applied_today}
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Germany job map (compact) */}
-      {locationData.length > 0 && (
-        <div className="mb-8 bg-white rounded-xl border border-gray-200 overflow-hidden animate-fade-in" style={{ animationDelay: '350ms' }}>
-          <div className="flex items-center justify-between px-5 pt-4 pb-3">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Jobs by Region</h3>
-            <button onClick={() => navigate('/analytics')} className="text-xs text-green-600 hover:text-green-800 font-medium transition">
-              View all →
-            </button>
-          </div>
-          <div className="flex flex-col sm:flex-row">
-            {/* Map */}
-            <div className="flex-1 min-w-0">
-              <GermanyJobMap
-                byLocation={locationData}
-                compact
-                onCityClick={loc => navigate(`/jobs?search=${encodeURIComponent(loc.split(/[,/(]/)[0].trim())}`)}
-              />
-            </div>
-            {/* City list */}
-            <div className="sm:w-44 shrink-0 px-4 py-3 sm:py-4 border-t sm:border-t-0 sm:border-l border-gray-100 space-y-2.5">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Top cities</p>
-              {locationData.slice(0, 6).map((loc, i) => {
-                const max = locationData[0]?.count || 1;
-                return (
-                  <div key={loc.location}>
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs text-gray-600 font-medium truncate max-w-[90px]">
-                        {i + 1}. {loc.location.split(/[,/(]/)[0].trim()}
-                      </span>
-                      <span className="text-xs font-bold text-green-700 ml-1">{loc.count}</span>
-                    </div>
-                    <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-green-400 rounded-full"
-                        style={{ width: `${Math.round((loc.count / max) * 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Quick-action grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
