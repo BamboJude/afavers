@@ -98,6 +98,7 @@ router.get('/', async (req: AuthRequest, res) => {
       offset:    q('offset') ? parseInt(q('offset')!) : undefined,
       language:  q('language') as 'en' | 'de' | undefined,
       dateFrom:  q('dateFrom'),
+      remoteOnly: q('remoteOnly') === 'true',
       userKeywords,
       userLocations: locationParam
         ? locationParam.split('|').map(l => l.trim()).filter(Boolean)
