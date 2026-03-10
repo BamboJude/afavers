@@ -53,6 +53,25 @@ const deadlineUrgency = (deadline: string | null): string => {
   return '';
 };
 
+const STATE_CITIES: Record<string, string[]> = {
+  'Nordrhein-Westfalen': ['Düsseldorf', 'Köln', 'Essen', 'Dortmund', 'Bochum', 'Wuppertal', 'Bielefeld', 'Bonn', 'Münster', 'Duisburg', 'Gelsenkirchen', 'Oberhausen', 'Aachen', 'NRW', 'Nordrhein-Westfalen'],
+  'Bayern':              ['München', 'Nürnberg', 'Augsburg', 'Regensburg', 'Ingolstadt', 'Würzburg', 'Bayern', 'Bavaria'],
+  'Baden-Württemberg':   ['Stuttgart', 'Mannheim', 'Karlsruhe', 'Freiburg', 'Heidelberg', 'Ulm', 'Baden-Württemberg'],
+  'Hessen':              ['Frankfurt', 'Wiesbaden', 'Kassel', 'Darmstadt', 'Offenbach', 'Hessen'],
+  'Hamburg':             ['Hamburg'],
+  'Berlin':              ['Berlin'],
+  'Sachsen':             ['Dresden', 'Leipzig', 'Chemnitz', 'Sachsen'],
+  'Niedersachsen':       ['Hannover', 'Braunschweig', 'Osnabrück', 'Wolfsburg', 'Göttingen', 'Niedersachsen'],
+  'Rheinland-Pfalz':     ['Mainz', 'Ludwigshafen', 'Koblenz', 'Trier', 'Rheinland-Pfalz'],
+  'Brandenburg':         ['Potsdam', 'Cottbus', 'Brandenburg'],
+  'Thüringen':           ['Erfurt', 'Jena', 'Gera', 'Thüringen'],
+  'Sachsen-Anhalt':      ['Magdeburg', 'Halle', 'Sachsen-Anhalt'],
+  'Schleswig-Holstein':  ['Kiel', 'Lübeck', 'Flensburg', 'Schleswig-Holstein'],
+  'Bremen':              ['Bremen', 'Bremerhaven'],
+  'Mecklenburg-Vorpommern': ['Rostock', 'Schwerin', 'Mecklenburg-Vorpommern'],
+  'Saarland':            ['Saarbrücken', 'Saarland'],
+};
+
 const JobSkeleton = ({ delay = 0 }: { delay?: number }) => (
   <div
     className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 animate-pulse"
@@ -428,21 +447,18 @@ export const JobsPage = () => {
             {t('remote')}
           </button>
         </div>
-        {/* Location filter pills */}
-        <div className="flex items-center gap-2 mt-2 flex-wrap">
-          {['', 'Düsseldorf', 'Köln', 'Essen', 'Dortmund', 'Bochum', 'Berlin', 'Hamburg', 'München', 'Frankfurt', 'Stuttgart'].map(city => (
-            <button
-              key={city}
-              onClick={() => { setLocationFilter(city); setPage(1); }}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
-                locationFilter === city
-                  ? 'bg-green-700 text-white border-green-700'
-                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
-              }`}
-            >
-              {city || 'All cities'}
-            </button>
-          ))}
+        {/* Location filter — state dropdown */}
+        <div className="mt-2">
+          <select
+            value={locationFilter}
+            onChange={e => { setLocationFilter(e.target.value); setPage(1); }}
+            className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-green-500 outline-none bg-white"
+          >
+            <option value="">All states</option>
+            {Object.keys(STATE_CITIES).map(state => (
+              <option key={state} value={STATE_CITIES[state].join('|')}>{state}</option>
+            ))}
+          </select>
         </div>
         {/* Active filter indicator */}
         {filterCount > 0 && (

@@ -99,7 +99,9 @@ router.get('/', async (req: AuthRequest, res) => {
       language:  q('language') as 'en' | 'de' | undefined,
       dateFrom:  q('dateFrom'),
       userKeywords,
-      userLocations: locationParam ? [locationParam] : userLocations,
+      userLocations: locationParam
+        ? locationParam.split('|').map(l => l.trim()).filter(Boolean)
+        : userLocations,
     };
 
     const [jobs, total] = await Promise.all([
