@@ -145,14 +145,16 @@ export const JobsPage = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const initialTab = (searchParams.get('tab') as Tab) || 'new';
+  const initialTab    = (searchParams.get('tab') as Tab) || 'new';
+  const initialSearch = searchParams.get('search') || '';
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [search, setSearch] = useState(initialSearch);
   const [sortBy, setSortBy] = useState('posted_date');
   const [sourceFilter, setSourceFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
+  const [locationFilter, setLocationFilter] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -175,7 +177,7 @@ export const JobsPage = () => {
   useEffect(() => {
     fetchJobs();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeTab, search, sortBy, sourceFilter, dateFilter, remoteOnly, page]);
+  }, [activeTab, search, sortBy, sourceFilter, dateFilter, remoteOnly, locationFilter, page]);
 
   const loadStats = async () => {
     try {
@@ -198,6 +200,7 @@ export const JobsPage = () => {
         source: sourceFilter || undefined,
         dateFrom: dateFilter || undefined,
         remoteOnly: remoteOnly || undefined,
+        location: locationFilter || undefined,
       };
       const response = await jobsService.getJobs(filters);
       setJobs(response.jobs);
@@ -261,6 +264,7 @@ export const JobsPage = () => {
     setSourceFilter('');
     setDateFilter('');
     setRemoteOnly(false);
+    setLocationFilter('');
     setPage(1);
   };
 
@@ -270,10 +274,11 @@ export const JobsPage = () => {
     setSourceFilter('');
     setDateFilter('');
     setRemoteOnly(false);
+    setLocationFilter('');
     setPage(1);
   };
 
-  const filterCount = [search, sourceFilter, dateFilter, remoteOnly ? 'r' : ''].filter(Boolean).length;
+  const filterCount = [search, sourceFilter, dateFilter, remoteOnly ? 'r' : '', locationFilter].filter(Boolean).length;
 
   const totalPages = Math.ceil(total / LIMIT);
 
@@ -422,6 +427,22 @@ export const JobsPage = () => {
           >
             {t('remote')}
           </button>
+        </div>
+        {/* Location filter pills */}
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          {['', 'Düsseldorf', 'Köln', 'Essen', 'Dortmund', 'Bochum', 'Berlin', 'Hamburg', 'München', 'Frankfurt', 'Stuttgart'].map(city => (
+            <button
+              key={city}
+              onClick={() => { setLocationFilter(city); setPage(1); }}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
+                locationFilter === city
+                  ? 'bg-green-700 text-white border-green-700'
+                  : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
+              }`}
+            >
+              {city || 'All cities'}
+            </button>
+          ))}
         </div>
         {/* Active filter indicator */}
         {filterCount > 0 && (

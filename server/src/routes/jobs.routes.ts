@@ -87,6 +87,7 @@ router.get('/', async (req: AuthRequest, res) => {
       ? { userKeywords: [], userLocations: [] }
       : await getUserSearchFilters(req.userId!);
 
+    const locationParam = q('location');
     const filters = {
       status:    q('status'),
       source:    q('source'),
@@ -98,7 +99,7 @@ router.get('/', async (req: AuthRequest, res) => {
       language:  q('language') as 'en' | 'de' | undefined,
       dateFrom:  q('dateFrom'),
       userKeywords,
-      userLocations,
+      userLocations: locationParam ? [locationParam] : userLocations,
     };
 
     const [jobs, total] = await Promise.all([
