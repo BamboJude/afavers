@@ -22,9 +22,19 @@ if (env.NODE_ENV === 'production') {
 // Security headers
 app.use(helmet());
 
-// CORS
+// CORS — allow web, Capacitor iOS, and local dev
+const ALLOWED_ORIGINS = [
+  env.CLIENT_URL,           // https://afavers.com
+  'capacitor://localhost',  // Capacitor iOS app
+  'http://localhost:5173',  // Vite dev server
+  'http://localhost:3000',
+];
 app.use(cors({
-  origin: env.CLIENT_URL,
+  origin: (origin, cb) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS: ${origin} not allowed`));
+  },
   credentials: true,
 }));
 
