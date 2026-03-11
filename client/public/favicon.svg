@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background: rounded square, dark -->
+  <rect width="100" height="100" rx="18" fill="#111111"/>
+  <!-- White "A" letter -->
+  <text x="50" y="74" text-anchor="middle" font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-size="76" fill="#ffffff">A</text>
+  <!-- Orange "v" chevron accent overlaid on the A -->
+  <polygon points="38,44 50,62 62,44 57,44 50,55 43,44" fill="#f97316"/>
+</svg>

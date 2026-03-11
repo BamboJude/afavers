@@ -31,19 +31,45 @@ interface PublicJob {
   color?: string;
 }
 
+const CITY_SHORTCUTS = ['Düsseldorf', 'Köln', 'Essen', 'Dortmund', 'Berlin', 'Hamburg'];
+
+const IconSearch = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+);
+const IconRefresh = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+const IconKanban = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+  </svg>
+);
+const IconFire = () => (
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M17.66 11.2c-.23-.3-.51-.56-.77-.82-.67-.6-1.43-1.03-2.07-1.66C13.33 7.26 13 4.85 13.95 3c-.95.23-1.78.75-2.49 1.32C8.87 6.4 7.85 10.07 9.07 13.22c.04.1.08.2.08.33 0 .22-.15.42-.35.5-.23.1-.47.04-.66-.12-.06-.05-.1-.1-.14-.17C6.87 12.33 6.69 10.28 7.45 8.64 5.78 10 4.87 12.3 5 14.47c.06.5.12 1 .29 1.5.14.6.41 1.2.71 1.73C7.08 19.43 8.95 20.67 10.96 20.92c2.14.27 4.43-.12 6.07-1.6 1.83-1.66 2.47-4.32 1.53-6.6l-.13-.26c-.21-.46-.77-1.26-.77-1.26z"/>
+  </svg>
+);
+
 const FEATURES = [
   {
-    icon: '🔄',
-    title: 'Auto-fetched every 2h',
-    desc: 'Jobs from Bundesagentur für Arbeit land in your feed automatically — no manual searching.',
+    icon: <IconRefresh />,
+    iconBg: 'bg-green-100 text-green-700',
+    title: 'Auto-searched every 2h',
+    desc: 'afavers fetches new jobs from Bundesagentur für Arbeit automatically — no manual searching needed.',
   },
   {
-    icon: '📋',
+    icon: <IconKanban />,
+    iconBg: 'bg-blue-100 text-blue-700',
     title: 'Track every application',
-    desc: 'Kanban board to move jobs from Saved → Applied → Interview → Offer.',
+    desc: 'Kanban board to move jobs from Saved → Applied → Interview → Offer. Never lose track.',
   },
   {
-    icon: '⚡',
+    icon: <IconFire />,
+    iconBg: 'bg-orange-100 text-orange-600',
     title: 'Hot Picks',
     desc: 'Swipe-style triage — pass or save one job at a time. Clear your list in minutes.',
   },
@@ -79,19 +105,19 @@ export const LandingPage = () => {
     <div className="min-h-screen bg-white flex flex-col" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
 
       {/* ── Nav ── */}
-      <nav className="sticky top-0 z-40 bg-white border-b border-gray-200">
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 h-20 flex items-center justify-between">
           <img
             src="/logo.png"
             alt="afavers"
-            className="h-14 w-auto"
+            className="h-28 w-auto"
             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
           <div className="flex items-center gap-2 sm:gap-3">
             {isAuthenticated ? (
               <Link
                 to="/dashboard"
-                className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-full transition"
+                className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-full transition"
               >
                 Dashboard →
               </Link>
@@ -102,7 +128,7 @@ export const LandingPage = () => {
                 </Link>
                 <Link
                   to="/register"
-                  className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-full transition"
+                  className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-full transition shadow-sm"
                 >
                   Sign up free
                 </Link>
@@ -113,44 +139,58 @@ export const LandingPage = () => {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="bg-gradient-to-b from-green-50 to-white border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-6 pt-16 pb-10 text-center">
+      <section className="bg-gradient-to-b from-gray-50 to-white border-b border-gray-100">
+        <div className="max-w-3xl mx-auto px-6 pt-14 pb-10 text-center">
+
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-[1.1] tracking-tight mb-4">
-            Find green jobs in Germany.<br />
-            <span className="text-green-600">Track every application.</span>
+            Find & track job applications<br />
+            <span className="text-green-600">in Germany.</span>
           </h1>
           <p className="text-gray-500 text-lg leading-relaxed max-w-xl mx-auto mb-8">
-            afavers fetches sustainability & consulting jobs from Bundesagentur für Arbeit every 2 hours and gives you a dashboard to manage your whole search.
+            Jobs are automatically fetched from Bundesagentur für Arbeit every 2 hours and brought to your dashboard — you just apply and track.
           </p>
 
           {/* Search bar */}
-          <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto mb-3">
+          <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto mb-4">
             <div
-              className="flex items-center bg-white border-2 border-gray-200 focus-within:border-green-500 rounded-2xl shadow-md transition overflow-hidden h-14 cursor-text"
+              className="flex items-center bg-white border-2 border-gray-200 focus-within:border-green-500 focus-within:shadow-lg rounded-2xl shadow-md transition-all duration-200 overflow-hidden cursor-text"
               onClick={handleSearchFocus}
             >
-              <span className="pl-5 text-gray-400 shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+              <span className="pl-4 sm:pl-5 text-gray-400 shrink-0">
+                <IconSearch />
               </span>
               <input
                 type="text"
-                placeholder="Search jobs, companies, cities…"
+                placeholder="Job title, company, or city…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 onFocus={handleSearchFocus}
-                className="flex-1 px-4 text-gray-800 placeholder-gray-400 bg-transparent outline-none text-base cursor-text"
+                className="flex-1 px-3 sm:px-4 py-4 sm:py-4 text-base text-gray-800 placeholder-gray-400 bg-transparent outline-none cursor-text"
                 readOnly
               />
               <button
                 type="submit"
-                className="mr-2 px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition shrink-0"
+                className="m-2 px-5 sm:px-6 py-3 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-sm sm:text-base font-bold rounded-xl transition-colors shrink-0"
               >
                 Search
               </button>
             </div>
+
+            {/* City shortcut pills */}
+            <div className="flex flex-wrap gap-2 justify-center mt-3">
+              {CITY_SHORTCUTS.map(city => (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => navigate(isAuthenticated ? `/jobs?q=${encodeURIComponent(city)}` : '/demo')}
+                  className="px-4 py-2 bg-white border border-gray-200 hover:border-green-400 hover:text-green-700 text-gray-500 text-sm font-medium rounded-full transition-colors shadow-sm active:scale-95"
+                >
+                  {city}
+                </button>
+              ))}
+            </div>
           </form>
+
           <p className="text-gray-400 text-sm">Free forever · No credit card</p>
         </div>
 
@@ -194,7 +234,9 @@ export const LandingPage = () => {
 
             {/* Sign-up end card */}
             <div className="snap-start shrink-0 w-72 bg-green-50 border-2 border-dashed border-green-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center text-2xl">🌿</div>
+              <div className="w-11 h-11 rounded-xl bg-green-600 flex items-center justify-center text-white">
+                <IconSearch />
+              </div>
               <div>
                 <p className="text-base font-bold text-gray-800 mb-0.5">See all jobs</p>
                 <p className="text-xs text-gray-500">Track & apply from one place</p>
@@ -214,8 +256,10 @@ export const LandingPage = () => {
       <section className="py-16 px-6 bg-white border-b border-gray-100">
         <div className="max-w-4xl mx-auto grid sm:grid-cols-3 gap-8">
           {FEATURES.map(f => (
-            <div key={f.title} className="text-center sm:text-left">
-              <div className="text-3xl mb-3">{f.icon}</div>
+            <div key={f.title} className="flex flex-col sm:items-start items-center text-center sm:text-left">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${f.iconBg}`}>
+                {f.icon}
+              </div>
               <p className="font-bold text-gray-900 mb-1">{f.title}</p>
               <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
             </div>
@@ -227,7 +271,7 @@ export const LandingPage = () => {
       <section className="py-16 px-6 bg-green-600 text-white text-center">
         <div className="max-w-xl mx-auto">
           <h2 className="text-3xl font-extrabold mb-3">Ready to get started?</h2>
-          <p className="text-green-100 mb-8">Free account · Takes 30 seconds.</p>
+          <p className="text-green-100 mb-8">Free account · Takes 30 seconds · job searching is done for you.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/register"
@@ -248,7 +292,7 @@ export const LandingPage = () => {
       {/* ── Footer ── */}
       <footer className="bg-white border-t border-gray-100 py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <img src="/logo.png" alt="afavers" className="h-12 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          <img src="/logo.png" alt="afavers" className="h-14 w-auto" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           <p className="text-sm text-gray-400">© {new Date().getFullYear()} afavers · Job tracker for Germany</p>
           <div className="flex gap-5 text-sm font-medium text-gray-400">
             <Link to="/login" className="hover:text-gray-900 transition">Log in</Link>

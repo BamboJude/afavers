@@ -110,7 +110,7 @@ const CompanyAvatar = ({ company }: { company: string }) => {
   ];
   const idx = letter.charCodeAt(0) % colors.length;
   return (
-    <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-sm sm:text-base font-bold shrink-0 ${colors[idx]}`}>
+    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-base font-bold shrink-0 ${colors[idx]}`}>
       {letter}
     </div>
   );
@@ -142,8 +142,18 @@ const SwipeableCard = ({
           }`}
           style={{ opacity: bgOpacity }}
         >
-          <span className="text-white text-sm font-bold select-none">
-            {visibleAction === 'save' ? '⭐ Save' : 'Hide ✕'}
+          <span className="text-white text-sm font-bold select-none flex items-center gap-1.5">
+            {visibleAction === 'save' ? (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                Save
+              </>
+            ) : (
+              <>
+                Hide
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+              </>
+            )}
           </span>
         </div>
       )}
@@ -264,6 +274,30 @@ export const JobsPage = () => {
     setActionLoading(null);
   };
 
+  const handleUnsave = async (job: Job) => {
+    setActionLoading(job.id);
+    try {
+      await jobsService.updateStatus(job.id, 'new');
+      setJobs(prev => prev.filter(j => j.id !== job.id));
+      setTotal(prev => prev - 1);
+      setStats(prev => prev ? { ...prev, saved: Math.max(0, prev.saved - 1), new: prev.new + 1 } : prev);
+      showToast(t('toastJobUnsaved'), 'info');
+    } catch {}
+    setActionLoading(null);
+  };
+
+  const handleRevertToSaved = async (job: Job) => {
+    setActionLoading(job.id);
+    try {
+      await jobsService.updateStatus(job.id, 'saved');
+      setJobs(prev => prev.filter(j => j.id !== job.id));
+      setTotal(prev => prev - 1);
+      setStats(prev => prev ? { ...prev, applied: Math.max(0, prev.applied - 1), saved: prev.saved + 1 } : prev);
+      showToast(t('toastJobReverted'), 'info');
+    } catch {}
+    setActionLoading(null);
+  };
+
   const handleHide = async (job: Job) => {
     setActionLoading(job.id);
     try {
@@ -340,7 +374,7 @@ export const JobsPage = () => {
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className={`px-5 py-3.5 text-sm font-medium border-b-2 whitespace-nowrap transition ${
+                className={`px-5 py-4 text-base font-medium border-b-2 whitespace-nowrap transition ${
                   activeTab === tab.id
                     ? tab.activeColor
                     : `border-transparent text-gray-400 ${tab.color}`
@@ -348,7 +382,7 @@ export const JobsPage = () => {
               >
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 ${
+                  <span className={`ml-2 px-2 py-0.5 rounded-full text-sm font-bold bg-gray-100 ${
                     activeTab === tab.id ? 'text-gray-700' : 'text-gray-400'
                   }`}>
                     {tab.count.toLocaleString()}
@@ -363,28 +397,41 @@ export const JobsPage = () => {
       {/* Search + Sort bar */}
       <div className="max-w-5xl mx-auto px-6 py-4">
         <div className="flex gap-3 flex-wrap">
-          <div className="flex-1 min-w-48 relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder={t('searchPlaceholder')}
-              value={searchInput}
-              onChange={e => setSearchInput(e.target.value)}
-              className="w-full pl-10 pr-9 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm bg-white"
-            />
-            {searchInput && (
-              <button
-                onClick={() => { setSearchInput(''); setPage(1); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-                aria-label="Clear search"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
+          {/* Combined location + search input */}
+          <div className="flex-1 min-w-48 flex rounded-lg border border-gray-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+            <select
+              value={locationFilter}
+              onChange={e => { setLocationFilter(e.target.value); setPage(1); }}
+              className="text-base text-gray-600 bg-transparent border-r border-gray-200 pl-3 pr-2 py-3.5 outline-none cursor-pointer shrink-0 max-w-[140px]"
+            >
+              <option value="">All states</option>
+              {Object.keys(STATE_CITIES).map(state => (
+                <option key={state} value={STATE_CITIES[state].join('|')}>{state}</option>
+              ))}
+            </select>
+            <div className="relative flex-1">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder={t('searchPlaceholder')}
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                className="w-full pl-9 pr-9 py-3.5 outline-none text-base bg-transparent"
+              />
+              {searchInput && (
+                <button
+                  onClick={() => { setSearchInput(''); setPage(1); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                  aria-label="Clear search"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
           <select
             value={sortBy}
@@ -447,19 +494,6 @@ export const JobsPage = () => {
             {t('remote')}
           </button>
         </div>
-        {/* Location filter — state dropdown */}
-        <div className="mt-2">
-          <select
-            value={locationFilter}
-            onChange={e => { setLocationFilter(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-green-500 outline-none bg-white"
-          >
-            <option value="">All states</option>
-            {Object.keys(STATE_CITIES).map(state => (
-              <option key={state} value={STATE_CITIES[state].join('|')}>{state}</option>
-            ))}
-          </select>
-        </div>
         {/* Active filter indicator */}
         {filterCount > 0 && (
           <div className="flex items-center gap-2 mt-3">
@@ -505,8 +539,8 @@ export const JobsPage = () => {
                     deadlineUrgency(job.deadline) || 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <div className="p-4 sm:p-5">
-                    <div className="flex items-start gap-3">
+                  <div className="p-5 sm:p-6">
+                    <div className="flex items-start gap-4">
                       {/* Company avatar */}
                       <div className="shrink-0">
                         <CompanyAvatar company={job.company} />
@@ -516,10 +550,10 @@ export const JobsPage = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <h3 className="font-semibold text-gray-900 leading-snug group-hover:text-blue-700 transition-colors text-sm sm:text-base">
+                            <h3 className="font-bold text-gray-900 leading-snug group-hover:text-blue-700 transition-colors text-base sm:text-lg">
                               {job.title}
                             </h3>
-                            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                            <p className="text-sm text-gray-500 mt-0.5">
                               {job.company}
                               {job.location && <span className="text-gray-400"> · {job.location}</span>}
                             </p>
@@ -532,7 +566,7 @@ export const JobsPage = () => {
                         </div>
 
                         {job.description && (
-                          <p className="text-xs sm:text-sm text-gray-500 mt-1.5 line-clamp-2 leading-relaxed">
+                          <p className="text-sm text-gray-500 mt-2 line-clamp-2 leading-relaxed">
                             {stripHtml(job.description)}
                           </p>
                         )}
@@ -552,7 +586,7 @@ export const JobsPage = () => {
                           )}
                         </div>
 
-                        {/* Actions — below content on mobile */}
+                        {/* Actions — icon buttons on mobile (language-agnostic) */}
                         <div
                           className="flex gap-2 mt-3 sm:hidden"
                           onClick={e => e.stopPropagation()}
@@ -561,38 +595,86 @@ export const JobsPage = () => {
                             <button
                               onClick={e => { e.stopPropagation(); handleSave(job); }}
                               disabled={actionLoading === job.id}
-                              className="flex-1 py-2 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40"
+                              aria-label={t('save')}
+                              title={t('save')}
+                              className="flex-1 flex flex-col items-center gap-1 py-2.5 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-xl transition disabled:opacity-40 active:scale-95"
                             >
-                              ⭐ {t('save')}
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                              </svg>
+                              <span className="text-xs font-semibold leading-none">{t('save')}</span>
+                            </button>
+                          )}
+                          {job.status === 'saved' && (
+                            <button
+                              onClick={e => { e.stopPropagation(); handleUnsave(job); }}
+                              disabled={actionLoading === job.id}
+                              aria-label={t('unsave')}
+                              title={t('unsaveJob')}
+                              className="flex-1 flex flex-col items-center gap-1 py-2.5 bg-yellow-50 hover:bg-red-50 text-yellow-600 hover:text-red-500 border border-yellow-200 hover:border-red-200 rounded-xl transition disabled:opacity-40 active:scale-95"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5zM9 9l6 6M15 9l-6 6"/>
+                              </svg>
+                              <span className="text-xs font-semibold leading-none">{t('unsave')}</span>
+                            </button>
+                          )}
+                          {job.status === 'applied' && (
+                            <button
+                              onClick={e => { e.stopPropagation(); handleRevertToSaved(job); }}
+                              disabled={actionLoading === job.id}
+                              aria-label={t('revertToSaved')}
+                              title={t('revertToSavedJob')}
+                              className="flex-1 flex flex-col items-center gap-1 py-2.5 bg-gray-50 hover:bg-yellow-50 text-gray-500 hover:text-yellow-700 border border-gray-200 hover:border-yellow-200 rounded-xl transition disabled:opacity-40 active:scale-95"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                              </svg>
+                              <span className="text-xs font-semibold leading-none">{t('revertToSaved')}</span>
                             </button>
                           )}
                           {(job.status === 'new' || job.status === 'saved') && (
                             <button
                               onClick={e => { e.stopPropagation(); handleApply(job); }}
                               disabled={actionLoading === job.id}
-                              className="flex-1 py-2 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40"
+                              aria-label={t('markApplied')}
+                              title={t('markApplied')}
+                              className="flex-1 flex flex-col items-center gap-1 py-2.5 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-xl transition disabled:opacity-40 active:scale-95"
                             >
-                              ✓ {t('markApplied')}
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                              </svg>
+                              <span className="text-xs font-semibold leading-none truncate max-w-full px-1">{t('markApplied')}</span>
                             </button>
                           )}
-                          <button
-                            onClick={e => { e.stopPropagation(); handleHide(job); }}
-                            disabled={actionLoading === job.id}
-                            className="flex-1 py-2 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
-                          >
-                            ✕ {t('hide')}
-                          </button>
                           {job.url && (
                             <a
                               href={job.url}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={e => e.stopPropagation()}
-                              className="flex-1 py-2 text-xs font-semibold text-center bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg transition"
+                              aria-label={t('apply')}
+                              title={t('apply')}
+                              className="flex-1 flex flex-col items-center gap-1 py-2.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-xl transition active:scale-95"
                             >
-                              {t('apply')}
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                              </svg>
+                              <span className="text-xs font-semibold leading-none">Apply</span>
                             </a>
                           )}
+                          <button
+                            onClick={e => { e.stopPropagation(); handleHide(job); }}
+                            disabled={actionLoading === job.id}
+                            aria-label={t('hide')}
+                            title={t('hide')}
+                            className="flex flex-col items-center gap-1 py-2.5 px-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200 rounded-xl transition disabled:opacity-40 active:scale-95"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                            </svg>
+                            <span className="text-xs font-semibold leading-none">Hide</span>
+                          </button>
                         </div>
                       </div>
 
@@ -606,9 +688,32 @@ export const JobsPage = () => {
                             onClick={e => { e.stopPropagation(); handleSave(job); }}
                             disabled={actionLoading === job.id}
                             title={t('saveJob')}
-                            className="px-3 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
                           >
-                            ⭐ {t('save')}
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                            {t('save')}
+                          </button>
+                        )}
+                        {job.status === 'saved' && (
+                          <button
+                            onClick={e => { e.stopPropagation(); handleUnsave(job); }}
+                            disabled={actionLoading === job.id}
+                            title={t('unsaveJob')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-yellow-50 hover:bg-red-50 text-yellow-600 hover:text-red-500 border border-yellow-200 hover:border-red-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+                          >
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5zM9 9l6 6M15 9l-6 6"/></svg>
+                            {t('unsave')}
+                          </button>
+                        )}
+                        {job.status === 'applied' && (
+                          <button
+                            onClick={e => { e.stopPropagation(); handleRevertToSaved(job); }}
+                            disabled={actionLoading === job.id}
+                            title={t('revertToSavedJob')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-gray-50 hover:bg-yellow-50 text-gray-500 hover:text-yellow-700 border border-gray-200 hover:border-yellow-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+                          >
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                            {t('revertToSaved')}
                           </button>
                         )}
                         {(job.status === 'new' || job.status === 'saved') && (
@@ -616,18 +721,20 @@ export const JobsPage = () => {
                             onClick={e => { e.stopPropagation(); handleApply(job); }}
                             disabled={actionLoading === job.id}
                             title={t('markAsApplied')}
-                            className="px-3 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
                           >
-                            ✓ {t('markApplied')}
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            {t('markApplied')}
                           </button>
                         )}
                         <button
                           onClick={e => { e.stopPropagation(); handleHide(job); }}
                           disabled={actionLoading === job.id}
                           title={t('hideJob')}
-                          className="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition disabled:opacity-40"
                         >
-                          ✕ {t('hide')}
+                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                          {t('hide')}
                         </button>
                         {job.url && (
                           <a

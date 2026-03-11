@@ -1,11 +1,23 @@
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /map
-Disallow: /air-quality
-Disallow: /contact
-Disallow: /about
-Disallow: /geoconvert
-Disallow: /convert
+Allow: /login
+Allow: /register
+Allow: /demo
+Allow: /forgot-password
+
+# Protected app pages — no value for crawlers
+Disallow: /dashboard
+Disallow: /jobs
+Disallow: /jobs/
+Disallow: /kanban
+Disallow: /analytics
+Disallow: /hotpicks
+Disallow: /english-jobs
+Disallow: /interview-prep
+Disallow: /career-guides
+Disallow: /reminders
+Disallow: /settings
+Disallow: /setup
+Disallow: /reset-password
 
 Sitemap: https://afavers.com/sitemap.xml

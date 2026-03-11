@@ -2,11 +2,31 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
+import { usePreferencesStore, jobMatchesFilter } from '../store/preferencesStore';
 
 const BATCH_SIZE = 20;
 const SWIPE_THRESHOLD = 80;
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+const IconFire = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M17.66 11.2c-.23-.3-.51-.56-.77-.82-.67-.6-1.43-1.03-2.07-1.66C13.33 7.26 13 4.85 13.95 3c-.95.23-1.78.75-2.49 1.32C8.87 6.4 7.85 10.07 9.07 13.22c.04.1.08.2.08.33 0 .22-.15.42-.35.5-.23.1-.47.04-.66-.12-.06-.05-.1-.1-.14-.17C6.87 12.33 6.69 10.28 7.45 8.64 5.78 10 4.87 12.3 5 14.47c.06.5.12 1 .29 1.5.14.6.41 1.2.71 1.73C7.08 19.43 8.95 20.67 10.96 20.92c2.14.27 4.43-.12 6.07-1.6 1.83-1.66 2.47-4.32 1.53-6.6l-.13-.26c-.21-.46-.77-1.26-.77-1.26z"/>
+  </svg>
+);
+
+const IconRefresh = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 4v6h6M23 20v-6h-6"/>
+    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
+  </svg>
+);
+
+const IconStar = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+  </svg>
+);
 
 const SOURCE_LABELS: Record<string, { label: string; cls: string }> = {
   bundesagentur: { label: 'Bundesagentur', cls: 'bg-blue-50 text-blue-600 border-blue-100' },
@@ -15,6 +35,7 @@ const SOURCE_LABELS: Record<string, { label: string; cls: string }> = {
 
 export const HotpicksPage = () => {
   const navigate = useNavigate();
+  const { filterKeywords, filterEnabled } = usePreferencesStore();
   const [queue, setQueue] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [exhausted, setExhausted] = useState(false);
@@ -67,7 +88,8 @@ export const HotpicksPage = () => {
       if (response.jobs.length === 0) {
         setExhausted(true);
       } else {
-        setQueue(prev => [...prev, ...response.jobs]);
+        const filtered = response.jobs.filter(j => jobMatchesFilter(j, filterKeywords, filterEnabled));
+        setQueue(prev => [...prev, ...filtered]);
         fetchOffsetRef.current += response.jobs.length;
       }
     } catch (err) {
@@ -173,7 +195,7 @@ export const HotpicksPage = () => {
     return (
       <div className="flex items-center justify-center bg-gradient-to-b from-orange-50 to-rose-50" style={{ height: 'calc(100dvh - 5rem)' }}>
         <div className="text-center">
-          <div className="text-5xl mb-4">🔥</div>
+          <div className="text-rose-500 mb-4"><IconFire size={48} /></div>
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
         </div>
       </div>
@@ -184,7 +206,12 @@ export const HotpicksPage = () => {
   if (!loading && queue.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center bg-gradient-to-b from-orange-50 to-rose-50 px-6 text-center" style={{ height: 'calc(100dvh - 5rem)' }}>
-        <div className="text-6xl mb-4">🎉</div>
+        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4 mx-auto">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">All caught up!</h2>
         <p className="text-gray-500 text-sm mb-8">
           You've seen all the latest jobs.<br />Check back later for fresh picks.
@@ -193,7 +220,7 @@ export const HotpicksPage = () => {
           onClick={handleRefresh}
           className="px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold rounded-2xl shadow-lg transition active:scale-95"
         >
-          🔄 Start over
+          <span className="flex items-center gap-2"><IconRefresh size={16} /> Start over</span>
         </button>
         <button
           onClick={() => navigate('/jobs')}
@@ -218,14 +245,14 @@ export const HotpicksPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
         <div>
-          <h1 className="text-lg font-bold text-gray-900">🔥 Hot Picks</h1>
+          <h1 className="text-lg font-bold text-gray-900 flex items-center gap-1.5"><span className="text-rose-500"><IconFire size={20} /></span> Hot Picks</h1>
           <p className="text-xs text-gray-400">{queue.length} fresh jobs</p>
         </div>
         {lastAction && (
           <span className={`text-base font-bold px-4 py-1.5 rounded-full animate-pulse ${
             lastAction === 'saved' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'
           }`}>
-            {lastAction === 'saved' ? '⭐ Saved!' : '✕ Passed'}
+            {lastAction === 'saved' ? <span className="flex items-center gap-1"><IconStar size={14} /> Saved!</span> : '✕ Passed'}
           </span>
         )}
       </div>

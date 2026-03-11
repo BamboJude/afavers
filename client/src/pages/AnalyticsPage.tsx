@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { AnalyticsData } from '../types';
 import { useLanguage } from '../store/languageStore';
@@ -34,6 +35,7 @@ export const AnalyticsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   const handleExport = async () => {
     setExporting(true);
@@ -151,7 +153,10 @@ export const AnalyticsPage = () => {
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Jobs by Region</h2>
                 <div className="flex flex-col lg:flex-row gap-6 items-start">
                   <div className="flex-1 min-w-0">
-                    <GermanyJobMap byLocation={data!.byLocation} />
+                    <GermanyJobMap
+                      byLocation={data!.byLocation}
+                      onCityClick={loc => navigate(`/jobs?search=${encodeURIComponent(loc.split(/[,/(]/)[0].trim())}`)}
+                    />
                   </div>
                   <div className="w-full lg:w-48 space-y-2.5 shrink-0">
                     {data!.byLocation.slice(0, 10).map(loc => (

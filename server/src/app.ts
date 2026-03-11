@@ -5,6 +5,7 @@ import { env } from './config/env.js';
 import authRoutes from './routes/auth.routes.js';
 import jobsRoutes from './routes/jobs.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
+import newsRoutes from './routes/news.routes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app: Application = express();
@@ -64,6 +65,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/news', newsRoutes);
 
 // 404 handler
 app.use(notFound);
