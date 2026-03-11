@@ -1,13 +1,8 @@
 import { useEffect, useState } from 'react';
 import { newsService, type NewsItem, isEnergyArticle, getImageUrl, timeAgo } from '../services/news.service';
+import { usePreferencesStore, ALL_NEWS_TOPICS, type NewsTopic } from '../store/preferencesStore';
 
-type Tab = 'energy' | 'economy' | 'all';
-
-const TABS: { key: Tab; label: string; de: string }[] = [
-  { key: 'energy',  label: 'Energy & Climate', de: 'Energie & Klima' },
-  { key: 'economy', label: 'Economy',           de: 'Wirtschaft' },
-  { key: 'all',     label: 'All News',          de: 'Alle Nachrichten' },
-];
+type Tab = NewsTopic | 'all';
 
 const RESSORT_COLORS: Record<string, string> = {
   wirtschaft: 'bg-blue-100 text-blue-700',
@@ -77,29 +72,47 @@ const NewsCard = ({ item }: { item: NewsItem }) => {
   );
 };
 
+function filterByTopic(all: NewsItem[], wirtschaft: NewsItem[], topic: NewsTopic): NewsItem[] {
+  const allMap = new Map(all.map(n => [n.sophoraId, n]));
+  switch (topic) {
+    case 'energy':
+      return [...wirtschaft.filter(isEnergyArticle), ...all.filter(n => isEnergyArticle(n) && !wirtschaft.find(w => w.sophoraId === n.sophoraId))];
+    case 'wirtschaft':
+      return wirtschaft.filter(n => !isEnergyArticle(n));
+    case 'inland':
+      return all.filter(n => n.ressort === 'inland');
+    case 'ausland':
+      return all.filter(n => n.ressort === 'ausland');
+    case 'wissen':
+      return all.filter(n => n.ressort === 'wissen');
+    default:
+      return [...allMap.values()];
+  }
+}
+
 export const NewsPage = () => {
-  const [tab, setTab]         = useState<Tab>('energy');
-  const [allNews, setAllNews] = useState<NewsItem[]>([]);
-  const [economy, setEconomy] = useState<NewsItem[]>([]);
-  const [energy, setEnergy]   = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(false);
+  const { newsTopics } = usePreferencesStore();
+
+  // Tabs = selected topics + 'all'. If nothing selected, show all topics.
+  const activeTabs: { key: Tab; label: string; emoji: string }[] = [
+    ...(newsTopics.length > 0 ? ALL_NEWS_TOPICS.filter(t => newsTopics.includes(t.key)) : ALL_NEWS_TOPICS),
+    { key: 'all', label: 'All', emoji: '📰' },
+  ];
+
+  const [tab, setTab] = useState<Tab>(activeTabs[0]?.key ?? 'all');
+  const [allNews, setAllNews]     = useState<NewsItem[]>([]);
+  const [wirtschaft, setWirtschaft] = useState<NewsItem[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState(false);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
   const fetchNews = async () => {
     setLoading(true);
     setError(false);
     try {
-      const [allData, wirtschaftData] = await Promise.all([
-        newsService.getAll(),
-        newsService.getWirtschaft(),
-      ]);
+      const [allData, wData] = await Promise.all([newsService.getAll(), newsService.getWirtschaft()]);
       setAllNews(allData);
-      setEconomy(wirtschaftData);
-      setEnergy([
-        ...wirtschaftData.filter(isEnergyArticle),
-        ...allData.filter(n => isEnergyArticle(n) && !wirtschaftData.find(w => w.sophoraId === n.sophoraId)),
-      ]);
+      setWirtschaft(wData);
       setLastFetched(new Date());
     } catch {
       setError(true);
@@ -110,7 +123,14 @@ export const NewsPage = () => {
 
   useEffect(() => { fetchNews(); }, []);
 
-  const displayed = tab === 'energy' ? energy : tab === 'economy' ? economy : allNews;
+  // Reset tab if it's no longer in activeTabs
+  useEffect(() => {
+    if (!activeTabs.find(t => t.key === tab)) setTab(activeTabs[0]?.key ?? 'all');
+  }, [newsTopics]);
+
+  const displayed = tab === 'all'
+    ? [...new Map([...wirtschaft, ...allNews].map(n => [n.sophoraId, n])).values()]
+    : filterByTopic(allNews, wirtschaft, tab as NewsTopic);
 
   return (
     <div className="px-4 py-6 max-w-5xl mx-auto w-full">
@@ -120,13 +140,9 @@ export const NewsPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">News</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            German news powered by{' '}
-            <a href="https://www.tagesschau.de" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 transition">
-              Tagesschau
-            </a>
-            {lastFetched && (
-              <span className="ml-2">· Updated {timeAgo(lastFetched.toISOString())}</span>
-            )}
+            German news · <a href="https://www.tagesschau.de" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 transition">Tagesschau</a>
+            {lastFetched && <span className="ml-2">· {timeAgo(lastFetched.toISOString())}</span>}
+            {newsTopics.length === 0 && <span className="ml-2 text-amber-500">· Customize topics in Settings</span>}
           </p>
         </div>
         <button
@@ -142,40 +158,31 @@ export const NewsPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1 w-fit">
-        {TABS.map(t => (
+      <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1 overflow-x-auto">
+        {activeTabs.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              tab === t.key
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+              tab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            {t.label}
+            <span>{t.emoji}</span>{t.label}
           </button>
         ))}
       </div>
 
-      {/* Note: articles in German */}
-      {tab === 'energy' && !loading && energy.length === 0 && !error && (
+      {error && (
         <div className="text-center py-16 text-gray-400">
-          <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <p className="font-medium">No energy news found right now</p>
-          <p className="text-sm mt-1">Check back shortly — articles refresh hourly</p>
+          <p className="font-medium">Could not load news</p>
+          <button onClick={fetchNews} className="text-sm mt-2 text-green-600 hover:underline">Try again</button>
         </div>
       )}
 
-      {error && (
+      {!error && !loading && displayed.length === 0 && (
         <div className="text-center py-16 text-gray-400">
-          <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-          </svg>
-          <p className="font-medium">Could not load news</p>
-          <button onClick={fetchNews} className="text-sm mt-2 text-green-600 hover:underline">Try again</button>
+          <p className="font-medium">No articles found for this topic</p>
+          <p className="text-sm mt-1">Check back shortly — news refreshes every 90 minutes</p>
         </div>
       )}
 
@@ -189,7 +196,6 @@ export const NewsPage = () => {
         </div>
       )}
 
-      {/* Language note */}
       {!loading && displayed.length > 0 && (
         <p className="text-center text-xs text-gray-300 mt-8">
           Articles are in German · Source: Tagesschau (ARD)
