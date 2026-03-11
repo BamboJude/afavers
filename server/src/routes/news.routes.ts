@@ -1,6 +1,15 @@
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
+
+const newsLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many news requests. Please try again in 1 hour.' },
+});
 const TAGESSCHAU_BASE = 'https://www.tagesschau.de/api2u';
 
 // Simple in-memory cache: 15 minutes
@@ -23,7 +32,7 @@ async function fetchWithCache(url: string): Promise<unknown> {
 }
 
 // GET /api/news?ressort=wirtschaft
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', newsLimiter, async (req: Request, res: Response) => {
   try {
     const ressort = req.query.ressort as string | undefined;
     const url = ressort
