@@ -1,10 +1,19 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { authenticateToken, AuthRequest } from '../middleware/auth.middleware.js';
 import { fetchAndSaveJobs } from '../services/fetchers/jobFetcher.service.js';
 import { pool } from '../config/database.js';
 import * as jobModel from '../models/job.model.js';
 
 const router = express.Router();
+
+const fetchLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many fetch requests. Please try again in 1 hour.' },
+});
 
 // ── Public endpoint (no auth required, open CORS) ───────────────────────────
 router.get('/public', (_req, res, next) => {
@@ -54,7 +63,7 @@ async function getUserSearchFilters(userId: number): Promise<{ userKeywords: str
 }
 
 /** POST /api/jobs/fetch — manually trigger job fetching */
-router.post('/fetch', async (req: AuthRequest, res) => {
+router.post('/fetch', fetchLimiter, async (req: AuthRequest, res) => {
   if (req.isDemo) {
     res.status(403).json({ error: 'Not available in demo mode' });
     return;
