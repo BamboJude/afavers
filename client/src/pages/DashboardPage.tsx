@@ -844,7 +844,7 @@ export const DashboardPage = () => {
   const [upcomingInterviews, setUpcomingInterviews] = useState<Job[]>([]);
   const [boardJobs, setBoardJobs] = useState<Record<BoardStatus, Job[]>>({ saved: [], applied: [], interviewing: [], offered: [] });
   const [storyJobs, setStoryJobs] = useState<Job[]>([]);
-  const { filterKeywords, filterEnabled } = usePreferencesStore();
+  const { filterKeywords, filterEnabled, newsOnDashboard } = usePreferencesStore();
   const filteredStoryJobs = storyJobs.filter(j => jobMatchesFilter(j, filterKeywords, filterEnabled));
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
@@ -916,7 +916,7 @@ export const DashboardPage = () => {
       </div>
 
       {/* News carousel */}
-      <NewsCarousel />
+      {newsOnDashboard && <NewsCarousel />}
 
       {/* Job stories — latest unreviewed */}
       <JobStories jobs={filteredStoryJobs} onJobClick={(id) => navigate(`/jobs/${id}`)} />

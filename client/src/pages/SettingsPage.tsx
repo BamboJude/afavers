@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useLanguage } from '../store/languageStore';
 import { useAuthStore } from '../store/authStore';
-import { usePreferencesStore } from '../store/preferencesStore';
+import { usePreferencesStore, ALL_NEWS_TOPICS, type NewsTopic } from '../store/preferencesStore';
 
 interface Settings {
   keywords: string;
@@ -31,7 +31,10 @@ export const SettingsPage = () => {
   const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   // Feed filter preferences (local, persisted)
-  const { filterKeywords, filterEnabled, setFilterKeywords, setFilterEnabled } = usePreferencesStore();
+  const {
+    filterKeywords, filterEnabled, setFilterKeywords, setFilterEnabled,
+    newsOnDashboard, newsTopics, setNewsOnDashboard, setNewsTopics,
+  } = usePreferencesStore();
   const [feedInput, setFeedInput] = useState('');
 
   const handleChangePassword = async () => {
@@ -278,6 +281,83 @@ export const SettingsPage = () => {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* News Preferences */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">News Preferences</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Choose which news topics appear and where.</p>
+              </div>
+            </div>
+
+            {/* Show on dashboard toggle */}
+            <div className="flex items-center justify-between gap-4 py-1">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Show news on Dashboard</p>
+                <p className="text-xs text-gray-400 mt-0.5">Displays a rotating headline carousel after your greeting</p>
+              </div>
+              <button
+                onClick={() => setNewsOnDashboard(!newsOnDashboard)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${newsOnDashboard ? 'bg-green-500' : 'bg-gray-200'}`}
+                aria-label="Toggle news on dashboard"
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${newsOnDashboard ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {/* Topic selection */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Topics to show</p>
+              <p className="text-xs text-gray-400 mb-3">
+                {newsTopics.length === 0 ? 'All topics shown — select specific ones to filter.' : `${newsTopics.length} topic${newsTopics.length > 1 ? 's' : ''} selected`}
+              </p>
+              <div className="space-y-2">
+                {ALL_NEWS_TOPICS.map(({ key, label, emoji, desc }) => {
+                  const selected = newsTopics.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        const next = selected
+                          ? newsTopics.filter(t => t !== key)
+                          : [...newsTopics, key] as NewsTopic[];
+                        setNewsTopics(next);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
+                        selected
+                          ? 'border-green-300 bg-green-50 text-green-900'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="text-lg shrink-0">{emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold">{label}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                        selected ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                      }`}>
+                        {selected && (
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {newsTopics.length > 0 && (
+                <button
+                  onClick={() => setNewsTopics([])}
+                  className="mt-3 text-xs text-gray-400 hover:text-gray-600 transition"
+                >
+                  Clear selection (show all topics)
+                </button>
+              )}
             </div>
           </div>
 

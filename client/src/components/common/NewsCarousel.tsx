@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { newsService, type NewsItem, isEnergyArticle, timeAgo } from '../../services/news.service';
+import { usePreferencesStore, type NewsTopic } from '../../store/preferencesStore';
 
 const RESSORT_COLORS: Record<string, string> = {
   wirtschaft: 'bg-blue-100 text-blue-700',
@@ -11,7 +12,36 @@ const RESSORT_COLORS: Record<string, string> = {
 
 const ENERGY_BADGE = 'bg-emerald-100 text-emerald-700';
 
+async function fetchForTopics(topics: NewsTopic[]): Promise<NewsItem[]> {
+  const useAll = topics.length === 0;
+  const needsWirtschaft = useAll || topics.includes('wirtschaft') || topics.includes('energy');
+  const needsAll = useAll || topics.includes('inland') || topics.includes('ausland') || topics.includes('wissen');
+
+  const [wirtschaft, all] = await Promise.all([
+    needsWirtschaft ? newsService.getWirtschaft() : Promise.resolve([]),
+    needsAll        ? newsService.getAll()        : Promise.resolve([]),
+  ]);
+
+  const seen = new Set<string>();
+  const combined: NewsItem[] = [];
+  for (const item of [...wirtschaft, ...all]) {
+    if (!seen.has(item.sophoraId)) { seen.add(item.sophoraId); combined.push(item); }
+  }
+
+  if (useAll) return combined.slice(0, 8);
+
+  return combined.filter(item => {
+    if (topics.includes('energy') && isEnergyArticle(item)) return true;
+    if (topics.includes('wirtschaft') && item.ressort === 'wirtschaft' && !isEnergyArticle(item)) return true;
+    if (topics.includes('inland')     && item.ressort === 'inland')     return true;
+    if (topics.includes('ausland')    && item.ressort === 'ausland')    return true;
+    if (topics.includes('wissen')     && item.ressort === 'wissen')     return true;
+    return false;
+  }).slice(0, 8);
+}
+
 export const NewsCarousel = () => {
+  const { newsTopics } = usePreferencesStore();
   const [items, setItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [current, setCurrent] = useState(0);
@@ -19,19 +49,13 @@ export const NewsCarousel = () => {
 
   useEffect(() => {
     let cancelled = false;
-    newsService.getWirtschaft()
-      .then(news => {
-        if (cancelled) return;
-        // Prioritise energy articles, then fill up to 8 with the rest
-        const energy = news.filter(isEnergyArticle);
-        const other  = news.filter(n => !isEnergyArticle(n));
-        const merged = [...energy, ...other].slice(0, 8);
-        setItems(merged);
-      })
+    setLoading(true);
+    fetchForTopics(newsTopics)
+      .then(news => { if (!cancelled) { setItems(news); setCurrent(0); } })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [newsTopics]);
 
   // Auto-advance every 5s
   useEffect(() => {
