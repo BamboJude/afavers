@@ -16,7 +16,7 @@ export default defineConfig({
         name: 'afavers – Job Tracker',
         short_name: 'afavers',
         description: 'Track your job applications and find new opportunities',
-        theme_color: '#4f46e5',
+        theme_color: '#16a34a',
         background_color: '#f9fafb',
         display: 'standalone',
         scope: '/',

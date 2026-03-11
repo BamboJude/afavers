@@ -11,10 +11,12 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isDemo: boolean;
+  lastActivity: number | null;
   login: (email: string, password: string) => Promise<void>;
   loginDemo: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateActivity: () => void;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -41,10 +43,11 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       isDemo: false,
+      lastActivity: null,
 
       login: async (email, password) => {
         const data = await authRequest('login', email, password);
-        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: false });
+        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: false, lastActivity: Date.now() });
       },
 
       loginDemo: async () => {
@@ -57,17 +60,21 @@ export const useAuthStore = create<AuthState>()(
           throw new Error(err.error || 'Demo login failed');
         }
         const data = await response.json();
-        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: true });
+        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: true, lastActivity: Date.now() });
       },
 
       register: async (email, password) => {
         await authRequest('register', email, password);
         const data = await authRequest('login', email, password);
-        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: false });
+        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: false, lastActivity: Date.now() });
       },
 
       logout: () => {
-        set({ user: null, token: null, isAuthenticated: false, isDemo: false });
+        set({ user: null, token: null, isAuthenticated: false, isDemo: false, lastActivity: null });
+      },
+
+      updateActivity: () => {
+        set({ lastActivity: Date.now() });
       },
     }),
     { name: 'auth-storage' }

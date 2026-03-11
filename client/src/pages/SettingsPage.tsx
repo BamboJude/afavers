@@ -2,11 +2,21 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useLanguage } from '../store/languageStore';
 import { useAuthStore } from '../store/authStore';
+import { usePreferencesStore } from '../store/preferencesStore';
 
 interface Settings {
   keywords: string;
   locations: string;
 }
+
+const FEED_PRESETS = [
+  { label: 'Tech / IT',    kw: ['developer', 'software engineer', 'data analyst', 'DevOps', 'IT'] },
+  { label: 'Environment', kw: ['umwelt', 'klimaschutz', 'nachhaltigkeit', 'GIS', 'energie'] },
+  { label: 'Business',    kw: ['consulting', 'beratung', 'project manager', 'finance', 'accounting'] },
+  { label: 'Healthcare',  kw: ['nurse', 'Pflegefachkraft', 'doctor', 'Arzt', 'medical'] },
+  { label: 'Engineering', kw: ['Ingenieur', 'engineer', 'mechanical', 'electrical', 'civil'] },
+  { label: 'Marketing',   kw: ['marketing', 'social media', 'SEO', 'content', 'brand'] },
+];
 
 export const SettingsPage = () => {
   const { t } = useLanguage();
@@ -19,6 +29,10 @@ export const SettingsPage = () => {
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  // Feed filter preferences (local, persisted)
+  const { filterKeywords, filterEnabled, setFilterKeywords, setFilterEnabled } = usePreferencesStore();
+  const [feedInput, setFeedInput] = useState('');
 
   const handleChangePassword = async () => {
     setPwMsg(null);
@@ -154,6 +168,116 @@ export const SettingsPage = () => {
                   <p className="text-xs text-gray-400 truncate">{kw}</p>
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Job Feed Filters */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">Job Feed Filters</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Filter which jobs appear in story bubbles and Hot Picks.</p>
+              </div>
+              {/* Toggle */}
+              <button
+                onClick={() => setFilterEnabled(!filterEnabled)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${filterEnabled ? 'bg-green-500' : 'bg-gray-200'}`}
+                aria-label="Toggle feed filter"
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${filterEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {/* Keyword tags */}
+            <div>
+              <p className="text-xs text-gray-500 mb-2">
+                {filterEnabled && filterKeywords.length === 0
+                  ? 'Add at least one keyword to activate filtering.'
+                  : filterEnabled
+                  ? 'Only jobs matching these keywords will appear in stories and Hot Picks.'
+                  : 'Filtering is off — all jobs are shown.'}
+              </p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {filterKeywords.map((kw) => (
+                  <span
+                    key={kw}
+                    className="flex items-center gap-1.5 px-3 py-1 bg-green-50 border border-green-200 text-green-800 text-xs font-medium rounded-full"
+                  >
+                    {kw}
+                    <button
+                      onClick={() => setFilterKeywords(filterKeywords.filter(k => k !== kw))}
+                      className="text-green-400 hover:text-green-700 transition leading-none"
+                      aria-label={`Remove ${kw}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                {filterKeywords.length === 0 && (
+                  <span className="text-xs text-gray-300 italic">No keywords yet</span>
+                )}
+              </div>
+              {/* Add keyword input */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={feedInput}
+                  onChange={e => setFeedInput(e.target.value)}
+                  onKeyDown={e => {
+                    if ((e.key === 'Enter' || e.key === ',') && feedInput.trim()) {
+                      e.preventDefault();
+                      const kw = feedInput.trim().replace(/,$/, '');
+                      if (kw && !filterKeywords.includes(kw)) {
+                        setFilterKeywords([...filterKeywords, kw]);
+                      }
+                      setFeedInput('');
+                    }
+                  }}
+                  placeholder="Type keyword, press Enter"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+                />
+                <button
+                  onClick={() => {
+                    const kw = feedInput.trim();
+                    if (kw && !filterKeywords.includes(kw)) {
+                      setFilterKeywords([...filterKeywords, kw]);
+                    }
+                    setFeedInput('');
+                  }}
+                  disabled={!feedInput.trim()}
+                  className="px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Quick-add presets */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Quick-add preset</p>
+              <div className="flex flex-wrap gap-2">
+                {FEED_PRESETS.map(({ label, kw }) => (
+                  <button
+                    key={label}
+                    onClick={() => {
+                      const toAdd = kw.filter(k => !filterKeywords.includes(k));
+                      if (toAdd.length) setFilterKeywords([...filterKeywords, ...toAdd]);
+                      setFilterEnabled(true);
+                    }}
+                    className="px-3 py-1.5 text-xs font-medium rounded-xl border border-gray-200 hover:border-green-300 hover:bg-green-50 text-gray-700 hover:text-green-700 transition"
+                  >
+                    {label}
+                  </button>
+                ))}
+                {filterKeywords.length > 0 && (
+                  <button
+                    onClick={() => setFilterKeywords([])}
+                    className="px-3 py-1.5 text-xs font-medium rounded-xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-100 transition"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

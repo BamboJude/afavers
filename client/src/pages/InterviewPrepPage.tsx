@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../store/languageStore';
 
 interface Video {
@@ -32,6 +33,7 @@ const CATEGORIES = [
 
 export const InterviewPrepPage = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [category, setCategory] = useState<string>('all');
   const [activeVideo, setActiveVideo] = useState<Video | null>(null);
 
@@ -103,6 +105,34 @@ export const InterviewPrepPage = () => {
           ))}
         </div>
       </main>
+
+      {/* ── Career Guides section ── */}
+      <section className="max-w-5xl mx-auto px-6 pb-16">
+        <div className="border-t border-gray-200 pt-10 mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-1">Career Guides & Resources</h2>
+          <p className="text-sm text-gray-500">Practical advice for your job search in Germany</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { emoji: '🇩🇪', title: 'The German Job Market', desc: 'What you need to know about sectors, culture, and the application process.' },
+            { emoji: '🎓', title: 'Jobs After Graduation', desc: 'How to land your first role and make the most of your post-study visa.' },
+            { emoji: '🧠', title: 'Managing Job Search Stress', desc: 'Process goals, daily habits, and keeping your mental health in check.' },
+            { emoji: '🌱', title: 'Green Jobs in Germany', desc: 'Sustainability roles, Energiewende, and where to find them.' },
+          ].map(card => (
+            <button
+              key={card.title}
+              onClick={() => navigate('/career-guides')}
+              className="group bg-white rounded-2xl border border-gray-100 p-5 text-left hover:border-green-300 hover:shadow-md transition-all duration-200 active:scale-[0.98]"
+            >
+              <div className="text-2xl mb-3">{card.emoji}</div>
+              <h3 className="text-sm font-bold text-gray-900 mb-1.5 group-hover:text-green-700 transition-colors">{card.title}</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">{card.desc}</p>
+              <span className="mt-3 inline-block text-xs font-semibold text-green-600 group-hover:text-green-700">Read guide →</span>
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* Video modal */}
       {activeVideo && (

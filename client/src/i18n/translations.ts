@@ -246,10 +246,25 @@ export const translations: Record<Lang, Record<string, string>> = {
     toastJobSaved: 'Job saved ⭐',
     toastJobApplied: 'Marked as applied ✓',
     toastJobHidden: 'Job hidden',
+    toastJobUnsaved: 'Removed from saved',
+    toastJobReverted: 'Moved back to saved',
+
+    // Unsave / revert actions
+    unsave: 'Unsave',
+    unsaveJob: 'Remove from saved',
+    revertToSaved: 'Revert',
+    revertToSavedJob: 'Move back to saved',
 
     // Filter indicator
     activeFilters: 'filter(s) active',
     clearAll: 'Clear all',
+
+    // News
+    news: 'News',
+    newsLatest: 'Latest News',
+    newsEnergyClimate: 'Energy & Climate',
+    newsEconomy: 'Economy',
+    newsAll: 'All News',
   },
 
   de: {
@@ -497,9 +512,24 @@ export const translations: Record<Lang, Record<string, string>> = {
     toastJobSaved: 'Stelle gespeichert ⭐',
     toastJobApplied: 'Als beworben markiert ✓',
     toastJobHidden: 'Stelle ausgeblendet',
+    toastJobUnsaved: 'Aus Gespeicherten entfernt',
+    toastJobReverted: 'Zurück zu Gespeichert',
+
+    // Unsave / revert actions
+    unsave: 'Entfernen',
+    unsaveJob: 'Aus Gespeicherten entfernen',
+    revertToSaved: 'Rückgängig',
+    revertToSavedJob: 'Zurück zu Gespeichert',
 
     // Filter indicator
     activeFilters: 'Filter aktiv',
     clearAll: 'Alle löschen',
+
+    // News
+    news: 'Nachrichten',
+    newsLatest: 'Aktuelle Nachrichten',
+    newsEnergyClimate: 'Energie & Klima',
+    newsEconomy: 'Wirtschaft',
+    newsAll: 'Alle Nachrichten',
   },
 };

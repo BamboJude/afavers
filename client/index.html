@@ -2,32 +2,44 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/pwa-192x192.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
-    <link rel="shortcut icon" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
+    <link rel="shortcut icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/pwa-192x192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="afavers" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#16a34a" />
 
     <!-- Primary SEO -->
-    <title>afavers | Job Tracker</title>
-    <meta name="description" content="afavers automatically finds green and sustainability jobs in Germany every 2 hours. Track applications, manage your pipeline, and land your next role in climate, environment, or energy." />
-    <link rel="canonical" href="https://afavers.com" />
+    <title>afavers | Personal Job Application Tracker for Germany</title>
+    <meta name="description" content="afavers is your personal job application tracker for Germany. Jobs are automatically fetched from Bundesagentur für Arbeit every 2 hours. Save, apply, and track every application from one dashboard — free forever." />
+    <meta name="keywords" content="job application tracker, job tracker Germany, Bewerbung verwalten, Bundesagentur jobs, job search tracker, application manager, Germany job board, Stellenangebote tracker" />
+    <link rel="canonical" href="https://afavers.com/" />
     <meta name="robots" content="index, follow" />
+    <meta name="author" content="afavers" />
 
     <!-- Open Graph -->
     <meta property="og:site_name" content="afavers" />
-    <meta property="og:title" content="afavers – Green Job Tracker for Germany" />
-    <meta property="og:description" content="Automatically finds sustainability, environment, and energy jobs in Germany. Save, track, and manage your applications in one place." />
-    <meta property="og:url" content="https://afavers.com" />
+    <meta property="og:title" content="afavers – Personal Job Application Tracker for Germany" />
+    <meta property="og:description" content="Track every job application in one place. Jobs auto-fetched from Bundesagentur für Arbeit every 2 hours. Kanban board, reminders, analytics — free forever." />
+    <meta property="og:url" content="https://afavers.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://afavers.com/pwa-512x512.png" />
     <meta property="og:image:width" content="512" />
     <meta property="og:image:height" content="512" />
+    <meta property="og:locale" content="en_DE" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="afavers – Green Job Tracker for Germany" />
-    <meta name="twitter:description" content="Automatically finds sustainability, environment, and energy jobs in Germany. Save, track, and manage your applications in one place." />
+    <meta name="twitter:title" content="afavers – Personal Job Application Tracker for Germany" />
+    <meta name="twitter:description" content="Track every job application in one place. Jobs auto-fetched from Bundesagentur für Arbeit every 2 hours. Free forever." />
     <meta name="twitter:image" content="https://afavers.com/pwa-512x512.png" />
 
     <!-- Google Verification -->
@@ -48,14 +60,26 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "afavers",
+      "alternateName": "afavers Job Tracker",
       "url": "https://afavers.com",
-      "description": "afavers automatically finds green and sustainability jobs in Germany every 2 hours. Track applications, manage your pipeline, and land your next role in climate, environment, or energy.",
+      "description": "afavers is a personal job application tracker for Germany. It automatically fetches jobs from Bundesagentur für Arbeit every 2 hours and gives you a dashboard to save, apply, and track every application.",
       "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
+      "applicationSubCategory": "Job Application Tracker",
+      "operatingSystem": "Web, iOS",
+      "inLanguage": ["en", "de"],
+      "featureList": [
+        "Automatic job fetching from Bundesagentur für Arbeit every 2 hours",
+        "Kanban board to track applications: Saved, Applied, Interviewing, Offered",
+        "Reminders and calendar for interviews and follow-ups",
+        "Analytics dashboard",
+        "Hot Picks swipe-style job triage",
+        "English-language job filter"
+      ],
       "offers": {
         "@type": "Offer",
         "price": "0",
-        "priceCurrency": "EUR"
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock"
       },
       "publisher": {
         "@type": "Organization",
@@ -67,6 +91,11 @@
           "width": 512,
           "height": 512
         }
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://afavers.com/demo?q={search_term_string}",
+        "query-input": "required name=search_term_string"
       }
     }
     </script>

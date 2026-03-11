@@ -2,7 +2,22 @@ import { StrictMode, Component } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { SplashScreen } from '@capacitor/splash-screen'
+import { StatusBar, Style } from '@capacitor/status-bar'
+import { Capacitor } from '@capacitor/core'
 
+// Hide native Capacitor splash screen
+SplashScreen.hide().catch(() => {});
+
+// On iOS: keep status bar visible but don't overlay the WebView
+// This ensures the topbar never hides behind the notch
+if (Capacitor.isNativePlatform()) {
+  StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+  StatusBar.setStyle({ style: Style.Default }).catch(() => {});
+  StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
+}
+
+// ── Error boundary ────────────────────────────────────────────────────────────
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
   constructor(props: { children: React.ReactNode }) {
     super(props);

@@ -44,9 +44,24 @@ const IconVideo = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
+const IconFire = () => (
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M17.66 11.2c-.23-.3-.51-.56-.77-.82-.67-.6-1.43-1.03-2.07-1.66C13.33 7.26 13 4.85 13.95 3c-.95.23-1.78.75-2.49 1.32C8.87 6.4 7.85 10.07 9.07 13.22c.04.1.08.2.08.33 0 .22-.15.42-.35.5-.23.1-.47.04-.66-.12-.06-.05-.1-.1-.14-.17C6.87 12.33 6.69 10.28 7.45 8.64 5.78 10 4.87 12.3 5 14.47c.06.5.12 1 .29 1.5.14.6.41 1.2.71 1.73C7.08 19.43 8.95 20.67 10.96 20.92c2.14.27 4.43-.12 6.07-1.6 1.83-1.66 2.47-4.32 1.53-6.6l-.13-.26c-.21-.46-.77-1.26-.77-1.26z"/>
+  </svg>
+);
+const IconBell = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+  </svg>
+);
 const IconLogout = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+  </svg>
+);
+const IconNews = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6" />
   </svg>
 );
 
@@ -66,10 +81,12 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const navItems = [
     { to: '/dashboard',    icon: <IconDashboard />,  label: t('dashboard') },
     { to: '/jobs',         icon: <IconJobs />,        label: t('browseJobs') },
-    { to: '/hotpicks',     icon: <span className="text-xl leading-none">🔥</span>, label: t('hotPicks') },
+    { to: '/hotpicks',     icon: <IconFire />, label: t('hotPicks') },
     { to: '/english-jobs', icon: <IconGlobe />,       label: t('englishJobs') },
     { to: '/kanban',       icon: <IconKanban />,      label: t('applicationsBoard') },
     { to: '/analytics',      icon: <IconAnalytics />,   label: t('analytics') },
+    { to: '/reminders',      icon: <IconBell />,        label: 'Reminders' },
+    { to: '/news',           icon: <IconNews />,        label: 'News' },
     { to: '/interview-prep', icon: <IconVideo />,       label: t('interviewPrep') },
     { to: '/settings',       icon: <IconSettings />,    label: t('settings') },
   ];
@@ -90,16 +107,22 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
           lg:translate-x-0
         `}
       >
-        {/* Logo */}
-        <div className="h-32 flex items-center px-5 border-b border-gray-100 shrink-0">
-          <Link to="/dashboard" onClick={() => setSidebarOpen(false)}>
-            <img
-              src="/logo.png"
-              alt="afavers"
-              className="h-28 w-auto"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          </Link>
+        {/* Sidebar brand header */}
+        <div className="h-14 flex items-center justify-between px-5 border-b border-gray-100 shrink-0">
+          <span style={{
+            fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+            fontSize: 22, fontWeight: 800, letterSpacing: -0.5, color: '#111827',
+          }}>
+            Afa<span style={{ color: '#f97316' }}>v</span>ers
+          </span>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-1 text-gray-400 hover:text-gray-600 rounded transition"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
         </div>
 
         {/* Nav items */}
@@ -124,7 +147,9 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </nav>
 
         {/* Bottom: language + user */}
-        <div className="border-t border-gray-100 p-4 space-y-3 shrink-0">
+        <div className="border-t border-gray-100 p-4 space-y-3 shrink-0"
+          style={{ paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}
+        >
           <LanguageToggle />
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
@@ -153,31 +178,53 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       {/* ── Main content ── */}
       <div className="flex-1 lg:ml-60 flex flex-col min-h-screen w-full overflow-x-hidden">
         {/* Mobile topbar */}
-        <div className="lg:hidden bg-white border-b border-gray-200 h-20 flex items-center justify-center px-4 sticky top-0 z-30 shadow-sm">
-          <Link to="/dashboard">
-            <img
-              src="/logo.png"
-              alt="afavers"
-              className="h-16 w-auto"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          </Link>
+        <div className="lg:hidden bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+          <div className="h-14 flex items-center px-4">
+            {/* Hamburger */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 -ml-1 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition shrink-0"
+              aria-label="Menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
+            </button>
+            {/* Brand name centred */}
+            <Link to="/dashboard" className="absolute left-1/2 -translate-x-1/2">
+              <span style={{
+                fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: 22, fontWeight: 800, letterSpacing: -0.5, color: '#111827',
+              }}>
+                Afa<span style={{ color: '#f97316' }}>v</span>ers
+              </span>
+            </Link>
+            {/* User avatar */}
+            <div className="ml-auto shrink-0">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold">
+                {initials}
+              </div>
+            </div>
+          </div>
         </div>
 
         <DemoBanner />
 
-        <main className="flex-1 pb-16 lg:pb-0">
+        <main className="flex-1">
           {children}
+          {/* Spacer: clears bottom nav (64px) + home indicator safe area, mobile only */}
+          <div className="lg:hidden" style={{ height: 'calc(64px + env(safe-area-inset-bottom))' }} />
         </main>
       </div>
 
       {/* ── Mobile bottom navigation ── */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 flex items-stretch" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {[
-          { to: '/dashboard', icon: <IconDashboard />, label: t('home') },
-          { to: '/jobs',      icon: <IconJobs />,      label: t('browse') },
-          { to: '/hotpicks',  icon: <span className="text-xl leading-none">🔥</span>, label: t('hotPicks') },
-          { to: '/kanban',    icon: <IconKanban />,    label: t('board') },
+          { to: '/dashboard',  icon: <IconDashboard />, label: t('home') },
+          { to: '/jobs',       icon: <IconJobs />,      label: t('browse') },
+          { to: '/hotpicks',   icon: <IconFire />,      label: t('hotPicks') },
+          { to: '/reminders',  icon: <IconBell />,      label: 'Reminders' },
+          { to: '/kanban',     icon: <IconKanban />,    label: t('board') },
         ].map(item => (
           <NavLink
             key={item.to}
@@ -192,16 +239,6 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <span>{item.label}</span>
           </NavLink>
         ))}
-        {/* More — opens sidebar overlay */}
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium text-gray-400 transition-colors"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M5 12h.01M12 12h.01M19 12h.01" />
-          </svg>
-          <span>{t('more')}</span>
-        </button>
       </nav>
 
       {/* ── Toast notifications ── */}

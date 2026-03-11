@@ -1,79 +1,43 @@
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
+import 'leaflet/dist/leaflet.css';
+import type { Map, CircleMarker } from 'leaflet';
 
-// ── Projection ────────────────────────────────────────────────────────────────
-// Simple linear projection for Germany's bounding box.
-// lon: 5.5°–15.5°E, lat: 47.0°–55.5°N  →  SVG: 400 × 480
-
-const W = 400;
-const H = 480;
-
-function project(lon: number, lat: number): [number, number] {
-  const x = ((lon - 5.5) / 10.0) * W;
-  const y = ((55.5 - lat) / 8.5) * H;
-  return [x, y];
-}
-
-// ── Simplified Germany outline (clockwise border polygon) ────────────────────
-// Each pair = [lon, lat]
-const GERMANY_BORDER: [number, number][] = [
-  [6.0, 51.5],   // Netherlands border W
-  [7.0, 53.5],   // Netherlands → North Sea
-  [8.8, 55.0],   // Denmark border
-  [10.5, 54.5],  // Baltic coast W
-  [12.8, 54.3],  // Baltic coast
-  [14.0, 54.5],  // Baltic coast NE
-  [14.2, 53.9],  // Polish border N
-  [14.8, 52.1],  // Polish border
-  [14.9, 51.0],  // Polish border S
-  [12.5, 50.2],  // Czech border NW
-  [13.8, 48.5],  // Czech border S
-  [13.0, 47.5],  // Austrian border E
-  [10.5, 47.4],  // Austrian border
-  [9.7,  47.5],  // Swiss border
-  [8.5,  47.6],  // Swiss border W
-  [7.5,  47.8],  // French border S
-  [7.0,  48.5],  // French border
-  [6.1,  49.5],  // French border N
-  [6.1,  50.1],  // Luxembourg
-  [5.9,  51.0],  // Belgian border
-];
-
-const borderPath = (() => {
-  const pts = GERMANY_BORDER.map(([lon, lat]) => project(lon, lat));
-  return pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`).join(' ') + ' Z';
-})();
-
-// ── Known German cities with coordinates ─────────────────────────────────────
+// ── City coordinates [lat, lng] ───────────────────────────────────────────────
 const CITY_COORDS: Record<string, [number, number]> = {
-  'Düsseldorf':  [6.7762,  51.2217],
-  'Koeln':       [6.9578,  50.9333],
-  'Köln':        [6.9578,  50.9333],
-  'Essen':       [7.0131,  51.4508],
-  'Bochum':      [7.2162,  51.4818],
-  'Dortmund':    [7.4653,  51.5136],
-  'Berlin':      [13.4050, 52.5200],
-  'Hamburg':     [10.0153, 53.5753],
-  'München':     [11.5820, 48.1351],
-  'Munich':      [11.5820, 48.1351],
-  'Frankfurt':   [8.6821,  50.1109],
-  'Stuttgart':   [9.1829,  48.7758],
-  'Hannover':    [9.7320,  52.3759],
-  'Leipzig':     [12.3731, 51.3397],
-  'Nürnberg':    [11.0771, 49.4521],
-  'Bremen':      [8.8017,  53.0793],
-  'Köln/Bonn':   [6.9578,  50.9333],
-  'Bonn':        [7.0982,  50.7374],
-  'Wuppertal':   [7.1888,  51.2562],
-  'Bielefeld':   [8.5325,  52.0302],
-  'Mannheim':    [8.4660,  49.4875],
-  'Karlsruhe':   [8.4037,  49.0069],
-  'Münster':     [7.6261,  51.9607],
+  'Düsseldorf':  [51.2217, 6.7762],
+  'Koeln':       [50.9333, 6.9578],
+  'Köln':        [50.9333, 6.9578],
+  'Essen':       [51.4508, 7.0131],
+  'Bochum':      [51.4818, 7.2162],
+  'Dortmund':    [51.5136, 7.4653],
+  'Berlin':      [52.5200, 13.4050],
+  'Hamburg':     [53.5753, 10.0153],
+  'München':     [48.1351, 11.5820],
+  'Munich':      [48.1351, 11.5820],
+  'Frankfurt':   [50.1109,  8.6821],
+  'Stuttgart':   [48.7758,  9.1829],
+  'Hannover':    [52.3759,  9.7320],
+  'Leipzig':     [51.3397, 12.3731],
+  'Nürnberg':   [49.4521, 11.0771],
+  'Bremen':      [53.0793,  8.8017],
+  'Köln/Bonn':  [50.9333,  6.9578],
+  'Bonn':        [50.7374,  7.0982],
+  'Wuppertal':   [51.2562,  7.1888],
+  'Bielefeld':   [52.0302,  8.5325],
+  'Mannheim':    [49.4875,  8.4660],
+  'Karlsruhe':   [49.0069,  8.4037],
+  'Münster':    [51.9607,  7.6261],
+  'Aachen':      [50.7753,  6.0839],
+  'Freiburg':    [47.9990,  7.8421],
+  'Kiel':        [54.3233, 10.1228],
+  'Rostock':     [54.0887, 12.1405],
+  'Dresden':     [51.0504, 13.7373],
+  'Magdeburg':   [52.1205, 11.6276],
+  'Erfurt':      [50.9848, 11.0299],
 };
 
 function findCityCoords(location: string): [number, number] | null {
-  // Exact match
   if (CITY_COORDS[location]) return CITY_COORDS[location];
-  // Partial match (e.g. "Köln (Westf.)" or "Essen, NRW")
   for (const [city, coords] of Object.entries(CITY_COORDS)) {
     if (location.toLowerCase().includes(city.toLowerCase())) return coords;
   }
@@ -81,132 +45,142 @@ function findCityCoords(location: string): [number, number] | null {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-
 interface Props {
   byLocation: { location: string; count: number }[];
   compact?: boolean;
+  onCityClick?: (location: string) => void;
 }
 
-interface TooltipState {
-  x: number;
-  y: number;
-  city: string;
-  count: number;
-}
+export const GermanyJobMap = ({ byLocation, compact = false, onCityClick }: Props) => {
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const mapRef        = useRef<Map | null>(null);
+  const markersRef    = useRef<CircleMarker[]>([]);
+  const onClickRef    = useRef(onCityClick);
+  onClickRef.current  = onCityClick;
+  // keep a stable ref to byLocation so effects can read it
+  const dataRef = useRef(byLocation);
+  dataRef.current = byLocation;
 
-export const GermanyJobMap = ({ byLocation, compact = false }: Props) => {
-  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  // Initialise map once
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
 
-  // Build city markers with SVG positions
-  const markers = byLocation
-    .map(({ location, count }) => {
+    import('leaflet').then((mod) => {
+      const L = mod.default ?? (mod as unknown as typeof import('leaflet'));
+
+      const map = L.map(containerRef.current!, {
+        center:            [51.5, 10.0],
+        zoom:              compact ? 5 : 6,
+        zoomControl:       true,
+        dragging:          true,
+        scrollWheelZoom:   false,
+        doubleClickZoom:   true,
+        touchZoom:         true,
+        attributionControl: !compact,
+      });
+
+      // CartoDB Positron — clean light basemap
+      L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        {
+          attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OSM',
+          subdomains: 'abcd',
+          maxZoom: 18,
+        }
+      ).addTo(map);
+
+      mapRef.current = map;
+      drawMarkers(L, map, dataRef.current);
+
+      // Ensure map fills container after DOM settles
+      setTimeout(() => map.invalidateSize(), 100);
+    });
+
+    return () => {
+      mapRef.current?.remove();
+      mapRef.current = null;
+      markersRef.current = [];
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compact]);
+
+  // Redraw markers whenever data changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+    import('leaflet').then((mod) => {
+      const L = mod.default ?? (mod as unknown as typeof import('leaflet'));
+      drawMarkers(L, mapRef.current!, byLocation);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byLocation]);
+
+  function drawMarkers(
+    L: typeof import('leaflet'),
+    map: Map,
+    data: { location: string; count: number }[]
+  ) {
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+
+    if (!data.length) return;
+    const maxCount = Math.max(...data.map(l => l.count), 1);
+
+    data.forEach(({ location, count }) => {
       const coords = findCityCoords(location);
-      if (!coords) return null;
-      const [x, y] = project(coords[0], coords[1]);
-      return { location, count, x, y };
-    })
-    .filter(Boolean) as { location: string; count: number; x: number; y: number }[];
+      if (!coords) return;
 
-  const maxCount = Math.max(...markers.map(m => m.count), 1);
+      const ratio  = count / maxCount;
+      const radius = compact ? 5 + ratio * 12 : 8 + ratio * 22;
 
-  const height = compact ? 220 : 360;
-  const scale = height / H;
+      const marker = L.circleMarker(coords, {
+        radius,
+        fillColor:   '#16a34a',
+        color:       '#fff',
+        weight:      2,
+        opacity:     0.9,
+        fillOpacity: 0.7 + ratio * 0.25,
+      });
+
+      const cityName = location.split(/[,/(]/)[0].trim();
+
+      // Popup (full mode: hover; compact mode: click shows brief label)
+      marker.bindPopup(
+        `<div style="font-family:Inter,system-ui,sans-serif;cursor:${onClickRef.current ? 'pointer' : 'default'}">
+          <p style="font-weight:700;font-size:14px;margin:0 0 2px">${cityName}</p>
+          <p style="color:#16a34a;font-weight:600;font-size:13px;margin:0 0 ${onClickRef.current ? '6px' : '0'}">${count} job${count !== 1 ? 's' : ''}</p>
+          ${onClickRef.current ? `<p style="font-size:11px;color:#6b7280;margin:0">Click to browse jobs →</p>` : ''}
+        </div>`,
+        { closeButton: false, offset: [0, -4] }
+      );
+
+      if (compact && !onClickRef.current) {
+        marker.on('click', () => marker.openPopup());
+      } else if (!compact) {
+        marker.on('mouseover', () => marker.openPopup());
+        marker.on('mouseout',  () => marker.closePopup());
+      }
+
+      // Click → navigate to jobs filtered by this city
+      if (onClickRef.current) {
+        marker.on('click', () => {
+          marker.closePopup();
+          onClickRef.current!(location);
+        });
+        // pointer cursor on hover
+        marker.on('mouseover', () => {
+          (marker.getElement() as HTMLElement | undefined)?.style.setProperty('cursor', 'pointer');
+        });
+      }
+
+      marker.addTo(map);
+      markersRef.current.push(marker);
+    });
+  }
 
   return (
-    <div className="relative select-none">
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        width="100%"
-        height={height}
-        className="overflow-visible"
-        onMouseLeave={() => setTooltip(null)}
-      >
-        {/* Germany outline */}
-        <path
-          d={borderPath}
-          fill="#f0fdf4"
-          stroke="#86efac"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-
-        {/* City markers */}
-        {markers.map(m => {
-          const ratio = m.count / maxCount;
-          const r = compact
-            ? 4 + ratio * 10
-            : 6 + ratio * 18;
-          return (
-            <g key={m.location}>
-              {/* Glow ring */}
-              <circle
-                cx={m.x}
-                cy={m.y}
-                r={r + 4}
-                fill="#16a34a"
-                opacity={0.15}
-              />
-              {/* Main bubble */}
-              <circle
-                cx={m.x}
-                cy={m.y}
-                r={r}
-                fill="#16a34a"
-                opacity={0.85}
-                className="cursor-pointer transition-all duration-150 hover:opacity-100"
-                onMouseEnter={e => {
-                  const svg = (e.target as SVGElement).closest('svg')!;
-                  const rect = svg.getBoundingClientRect();
-                  setTooltip({
-                    x: m.x * scale * (rect.width / W),
-                    y: m.y * scale * (rect.width / W),
-                    city: m.location,
-                    count: m.count,
-                  });
-                }}
-              />
-              {/* City label (full version only) */}
-              {!compact && (
-                <text
-                  x={m.x}
-                  y={m.y + r + 12}
-                  textAnchor="middle"
-                  fontSize={9}
-                  fill="#166534"
-                  fontFamily="Inter, system-ui, sans-serif"
-                  fontWeight="600"
-                >
-                  {m.location.split(/[,/(]/)[0].trim()}
-                </text>
-              )}
-            </g>
-          );
-        })}
-      </svg>
-
-      {/* Tooltip */}
-      {tooltip && !compact && (
-        <div
-          className="absolute z-10 pointer-events-none bg-gray-900 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap"
-          style={{ left: tooltip.x + 14, top: tooltip.y - 14 }}
-        >
-          {tooltip.city} · {tooltip.count.toLocaleString()} jobs
-        </div>
-      )}
-
-      {/* Legend (full only) */}
-      {!compact && markers.length > 0 && (
-        <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-400 opacity-50" />
-            fewer jobs
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-4 h-4 rounded-full bg-green-600" />
-            more jobs
-          </span>
-        </div>
-      )}
-    </div>
+    <div
+      ref={containerRef}
+      style={{ height: compact ? 220 : 420, width: '100%', borderRadius: 12, overflow: 'hidden' }}
+    />
   );
 };

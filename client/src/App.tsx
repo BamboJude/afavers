@@ -15,8 +15,11 @@ import { EnglishJobsPage } from './pages/EnglishJobsPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { HotpicksPage } from './pages/HotpicksPage';
 import { InterviewPrepPage } from './pages/InterviewPrepPage';
+import { CareerGuidesPage } from './pages/CareerGuidesPage';
 import { LandingPage } from './pages/LandingPage';
 import { DemoJobsPage } from './pages/DemoJobsPage';
+import { RemindersPage } from './pages/RemindersPage';
+import { NewsPage } from './pages/NewsPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 
@@ -73,6 +76,9 @@ function App() {
         <Route path="/analytics"    element={<ProtectedLayout><AnalyticsPage /></ProtectedLayout>} />
         <Route path="/hotpicks"        element={<ProtectedLayout><HotpicksPage /></ProtectedLayout>} />
         <Route path="/interview-prep" element={<ProtectedLayout><InterviewPrepPage /></ProtectedLayout>} />
+        <Route path="/career-guides"  element={<ProtectedLayout><CareerGuidesPage /></ProtectedLayout>} />
+        <Route path="/reminders"      element={<ProtectedLayout><RemindersPage /></ProtectedLayout>} />
+        <Route path="/news"           element={<ProtectedLayout><NewsPage /></ProtectedLayout>} />
         <Route path="/demo" element={<DemoJobsPage />} />
         <Route path="/" element={<LandingPage />} />
       </Routes>
