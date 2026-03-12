@@ -72,8 +72,9 @@ router.post('/capture', async (req: AuthRequest, res) => {
     let jobId: number;
     if (url) {
       const existing = await pool.query('SELECT id FROM jobs WHERE url = $1', [url]);
-      if (existing.rows.length > 0) {
-        jobId = existing.rows[0].id;
+      const existingRow = existing.rows[0] as { id: number } | undefined;
+      if (existingRow) {
+        jobId = existingRow.id;
         // Update fields in case they changed
         await pool.query(
           `UPDATE jobs SET title=$1, company=$2, location=$3, salary=$4, description=$5, source=$6 WHERE id=$7`,
@@ -85,7 +86,7 @@ router.post('/capture', async (req: AuthRequest, res) => {
            VALUES ($1,$2,$3,$4,$5,$6,$7,NOW()) RETURNING id`,
           [title, company || null, location || null, salary || null, description || null, url, source || 'manual']
         );
-        jobId = ins.rows[0].id;
+        jobId = (ins.rows[0] as { id: number }).id;
       }
     } else {
       const ins = await pool.query(
@@ -93,7 +94,7 @@ router.post('/capture', async (req: AuthRequest, res) => {
          VALUES ($1,$2,$3,$4,$5,$6,$7,NOW()) RETURNING id`,
         [title, company || null, location || null, salary || null, description || null, null, source || 'manual']
       );
-      jobId = ins.rows[0].id;
+      jobId = (ins.rows[0] as { id: number }).id;
     }
 
     // Create/update user_jobs entry
