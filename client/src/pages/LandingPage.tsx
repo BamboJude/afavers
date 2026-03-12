@@ -289,6 +289,9 @@ export const LandingPage = () => {
         </div>
       </section>
 
+      {/* ── Contact ── */}
+      <ContactSection />
+
       {/* ── Footer ── */}
       <footer className="bg-white border-t border-gray-100 py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -360,4 +363,88 @@ export const LandingPage = () => {
 
     </div>
   );
+
 };
+
+// ── Contact Section ────────────────────────────────────────────────────────
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+function ContactSection() {
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('sending');
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send');
+      setStatus('sent');
+      setForm({ name: '', email: '', subject: '', message: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setStatus('error');
+    }
+  };
+
+  return (
+    <section className="py-16 px-6 bg-gray-50 border-t border-gray-100">
+      <div className="max-w-xl mx-auto">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1 text-center">Get in touch</h2>
+        <p className="text-sm text-gray-500 text-center mb-8">Questions, feedback, or partnership inquiries — we'd love to hear from you.</p>
+
+        {status === 'sent' ? (
+          <div className="text-center py-10">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-green-100 rounded-full mb-4">
+              <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-lg font-semibold text-gray-900">Message sent!</p>
+            <p className="text-sm text-gray-500 mt-1">We'll get back to you soon.</p>
+            <button onClick={() => setStatus('idle')} className="mt-4 text-sm text-green-600 hover:underline">Send another</button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input
+                type="text" placeholder="Your name" required value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+              />
+              <input
+                type="email" placeholder="Your email" required value={form.email}
+                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+              />
+            </div>
+            <input
+              type="text" placeholder="Subject" required value={form.subject}
+              onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+            />
+            <textarea
+              placeholder="Your message" required rows={5} value={form.message}
+              onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 resize-none"
+            />
+            {status === 'error' && <p className="text-sm text-red-500">{error}</p>}
+            <button
+              type="submit" disabled={status === 'sending'}
+              className="w-full py-3.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition"
+            >
+              {status === 'sending' ? 'Sending…' : 'Send message →'}
+            </button>
+          </form>
+        )}
+      </div>
+    </section>
+  );
+}

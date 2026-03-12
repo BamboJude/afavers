@@ -27,7 +27,17 @@ interface JobStats {
   recentFetches: { day: string; count: number }[];
 }
 
-type Tab = 'overview' | 'users' | 'jobs';
+interface ContactMessage {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+type Tab = 'overview' | 'users' | 'jobs' | 'messages';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const STATUS_COLORS: Record<string, string> = {
@@ -63,12 +73,16 @@ export const AdminPage = () => {
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
   const [actionMsg, setActionMsg] = useState('');
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [expandedMsg, setExpandedMsg] = useState<number | null>(null);
 
   // ── Load data by tab ──────────────────────────────────────────────────
   useEffect(() => {
     if (tab === 'overview') loadStats();
     if (tab === 'users')    loadUsers(userPage, userSearch);
     if (tab === 'jobs')     loadJobStats();
+    if (tab === 'messages') loadMessages();
   }, [tab]);
 
   const loadStats = async () => {
@@ -96,6 +110,33 @@ export const AdminPage = () => {
     try { setJobStats((await api.get<JobStats>('/admin/jobs/stats')).data); }
     catch { setError('Failed to load job stats'); }
     finally { setLoading(false); }
+  };
+
+  const loadMessages = async () => {
+    setLoading(true); setError('');
+    try {
+      const res = await api.get<{ messages: ContactMessage[]; unreadCount: number }>('/admin/messages');
+      setMessages(res.data.messages);
+      setUnreadCount(res.data.unreadCount);
+    } catch { setError('Failed to load messages'); }
+    finally { setLoading(false); }
+  };
+
+  const handleMarkRead = async (id: number) => {
+    try {
+      await api.patch(`/admin/messages/${id}/read`, {});
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, is_read: true } : m));
+      setUnreadCount(c => Math.max(0, c - 1));
+    } catch { flash('Failed to mark as read', true); }
+  };
+
+  const handleDeleteMessage = async (id: number) => {
+    try {
+      await api.delete(`/admin/messages/${id}`);
+      const msg = messages.find(m => m.id === id);
+      if (msg && !msg.is_read) setUnreadCount(c => Math.max(0, c - 1));
+      setMessages(prev => prev.filter(m => m.id !== id));
+    } catch { flash('Failed to delete', true); }
   };
 
   const handleToggleAdmin = async (user: AdminUser) => {
@@ -128,9 +169,10 @@ export const AdminPage = () => {
   };
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'users',    label: `Users${userTotal ? ` (${userTotal})` : ''}` },
-    { key: 'jobs',     label: 'Jobs' },
+    { key: 'overview',  label: 'Overview' },
+    { key: 'users',     label: `Users${userTotal ? ` (${userTotal})` : ''}` },
+    { key: 'jobs',      label: 'Jobs' },
+    { key: 'messages',  label: `Messages${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
   ];
 
   return (
@@ -406,6 +448,56 @@ export const AdminPage = () => {
                 </div>
               </div>
             )}
+          </div>
+        )
+      )}
+
+      {/* ── Messages tab ── */}
+      {tab === 'messages' && (
+        loading ? <SkeletonTable /> : (
+          <div className="space-y-3">
+            {messages.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-12">No messages yet.</p>
+            )}
+            {messages.map(msg => (
+              <div
+                key={msg.id}
+                className={`bg-white rounded-2xl border p-4 ${msg.is_read ? 'border-gray-200' : 'border-green-400 bg-green-50/30'}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {!msg.is_read && <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">New</span>}
+                      <span className="text-sm font-semibold text-gray-900 truncate">{msg.subject}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {msg.name} · <a href={`mailto:${msg.email}`} className="text-green-600 hover:underline">{msg.email}</a>
+                      {' · '}{new Date(msg.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {!msg.is_read && (
+                      <button onClick={() => handleMarkRead(msg.id)} className="text-xs text-gray-500 hover:text-green-600 transition">Mark read</button>
+                    )}
+                    <button onClick={() => setExpandedMsg(expandedMsg === msg.id ? null : msg.id)} className="text-xs text-gray-500 hover:text-gray-900 transition">
+                      {expandedMsg === msg.id ? 'Hide' : 'View'}
+                    </button>
+                    <button onClick={() => handleDeleteMessage(msg.id)} className="text-xs text-red-400 hover:text-red-600 transition">Delete</button>
+                  </div>
+                </div>
+                {expandedMsg === msg.id && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{msg.message}</p>
+                    <a
+                      href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject)}`}
+                      className="inline-block mt-3 text-xs font-semibold text-green-600 hover:underline"
+                    >
+                      Reply via email →
+                    </a>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )
       )}

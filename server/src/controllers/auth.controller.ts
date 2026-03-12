@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
+import { getMailTransporter } from '../services/mail.service.js';
 import { pool } from '../config/database.js';
 import { env } from '../config/env.js';
 import { User, UserResponse } from '../types/index.js';
@@ -65,13 +65,6 @@ function validatePassword(password: string): string | null {
   return null;
 }
 
-function getMailTransporter() {
-  if (!env.SMTP_USER || !env.SMTP_PASS) return null;
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
-  });
-}
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {

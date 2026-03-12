@@ -11,6 +11,7 @@ interface EnvConfig {
   ADZUNA_APP_ID?: string;
   ADZUNA_APP_KEY?: string;
   CLIENT_URL: string;
+  SMTP_HOST?: string;
   SMTP_USER?: string;
   SMTP_PASS?: string;
   REGISTER_SECRET?: string;
@@ -45,6 +46,7 @@ export const env: EnvConfig = {
   ADZUNA_APP_ID: process.env.ADZUNA_APP_ID,
   ADZUNA_APP_KEY: process.env.ADZUNA_APP_KEY,
   CLIENT_URL: (process.env.CLIENT_URL || 'http://localhost:5173').trim(),
+  SMTP_HOST: process.env.SMTP_HOST,
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASS: process.env.SMTP_PASS,
   REGISTER_SECRET: process.env.REGISTER_SECRET,
