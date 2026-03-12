@@ -115,7 +115,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, email: user.email, isAdmin: user.is_admin ?? false },
       env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -124,6 +124,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const userResponse: UserResponse = {
       id: user.id,
       email: user.email,
+      isAdmin: user.is_admin ?? false,
     };
 
     res.json({

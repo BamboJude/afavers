@@ -78,6 +78,8 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   const { showWarning, secondsLeft, stayLoggedIn } = useIdleTimer(handleLogout);
 
+  const isAdmin = user?.isAdmin ?? false;
+
   const navItems = [
     { to: '/dashboard',    icon: <IconDashboard />,  label: t('dashboard') },
     { to: '/jobs',         icon: <IconJobs />,        label: t('browseJobs') },
@@ -144,6 +146,29 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
               <span>{item.label}</span>
             </NavLink>
           ))}
+
+          {/* Admin link — only visible to admins */}
+          {isAdmin && (
+            <>
+              <div className="my-2 border-t border-gray-100" />
+              <NavLink
+                to="/admin"
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-150 active:scale-95 ${
+                    isActive
+                      ? 'bg-red-50 text-red-700 font-semibold shadow-sm ring-1 ring-red-100'
+                      : 'font-medium text-red-400 hover:bg-red-50 hover:text-red-700 hover:translate-x-0.5'
+                  }`
+                }
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>Admin Panel</span>
+              </NavLink>
+            </>
+          )}
         </nav>
 
         {/* Bottom: language + user */}
