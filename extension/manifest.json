@@ -14,8 +14,6 @@
     "https://*.monster.de/*",
     "https://*.jobs.de/*",
     "https://*.karriere.de/*",
-    "https://*.adzuna.de/*",
-    "https://*.adzuna.com/*",
     "https://server-production-ebd2b.up.railway.app/*"
   ],
   "content_security_policy": {
@@ -48,9 +46,7 @@
         "https://*.glassdoor.com/*",
         "https://*.monster.de/*",
         "https://*.jobs.de/*",
-        "https://*.karriere.de/*",
-        "https://*.adzuna.de/*",
-        "https://*.adzuna.com/*"
+        "https://*.karriere.de/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"

@@ -132,19 +132,6 @@ function extractArbeitsagentur() {
   return { title, company, location, description, salary: '' };
 }
 
-// ── Adzuna ────────────────────────────────────────────────────────────────
-function extractAdzuna() {
-  const title    = getText('h1[class*="title"], h1[class*="job"], h1') || '';
-  const company  = getText('[class*="company"], [class*="advertiser"]') || '';
-  const location = getText('[class*="location"], [class*="city"]') || '';
-  const descEl   = document.querySelector('[class*="description"], [class*="adBody"], article');
-  const description = descEl
-    ? (descEl.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 3000)
-    : '';
-  const salary   = getText('[class*="salary"], [class*="pay"]') || '';
-  return { title, company, location, description, salary };
-}
-
 // ── Generic fallback ──────────────────────────────────────────────────────
 function extractGeneric() {
   const title    = getText('h1')
@@ -182,7 +169,6 @@ function extractJobData() {
   else if (hostname.includes('stepstone.'))     data = extractStepStone();
   else if (hostname.includes('xing.com'))       data = extractXing();
   else if (hostname.includes('arbeitsagentur.de')) data = extractArbeitsagentur();
-  else if (hostname.includes('adzuna.'))        data = extractAdzuna();
   else                                          data = extractGeneric();
 
   return { ...data, url, source: detectSource(hostname) };
@@ -196,7 +182,6 @@ function detectSource(hostname) {
   if (hostname.includes('arbeitsagentur')) return 'bundesagentur';
   if (hostname.includes('glassdoor'))     return 'glassdoor';
   if (hostname.includes('monster'))       return 'monster';
-  if (hostname.includes('adzuna'))        return 'adzuna';
   return hostname.replace('www.', '').split('.')[0];
 }
 
