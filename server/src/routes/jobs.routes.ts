@@ -15,6 +15,14 @@ const fetchLimiter = rateLimit({
   message: { error: 'Too many fetch requests. Please try again in 1 hour.' },
 });
 
+const captureLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many capture requests. Please try again in 1 hour.' },
+});
+
 // ── Public endpoint (no auth required, open CORS) ───────────────────────────
 router.get('/public', (_req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -63,7 +71,7 @@ async function getUserSearchFilters(userId: number): Promise<{ userKeywords: str
 }
 
 /** POST /api/jobs/capture — save a job captured from browser extension */
-router.post('/capture', async (req: AuthRequest, res) => {
+router.post('/capture', captureLimiter, async (req: AuthRequest, res) => {
   try {
     const { title, company, location, salary, status, url, source, description } = req.body;
     if (!title) { res.status(400).json({ error: 'Job title is required' }); return; }
