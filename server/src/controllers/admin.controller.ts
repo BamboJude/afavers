@@ -96,7 +96,7 @@ export const listUsers = async (req: AuthRequest, res: Response): Promise<void> 
 
 export const toggleAdmin = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const targetId = parseInt(String(req.params.id));
+    const targetId = parseInt(req.params['id'] as string);
     if (targetId === req.userId) {
       res.status(400).json({ error: 'Cannot modify your own admin status' });
       return;
@@ -119,7 +119,7 @@ export const toggleAdmin = async (req: AuthRequest, res: Response): Promise<void
 
 export const deleteUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const targetId = parseInt(String(req.params.id));
+    const targetId = parseInt(req.params['id'] as string);
     if (targetId === req.userId) {
       res.status(400).json({ error: 'Cannot delete your own account from admin panel' });
       return;
