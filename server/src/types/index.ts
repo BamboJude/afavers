@@ -3,12 +3,14 @@ export interface User {
   id: number;
   email: string;
   password_hash: string;
+  is_admin: boolean;
   created_at: Date;
 }
 
 export interface UserResponse {
   id: number;
   email: string;
+  isAdmin?: boolean;
 }
 
 // Job types

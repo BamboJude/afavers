@@ -21,6 +21,8 @@ import { DemoJobsPage } from './pages/DemoJobsPage';
 import { RemindersPage } from './pages/RemindersPage';
 import { NewsPage } from './pages/NewsPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
+import { AdminRoute } from './routes/AdminRoute';
+import { AdminPage } from './pages/AdminPage';
 import { AppLayout } from './components/layout/AppLayout';
 
 const TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
@@ -79,6 +81,11 @@ function App() {
         <Route path="/career-guides"  element={<ProtectedLayout><CareerGuidesPage /></ProtectedLayout>} />
         <Route path="/reminders"      element={<ProtectedLayout><RemindersPage /></ProtectedLayout>} />
         <Route path="/news"           element={<ProtectedLayout><NewsPage /></ProtectedLayout>} />
+        <Route path="/admin" element={
+          <AdminRoute>
+            <AppLayout><AdminPage /></AppLayout>
+          </AdminRoute>
+        } />
         <Route path="/demo" element={<DemoJobsPage />} />
         <Route path="/" element={<LandingPage />} />
       </Routes>

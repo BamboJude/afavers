@@ -8,12 +8,14 @@ import { pool } from '../config/database.js';
 export interface AuthRequest extends Request {
   userId?: number;
   isDemo?: boolean;
+  isAdmin?: boolean;
 }
 
 interface JWTPayload {
   userId: number;
   email: string;
   isDemo?: boolean;
+  isAdmin?: boolean;
 }
 
 export const authenticateToken = async (
@@ -45,8 +47,17 @@ export const authenticateToken = async (
 
     req.userId = decoded.userId;
     req.isDemo = decoded.isDemo ?? false;
+    req.isAdmin = decoded.isAdmin ?? false;
     next();
   } catch (error) {
     res.status(403).json({ error: 'Invalid or expired token' });
   }
+};
+
+export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  if (!req.isAdmin) {
+    res.status(403).json({ error: 'Admin access required' });
+    return;
+  }
+  next();
 };
