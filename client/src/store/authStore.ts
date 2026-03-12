@@ -13,7 +13,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isDemo: boolean;
   lastActivity: number | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, adminKey?: string) => Promise<void>;
   loginDemo: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -22,11 +22,11 @@ interface AuthState {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-async function authRequest(path: string, email: string, password: string) {
+async function authRequest(path: string, email: string, password: string, adminKey?: string) {
   const response = await fetch(`${API_URL}/api/auth/${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, ...(adminKey ? { adminKey } : {}) }),
   });
 
   if (!response.ok) {
@@ -46,8 +46,8 @@ export const useAuthStore = create<AuthState>()(
       isDemo: false,
       lastActivity: null,
 
-      login: async (email, password) => {
-        const data = await authRequest('login', email, password);
+      login: async (email, password, adminKey?) => {
+        const data = await authRequest('login', email, password, adminKey);
         set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: false, lastActivity: Date.now() });
       },
 

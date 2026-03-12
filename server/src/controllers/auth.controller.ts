@@ -113,9 +113,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     await clearFailures(email.toLowerCase().trim());
 
+    // Admin privileges only granted when correct ADMIN_SECRET is provided
+    const { adminKey } = req.body;
+    const isAdmin = (user.is_admin ?? false) &&
+      !!env.ADMIN_SECRET &&
+      adminKey === env.ADMIN_SECRET;
+
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email, isAdmin: user.is_admin ?? false },
+      { userId: user.id, email: user.email, isAdmin },
       env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -124,7 +130,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const userResponse: UserResponse = {
       id: user.id,
       email: user.email,
-      isAdmin: user.is_admin ?? false,
+      isAdmin,
     };
 
     res.json({

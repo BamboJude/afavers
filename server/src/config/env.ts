@@ -14,6 +14,7 @@ interface EnvConfig {
   SMTP_USER?: string;
   SMTP_PASS?: string;
   REGISTER_SECRET?: string;
+  ADMIN_SECRET?: string;
 }
 
 // Validate required environment variables
@@ -47,6 +48,7 @@ export const env: EnvConfig = {
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASS: process.env.SMTP_PASS,
   REGISTER_SECRET: process.env.REGISTER_SECRET,
+  ADMIN_SECRET: process.env.ADMIN_SECRET,
 };
 
 // Log configuration (without sensitive data)
