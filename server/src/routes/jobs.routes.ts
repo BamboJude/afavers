@@ -62,6 +62,56 @@ async function getUserSearchFilters(userId: number): Promise<{ userKeywords: str
   return { userKeywords: [], userLocations: [] };
 }
 
+/** POST /api/jobs/capture — save a job captured from browser extension */
+router.post('/capture', async (req: AuthRequest, res) => {
+  try {
+    const { title, company, location, salary, status, url, source, description } = req.body;
+    if (!title) { res.status(400).json({ error: 'Job title is required' }); return; }
+
+    // Upsert job by URL (avoid duplicates), or insert new
+    let jobId: number;
+    if (url) {
+      const existing = await pool.query('SELECT id FROM jobs WHERE url = $1', [url]);
+      if (existing.rows.length > 0) {
+        jobId = existing.rows[0].id;
+        // Update fields in case they changed
+        await pool.query(
+          `UPDATE jobs SET title=$1, company=$2, location=$3, salary=$4, description=$5, source=$6 WHERE id=$7`,
+          [title, company || null, location || null, salary || null, description || null, source || 'manual', jobId]
+        );
+      } else {
+        const ins = await pool.query(
+          `INSERT INTO jobs (title, company, location, salary, description, url, source, posted_date)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,NOW()) RETURNING id`,
+          [title, company || null, location || null, salary || null, description || null, url, source || 'manual']
+        );
+        jobId = ins.rows[0].id;
+      }
+    } else {
+      const ins = await pool.query(
+        `INSERT INTO jobs (title, company, location, salary, description, url, source, posted_date)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,NOW()) RETURNING id`,
+        [title, company || null, location || null, salary || null, description || null, null, source || 'manual']
+      );
+      jobId = ins.rows[0].id;
+    }
+
+    // Create/update user_jobs entry
+    await pool.query(
+      `INSERT INTO user_jobs (user_id, job_id, status, created_at, updated_at)
+       VALUES ($1,$2,$3,NOW(),NOW())
+       ON CONFLICT (user_id, job_id) DO UPDATE SET status=$3, updated_at=NOW()`,
+      [req.userId, jobId, status || 'saved']
+    );
+
+    const job = await jobModel.findById(jobId, req.userId);
+    res.json({ success: true, job });
+  } catch (error) {
+    console.error('Error capturing job:', error);
+    res.status(500).json({ error: 'Failed to capture job' });
+  }
+});
+
 /** POST /api/jobs/fetch — manually trigger job fetching */
 router.post('/fetch', fetchLimiter, async (req: AuthRequest, res) => {
   if (req.isDemo) {

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>afavers</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      Afa<span class="logo-v">v</span>ers
+    </div>
+    <div id="user-info" class="user-info hidden">
+      <span id="user-email" class="user-email"></span>
+      <button id="logout-btn" class="btn-icon" title="Logout">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Login view -->
+  <div id="view-login" class="view">
+    <p class="view-subtitle">Sign in to save jobs</p>
+    <div class="form-group">
+      <input id="login-email" type="email" placeholder="Email" class="input" autocomplete="email" />
+    </div>
+    <div class="form-group">
+      <input id="login-password" type="password" placeholder="Password" class="input" autocomplete="current-password" />
+    </div>
+    <div id="login-error" class="error hidden"></div>
+    <button id="login-btn" class="btn-primary">Sign In</button>
+  </div>
+
+  <!-- Capture view -->
+  <div id="view-capture" class="view hidden">
+    <div id="extract-status" class="extract-status">
+      <div class="spinner"></div>
+      <span>Reading page…</span>
+    </div>
+
+    <div id="capture-form" class="hidden">
+      <div class="form-group">
+        <label class="label">Job Title *</label>
+        <input id="field-title" type="text" class="input" placeholder="e.g. Software Engineer" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="label">Company</label>
+          <input id="field-company" type="text" class="input" placeholder="Company name" />
+        </div>
+        <div class="form-group">
+          <label class="label">Location</label>
+          <input id="field-location" type="text" class="input" placeholder="City" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="label">Salary</label>
+        <input id="field-salary" type="text" class="input" placeholder="Optional" />
+      </div>
+      <div class="form-group">
+        <label class="label">Status</label>
+        <select id="field-status" class="input">
+          <option value="saved">Saved</option>
+          <option value="applied">Applied</option>
+          <option value="interviewing">Interviewing</option>
+        </select>
+      </div>
+      <div id="source-badge" class="source-badge"></div>
+
+      <div id="save-error" class="error hidden"></div>
+      <button id="save-btn" class="btn-primary">Save to afavers</button>
+    </div>
+  </div>
+
+  <!-- Success view -->
+  <div id="view-success" class="view hidden">
+    <div class="success-icon">
+      <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <p class="success-title">Job saved!</p>
+    <p class="success-sub" id="success-sub"></p>
+    <a id="open-dashboard" href="#" target="_blank" class="btn-secondary">Open Dashboard</a>
+    <button id="save-another" class="btn-ghost">Save another job</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
