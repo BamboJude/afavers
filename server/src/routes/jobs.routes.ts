@@ -81,18 +81,20 @@ router.post('/capture', async (req: AuthRequest, res) => {
           [title, company || null, location || null, salary || null, description || null, source || 'manual', jobId]
         );
       } else {
+        const extId = `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const ins = await pool.query(
-          `INSERT INTO jobs (title, company, location, salary, description, url, source, posted_date)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,NOW()) RETURNING id`,
-          [title, company || null, location || null, salary || null, description || null, url, source || 'manual']
+          `INSERT INTO jobs (external_id, title, company, location, salary, description, url, source, posted_date)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING id`,
+          [extId, title, company || null, location || null, salary || null, description || null, url, source || 'manual']
         );
         jobId = (ins.rows[0] as { id: number }).id;
       }
     } else {
+      const extId = `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const ins = await pool.query(
-        `INSERT INTO jobs (title, company, location, salary, description, url, source, posted_date)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,NOW()) RETURNING id`,
-        [title, company || null, location || null, salary || null, description || null, null, source || 'manual']
+        `INSERT INTO jobs (external_id, title, company, location, salary, description, url, source, posted_date)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING id`,
+        [extId, title, company || null, location || null, salary || null, description || null, null, source || 'manual']
       );
       jobId = (ins.rows[0] as { id: number }).id;
     }
