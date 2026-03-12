@@ -47,8 +47,8 @@ export const getStats = async (_req: AuthRequest, res: Response): Promise<void> 
 
 export const listUsers = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const search = (req.query.search as string) || '';
-    const page = parseInt((req.query.page as string) || '1');
+    const search = typeof req.query.search === 'string' ? req.query.search : '';
+    const page = parseInt(typeof req.query.page === 'string' ? req.query.page : '1');
     const limit = 20;
     const offset = (page - 1) * limit;
 
@@ -96,7 +96,7 @@ export const listUsers = async (req: AuthRequest, res: Response): Promise<void> 
 
 export const toggleAdmin = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const targetId = parseInt(req.params.id);
+    const targetId = parseInt(String(req.params.id));
     if (targetId === req.userId) {
       res.status(400).json({ error: 'Cannot modify your own admin status' });
       return;
@@ -119,7 +119,7 @@ export const toggleAdmin = async (req: AuthRequest, res: Response): Promise<void
 
 export const deleteUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const targetId = parseInt(req.params.id);
+    const targetId = parseInt(String(req.params.id));
     if (targetId === req.userId) {
       res.status(400).json({ error: 'Cannot delete your own account from admin panel' });
       return;
