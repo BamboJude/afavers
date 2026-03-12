@@ -24,7 +24,7 @@ if (env.NODE_ENV === 'production') {
 // Security headers
 app.use(helmet());
 
-// CORS — allow web, Capacitor iOS, and local dev
+// CORS — allow web, Capacitor iOS, browser extensions, and local dev
 const ALLOWED_ORIGINS = [
   env.CLIENT_URL,           // https://afavers.com
   'capacitor://localhost',  // Capacitor iOS app
@@ -34,7 +34,10 @@ const ALLOWED_ORIGINS = [
 app.use(cors({
   origin: (origin, cb) => {
     // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (!origin) return cb(null, true);
+    // Allow browser extensions (Chrome/Firefox/Edge)
+    if (origin.startsWith('chrome-extension://') || origin.startsWith('moz-extension://') || origin.startsWith('ms-browser-extension://')) return cb(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
     cb(new Error(`CORS: ${origin} not allowed`));
   },
   credentials: true,
