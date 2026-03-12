@@ -297,6 +297,7 @@ export const LandingPage = () => {
           <div className="flex gap-5 text-sm font-medium text-gray-400">
             <Link to="/login" className="hover:text-gray-900 transition">Log in</Link>
             <Link to="/register" className="hover:text-gray-900 transition">Sign up</Link>
+            <Link to="/disclaimer" className="hover:text-gray-900 transition">Disclaimer & Privacy</Link>
           </div>
         </div>
       </footer>
