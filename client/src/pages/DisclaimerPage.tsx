@@ -28,7 +28,7 @@ export const DisclaimerPage = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-3">2. Third-Party Job Listings</h2>
             <p>
               Job listings shown on afavers are retrieved from external sources including the Bundesagentur
-              für Arbeit, StepStone, LinkedIn, Indeed, XING, and other job boards. afavers does not own,
+              für Arbeit, Adzuna, StepStone, LinkedIn, Indeed, XING, and other job boards. afavers does not own,
               verify, or endorse any of these listings. We are not responsible for the accuracy,
               completeness, or availability of third-party job content.
             </p>
