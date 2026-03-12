@@ -17,6 +17,7 @@ import { HotpicksPage } from './pages/HotpicksPage';
 import { InterviewPrepPage } from './pages/InterviewPrepPage';
 import { CareerGuidesPage } from './pages/CareerGuidesPage';
 import { LandingPage } from './pages/LandingPage';
+import { DisclaimerPage } from './pages/DisclaimerPage';
 import { DemoJobsPage } from './pages/DemoJobsPage';
 import { RemindersPage } from './pages/RemindersPage';
 import { NewsPage } from './pages/NewsPage';
@@ -89,6 +90,7 @@ function App() {
         } />
         <Route path="/admin-login" element={<AdminLoginPage />} />
         <Route path="/demo" element={<DemoJobsPage />} />
+        <Route path="/disclaimer" element={<DisclaimerPage />} />
         <Route path="/" element={<LandingPage />} />
       </Routes>
     </BrowserRouter>
