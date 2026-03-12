@@ -134,7 +134,7 @@ function populateForm(data) {
   const sourceLabels = {
     linkedin: '🔵 LinkedIn', indeed: '🔵 Indeed', stepstone: '🟠 StepStone',
     xing: '🟢 Xing', bundesagentur: '🇩🇪 Bundesagentur', glassdoor: '🟡 Glassdoor',
-    manual: '✏️ Manual entry',
+    adzuna: '🔍 Adzuna', manual: '✏️ Manual entry',
   };
   badge.textContent = sourceLabels[source] || `🌐 ${source}`;
   badge.dataset.url = data.url || '';
