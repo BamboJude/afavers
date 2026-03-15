@@ -5,11 +5,14 @@ import { env } from '../../config/env.js';
 // Adzuna API configuration
 const BASE_URL = 'https://api.adzuna.com/v1/api/jobs/de/search';
 
-// Search configuration
-const KEYWORDS = ['consulting', 'beratung', 'nachhaltigkeit', 'umwelt', 'gis', 'energy', 'renewable energy'];
-const ENGLISH_KEYWORDS = ['english speaking', 'international', 'sustainability', 'climate', 'data analyst'];
-const LOCATIONS = ['Düsseldorf', 'Köln', 'Essen', 'Bochum', 'Dortmund'];
-const PAGES_PER_SEARCH = 2; // Fetch 2 pages per keyword/location combination
+// Search configuration — kept small to stay within Adzuna free tier (250 req/week)
+// 4 keywords × 3 locations × 1 page = 12 requests per daily run
+const KEYWORDS = ['nachhaltigkeit', 'umwelt', 'energy', 'consulting'];
+const LOCATIONS = ['Düsseldorf', 'Köln', 'Berlin'];
+const PAGES_PER_SEARCH = 1;
+
+// Only fetch from Adzuna once per 24 hours
+let lastAdzunaFetch: Date | null = null;
 
 interface AdzunaJob {
   id: string;
@@ -44,9 +47,19 @@ export async function fetchAdzunaJobs(): Promise<ExternalJob[]> {
     return [];
   }
 
-  const allJobs: ExternalJob[] = [];
+  // Rate-guard: only run once per 24 hours
+  if (lastAdzunaFetch) {
+    const hoursSince = (Date.now() - lastAdzunaFetch.getTime()) / 3_600_000;
+    if (hoursSince < 24) {
+      console.log(`⏭️  Adzuna skipped (last run ${hoursSince.toFixed(1)}h ago, limit: 24h)`);
+      return [];
+    }
+  }
 
-  console.log('🔍 Fetching jobs from Adzuna...');
+  const allJobs: ExternalJob[] = [];
+  lastAdzunaFetch = new Date();
+
+  console.log('🔍 Fetching jobs from Adzuna (daily run)...');
 
   try {
     // Fetch jobs for each keyword-location combination
@@ -58,20 +71,6 @@ export async function fetchAdzunaJobs(): Promise<ExternalJob[]> {
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
           console.error(`Error fetching ${keyword} in ${location}:`, error);
-        }
-      }
-    }
-
-    // English-focused pass: search English keywords with what_and=english to find
-    // jobs that explicitly mention English (i.e. English-language or English-required roles)
-    for (const keyword of ENGLISH_KEYWORDS) {
-      for (const location of LOCATIONS) {
-        try {
-          const jobs = await fetchJobsForKeywordAndLocation(keyword, location, 'english');
-          allJobs.push(...jobs);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } catch (error) {
-          console.error(`Error fetching English jobs (${keyword}, ${location}):`, error);
         }
       }
     }
@@ -101,7 +100,7 @@ async function fetchJobsForKeywordAndLocation(
       const params: Record<string, string | number> = {
         app_id: env.ADZUNA_APP_ID!,
         app_key: env.ADZUNA_APP_KEY!,
-        results_per_page: 50,
+        results_per_page: 25,
         what: keyword,
         where: location,
       };
