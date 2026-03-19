@@ -9,6 +9,9 @@
     <link rel="shortcut icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/pwa-192x192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet" />
 
     <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -21,7 +24,7 @@
     <title>afavers | Personal Job Application Tracker for Germany</title>
     <meta name="description" content="afavers is your personal job application tracker for Germany. Jobs are automatically fetched from Bundesagentur für Arbeit every 2 hours. Save, apply, and track every application from one dashboard — free forever." />
     <meta name="keywords" content="job application tracker, job tracker Germany, Bewerbung verwalten, Bundesagentur jobs, job search tracker, application manager, Germany job board, Stellenangebote tracker" />
-    <link rel="canonical" href="https://afavers.com/" />
+    <link rel="canonical" href="https://afavers.online/" />
     <meta name="robots" content="index, follow" />
     <meta name="author" content="afavers" />
 
@@ -29,21 +32,25 @@
     <meta property="og:site_name" content="afavers" />
     <meta property="og:title" content="afavers – Personal Job Application Tracker for Germany" />
     <meta property="og:description" content="Track every job application in one place. Jobs auto-fetched from Bundesagentur für Arbeit every 2 hours. Kanban board, reminders, analytics — free forever." />
-    <meta property="og:url" content="https://afavers.com/" />
+    <meta property="og:url" content="https://afavers.online/" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://afavers.com/pwa-512x512.png" />
+    <meta property="og:image" content="https://afavers.online/pwa-512x512.png" />
     <meta property="og:image:width" content="512" />
     <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="afavers – job tracker for Germany" />
     <meta property="og:locale" content="en_DE" />
+    <meta property="og:locale:alternate" content="de_DE" />
 
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@afavers" />
     <meta name="twitter:title" content="afavers – Personal Job Application Tracker for Germany" />
     <meta name="twitter:description" content="Track every job application in one place. Jobs auto-fetched from Bundesagentur für Arbeit every 2 hours. Free forever." />
-    <meta name="twitter:image" content="https://afavers.com/pwa-512x512.png" />
+    <meta name="twitter:image" content="https://afavers.online/pwa-512x512.png" />
+    <meta name="twitter:image:alt" content="afavers job tracker dashboard" />
 
     <!-- Google Verification -->
-    <meta name="google-site-verification" content="lh_TeeZ8cKsZY3XtF8mcjX4HqnMt44RnMSzGsZR0VwE" />
+    <meta name="google-site-verification" content="7Bk4XnzXtYIe59tCV3Wc9tGOTbTgTeVRq77r3qvFonc" />
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-YC3FZBQ1EG"></script>
@@ -61,7 +68,7 @@
       "@type": "WebApplication",
       "name": "afavers",
       "alternateName": "afavers Job Tracker",
-      "url": "https://afavers.com",
+      "url": "https://afavers.online",
       "description": "afavers is a personal job application tracker for Germany. It automatically fetches jobs from Bundesagentur für Arbeit every 2 hours and gives you a dashboard to save, apply, and track every application.",
       "applicationCategory": "BusinessApplication",
       "applicationSubCategory": "Job Application Tracker",
@@ -84,19 +91,77 @@
       "publisher": {
         "@type": "Organization",
         "name": "afavers",
-        "url": "https://afavers.com",
+        "url": "https://afavers.online",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://afavers.com/pwa-512x512.png",
+          "url": "https://afavers.online/pwa-512x512.png",
           "width": 512,
           "height": 512
         }
       },
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://afavers.com/demo?q={search_term_string}",
+        "target": "https://afavers.online/demo?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
+    }
+    </script>
+
+    <!-- FAQ Structured Data (helps AI + Google featured snippets) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is afavers?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "afavers is a free personal job application tracker built for the German job market. It automatically fetches job listings from Bundesagentur für Arbeit every 2 hours and provides a dashboard to save, apply, and track every application."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is afavers free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. afavers is completely free with no ads, no paywalls, and no hidden costs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where do the job listings come from?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "All job listings are fetched directly from Bundesagentur für Arbeit — the official German federal employment agency. The data is refreshed automatically every 2 hours."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use afavers if I don't speak German?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. afavers has a built-in English-language job filter that shows only positions where English is the working language. The app interface is available in both English and German."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What types of jobs does afavers focus on?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "afavers focuses on green and sustainability-related roles in Germany — including renewable energy, environmental consulting, GIS, Nachhaltigkeit (sustainability), and Beratung (consulting). Jobs are primarily sourced from cities in NRW (Düsseldorf, Köln, Essen, Bochum, Dortmund) and other major German cities."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a mobile app?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. afavers is available as an iOS app and can also be installed as a Progressive Web App (PWA) on any mobile device via the browser."
+          }
+        }
+      ]
     }
     </script>
   </head>
