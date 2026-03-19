@@ -85,9 +85,12 @@ const SwipeVisual = () => {
   const dragging = useRef(false);
   const startX = useRef(0);
 
-  const handleMouseDown = (e: React.MouseEvent) => { dragging.current = true; startX.current = e.clientX; };
-  const handleMouseMove = (e: React.MouseEvent) => { if (!dragging.current) return; setSwipeX(e.clientX - startX.current); };
-  const handleMouseUp = () => {
+  const getX = (e: React.MouseEvent | React.TouchEvent) =>
+    'touches' in e ? e.touches[0].clientX : e.clientX;
+
+  const handleDown = (e: React.MouseEvent | React.TouchEvent) => { dragging.current = true; startX.current = getX(e); };
+  const handleMove = (e: React.MouseEvent | React.TouchEvent) => { if (!dragging.current) return; setSwipeX(getX(e) - startX.current); };
+  const handleUp = () => {
     dragging.current = false;
     if (swipeX > 80) { setSwiped('right'); setTimeout(() => { setSwiped(null); setSwipeX(0); setCardIdx(i => (i + 1) % SAMPLE_JOBS.length); }, 500); }
     else if (swipeX < -80) { setSwiped('left'); setTimeout(() => { setSwiped(null); setSwipeX(0); setCardIdx(i => (i + 1) % SAMPLE_JOBS.length); }, 500); }
@@ -109,7 +112,8 @@ const SwipeVisual = () => {
       <div
         className="absolute inset-0 bg-white rounded-2xl border border-gray-200 shadow-xl p-5 cursor-grab active:cursor-grabbing z-10"
         style={{ transform: swiped === 'right' ? 'translateX(120%) rotate(20deg)' : swiped === 'left' ? 'translateX(-120%) rotate(-20deg)' : `translateX(${swipeX}px) rotate(${rot}deg)`, transition: swiped ? 'transform 0.4s cubic-bezier(0.16,1,0.3,1)' : swipeX === 0 ? 'transform 0.3s ease' : 'none' }}
-        onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
+        onMouseDown={handleDown} onMouseMove={handleMove} onMouseUp={handleUp} onMouseLeave={handleUp}
+        onTouchStart={handleDown} onTouchMove={handleMove} onTouchEnd={handleUp}
       >
         {/* Save/Skip badges */}
         <div className="absolute top-4 left-4 px-3 py-1.5 bg-green-500 text-white text-xs font-black rounded-full rotate-[-12deg] border-2 border-white" style={{ opacity: saveOpacity }}>SAVE ♥</div>
@@ -245,6 +249,29 @@ const USE_CASES = [
   { tag: 'Track progress', headline: 'Watch your pipeline move forward.', body: 'Every application moves through Saved → Applied → Interview → Offer. See exactly where each opportunity stands — at a glance, every day.', Visual: KanbanVisual },
 ];
 
+// Wrapper so useInView is called at component level (not inside .map)
+const UseCaseRow = ({ uc, i }: { uc: typeof USE_CASES[number]; i: number }) => {
+  const { ref, inView } = useInView(0.2);
+  const isEven = i % 2 === 0;
+  return (
+    <div ref={ref} className={`py-16 md:py-24 px-6 border-b border-gray-100 ${isEven ? 'bg-white' : 'bg-[#f4f6fa]'}`}>
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
+        <div className={isEven ? 'order-1' : 'order-1 md:order-2'} style={{ opacity: inView ? 1 : 0, transform: inView ? 'translateX(0)' : isEven ? 'translateX(-32px)' : 'translateX(32px)', transition: 'all 0.8s cubic-bezier(0.16,1,0.3,1)' }}>
+          <span className="text-xs font-bold text-[#16a34a] uppercase tracking-widest">{uc.tag}</span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#0a1a25] leading-tight mt-3 mb-5">{uc.headline}</h2>
+          <p className="text-gray-500 text-base md:text-lg leading-relaxed">{uc.body}</p>
+          <Link to="/register" className="inline-flex items-center gap-2 mt-8 text-[#0a1a25] font-semibold text-sm hover:gap-3 transition-all">
+            Try it free <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+          </Link>
+        </div>
+        <div className={`flex justify-center ${isEven ? 'order-2' : 'order-2 md:order-1'}`} style={{ opacity: inView ? 1 : 0, transform: inView ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.96)', transition: 'all 0.8s cubic-bezier(0.16,1,0.3,1) 120ms' }}>
+          <uc.Visual />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const LandingPage = () => {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated);
   const [selectedJob, setSelectedJob] = useState<PublicJob | null>(null);
@@ -330,11 +357,11 @@ export const LandingPage = () => {
             Auto-updated every 2 hours · Germany's green jobs
           </div>
 
-          <h1 className={`text-6xl sm:text-8xl font-black text-[#0a1a25] leading-[0.95] tracking-tight mb-6 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '80ms' }}>
+          <h1 className={`text-4xl sm:text-6xl lg:text-8xl font-black text-[#0a1a25] leading-[0.95] tracking-tight mb-6 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '80ms' }}>
             Your job search,<br /><span className="shimmer-text">on autopilot.</span>
           </h1>
 
-          <p className={`text-gray-500 text-xl leading-relaxed max-w-2xl mx-auto mb-10 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '160ms' }}>
+          <p className={`text-gray-500 text-base sm:text-xl leading-relaxed max-w-2xl mx-auto mb-10 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '160ms' }}>
             afavers fetches, filters, and tracks every relevant green job in Germany — automatically. You focus on applying.
           </p>
 
@@ -347,20 +374,20 @@ export const LandingPage = () => {
             </Link>
           </div>
 
-          <div className={`flex items-center justify-center gap-3 text-sm text-gray-400 mb-16 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '320ms' }}>
+          <div className={`flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-sm text-gray-400 mb-12 md:mb-16 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '320ms' }}>
             <div className="flex -space-x-2">
               {['#16a34a','#3b82f6','#8b5cf6','#f59e0b','#ef4444'].map((c, i) => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[11px] font-black text-white" style={{ background: c }}>{['M','A','J','T','S'][i]}</div>
+                <div key={i} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-black text-white" style={{ background: c }}>{['M','A','J','T','S'][i]}</div>
               ))}
             </div>
-            <span>200+ job seekers trust afavers</span>
-            <span className="text-gray-200">·</span>
-            <span className="text-[#16a34a] font-semibold">Free forever</span>
+            <span className="text-xs sm:text-sm">200+ job seekers trust afavers</span>
+            <span className="hidden sm:inline text-gray-200">·</span>
+            <span className="text-[#16a34a] font-semibold text-xs sm:text-sm">Free forever</span>
           </div>
         </div>
 
         {/* Dashboard mockup */}
-        <div className={`relative w-full max-w-4xl mx-auto ${heroRef.inView ? 'scale-in' : 'opacity-0'}`} style={{ animationDelay: '400ms' }}>
+        <div className={`relative w-full max-w-4xl mx-auto hidden sm:block ${heroRef.inView ? 'scale-in' : 'opacity-0'}`} style={{ animationDelay: '400ms' }}>
           <div className="rounded-2xl border border-gray-200/80 overflow-hidden" style={{ boxShadow: '0 40px 80px -20px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04)' }}>
             <div className="bg-[#f8f9fa] border-b border-gray-200 px-4 py-3 flex items-center gap-3">
               <div className="flex gap-1.5"><div className="w-3 h-3 rounded-full bg-red-400" /><div className="w-3 h-3 rounded-full bg-amber-400" /><div className="w-3 h-3 rounded-full bg-green-400" /></div>
@@ -393,8 +420,8 @@ export const LandingPage = () => {
       </section>
 
       {/* ── Stats ── */}
-      <section className="py-20 bg-white border-y border-gray-100">
-        <div ref={statsRef.ref} className="max-w-4xl mx-auto px-6 grid grid-cols-3 gap-8 text-center">
+      <section className="py-16 sm:py-20 bg-white border-y border-gray-100">
+        <div ref={statsRef.ref} className="max-w-4xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
           {[{num:'2,400+',label:'Active green jobs',sub:'Updated every 2 hours'},{num:'50+',label:'Cities covered',sub:'Across Germany'},{num:'< 60s',label:'Setup time',sub:'Really, we promise'}].map((s,i)=>(
             <div key={s.label} style={{opacity:statsRef.inView?1:0,transform:statsRef.inView?'translateY(0)':'translateY(24px)',transition:`all 0.7s cubic-bezier(0.16,1,0.3,1) ${i*100}ms`}}>
               <div className="text-5xl sm:text-6xl font-black text-[#0a1a25] mb-2">{s.num}</div>
@@ -405,37 +432,17 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* ── Use cases (interactive, no sticky scroll) ── */}
+      {/* ── Use cases ── */}
       <section id="use-cases" className="bg-white">
-        {USE_CASES.map((uc, i) => {
-          const { ref, inView } = useInView(0.25);
-          const isEven = i % 2 === 0;
-          return (
-            <div key={i} ref={ref} className={`py-24 px-6 border-b border-gray-100 ${isEven ? 'bg-white' : 'bg-[#f4f6fa]'}`}>
-              <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                <div className={isEven ? 'order-1' : 'order-1 md:order-2'} style={{ opacity: inView ? 1 : 0, transform: inView ? 'translateX(0)' : isEven ? 'translateX(-32px)' : 'translateX(32px)', transition: 'all 0.8s cubic-bezier(0.16,1,0.3,1)' }}>
-                  <span className="text-xs font-bold text-[#16a34a] uppercase tracking-widest">{uc.tag}</span>
-                  <h2 className="text-4xl sm:text-5xl font-black text-[#0a1a25] leading-tight mt-3 mb-5">{uc.headline}</h2>
-                  <p className="text-gray-500 text-lg leading-relaxed">{uc.body}</p>
-                  <Link to="/register" className="inline-flex items-center gap-2 mt-8 text-[#0a1a25] font-semibold text-sm hover:gap-3 transition-all">
-                    Try it free <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                  </Link>
-                </div>
-                <div className={`flex justify-center ${isEven ? 'order-2' : 'order-2 md:order-1'}`} style={{ opacity: inView ? 1 : 0, transform: inView ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.96)', transition: 'all 0.8s cubic-bezier(0.16,1,0.3,1) 120ms' }}>
-                  <uc.Visual />
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {USE_CASES.map((uc, i) => <UseCaseRow key={i} uc={uc} i={i} />)}
       </section>
 
       {/* ── Live Jobs ── */}
-      <section id="jobs" className="py-24 bg-[#f4f6fa] border-y border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 mb-10 flex items-end justify-between">
+      <section id="jobs" className="py-16 sm:py-24 bg-[#f4f6fa] border-y border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 mb-8 sm:mb-10 flex items-end justify-between">
           <div>
             <p className="text-[#16a34a] text-xs font-bold uppercase tracking-widest mb-2">Live right now</p>
-            <h2 className="text-4xl font-black text-[#0a1a25]">Jobs available today</h2>
+            <h2 className="text-2xl sm:text-4xl font-black text-[#0a1a25]">Jobs available today</h2>
             <p className="text-gray-400 text-sm mt-1">{jobs.length > 0 ? `${jobs.length} listings · refreshed every 2h` : 'Loading…'}</p>
           </div>
           <Link to={isAuthenticated ? '/jobs' : '/demo'} className="text-sm font-semibold text-[#0a1a25] hover:text-gray-600 transition flex items-center gap-1 shrink-0">
@@ -470,20 +477,20 @@ export const LandingPage = () => {
       </section>
 
       {/* ── Browser Extension ── */}
-      <section id="extension" className="py-24 px-6 bg-white border-y border-gray-100">
+      <section id="extension" className="py-16 sm:py-24 px-6 bg-white border-y border-gray-100">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12 sm:mb-16">
             <p className="text-[#16a34a] text-xs font-bold uppercase tracking-widest mb-3">Browser Extension</p>
-            <h2 className="text-4xl sm:text-5xl font-black text-[#0a1a25] mb-4">Save any job from any website.<br />In one click.</h2>
-            <p className="text-gray-500 text-lg max-w-xl mx-auto">Browsing LinkedIn, StepStone, or any job board? Click the afavers extension and save that job straight to your tracker — no copy-pasting.</p>
-            <div className="flex items-center justify-center gap-4 mt-8">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#0a1a25] mb-4">Save any job from any website.<br className="hidden sm:block" /> In one click.</h2>
+            <p className="text-gray-500 text-base sm:text-lg max-w-xl mx-auto">Browsing LinkedIn, StepStone, or any job board? Click the afavers extension and save that job straight to your tracker — no copy-pasting.</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8">
               <a href="https://chromewebstore.google.com" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-3 px-6 py-3 bg-[#0a1a25] hover:bg-gray-800 text-white font-semibold rounded-2xl transition hover:shadow-lg hover:-translate-y-0.5">
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 py-3 bg-[#0a1a25] hover:bg-gray-800 text-white font-semibold rounded-2xl transition hover:shadow-lg hover:-translate-y-0.5">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.001h-.002l-5.344 9.257c.206.01.413.016.621.016 6.627 0 12-5.373 12-12 0-1.54-.29-3.011-.818-4.364zM12 10.545a1.455 1.455 0 1 0 0 2.91 1.455 1.455 0 0 0 0-2.91z"/></svg>
                 Add to Chrome
               </a>
               <a href="https://addons.mozilla.org" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-3 px-6 py-3 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-2xl transition">
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 py-3 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-2xl transition">
                 <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" fill="#FF6611"/><path d="M12 4.5c-1.8 0-3.45.63-4.75 1.67.48-.1.98-.17 1.5-.17 3.59 0 6.5 2.91 6.5 6.5 0 1.2-.33 2.33-.9 3.3A7.5 7.5 0 0 0 12 4.5z" fill="white" opacity="0.6"/></svg>
                 Add to Firefox
               </a>
@@ -553,12 +560,12 @@ export const LandingPage = () => {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-32 px-6 bg-white">
+      <section className="py-20 sm:py-32 px-6 bg-white">
         <div ref={ctaRef.ref} className="max-w-3xl mx-auto text-center" style={{ opacity: ctaRef.inView ? 1 : 0, transform: ctaRef.inView ? 'translateY(0)' : 'translateY(32px)', transition: 'all 0.8s cubic-bezier(0.16,1,0.3,1)' }}>
-          <h2 className="text-5xl sm:text-7xl font-black text-[#0a1a25] leading-tight mb-6">
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-black text-[#0a1a25] leading-tight mb-6">
             Your next job<br /><span className="shimmer-text">starts here.</span>
           </h2>
-          <p className="text-gray-500 text-xl mb-12">Free forever · No credit card · Set up in 60 seconds.</p>
+          <p className="text-gray-500 text-base sm:text-xl mb-10 sm:mb-12">Free forever · No credit card · Set up in 60 seconds.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register" className="px-10 py-4 bg-[#0a1a25] hover:bg-gray-800 text-white font-bold rounded-2xl text-base transition-all hover:shadow-2xl hover:-translate-y-0.5">Start for free →</Link>
             <Link to="/login" className="px-10 py-4 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-2xl text-base transition">Already have an account</Link>
