@@ -1009,11 +1009,6 @@ export const DashboardPage = () => {
               🔥 {streak}-day streak
             </div>
           )}
-          {stats && (
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full text-green-700 text-[12px] font-black">
-              {Math.round(((stats.interviewing || 0) + (stats.offered || 0)) / Math.max(stats.applied || 1, 1) * 100)}% response rate
-            </div>
-          )}
           <button
             onClick={() => setEditMode(e => !e)}
             className={`text-[13px] font-bold px-4 py-2 rounded-full border transition ${
