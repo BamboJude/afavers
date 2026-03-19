@@ -11,28 +11,7 @@ import { scheduleReminder } from '../services/notification.service';
 import { usePreferencesStore, jobMatchesFilter } from '../store/preferencesStore';
 import { NewsCarousel } from '../components/common/NewsCarousel';
 
-// ── Stress check-up ──────────────────────────────────────────────────────────
-
-const StressFace = ({ level, size = 28 }: { level: 1|2|3|4|5; size?: number }) => {
-  type Cfg = { bg: string; stroke: string; mouth: string; brows?: boolean };
-  const configs: Record<number, Cfg> = {
-    1: { bg: '#fee2e2', stroke: '#ef4444', mouth: 'M9 15.5 Q12 13 15 15.5', brows: true },
-    2: { bg: '#ffedd5', stroke: '#f97316', mouth: 'M9.5 14.5 Q12 13 14.5 14.5', brows: false },
-    3: { bg: '#f3f4f6', stroke: '#6b7280', mouth: 'M9.5 14 H14.5', brows: false },
-    4: { bg: '#dbeafe', stroke: '#3b82f6', mouth: 'M9.5 13.5 Q12 15.5 14.5 13.5', brows: false },
-    5: { bg: '#dcfce7', stroke: '#16a34a', mouth: 'M8.5 13 Q12 16.5 15.5 13', brows: false },
-  };
-  const c = configs[level];
-  return (
-    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" style={{ flexShrink: 0 }}>
-      <circle cx="12" cy="12" r="10" fill={c.bg} stroke={c.stroke} strokeWidth="1.5"/>
-      <circle cx="9" cy="10" r="1.1" fill={c.stroke}/>
-      <circle cx="15" cy="10" r="1.1" fill={c.stroke}/>
-      {c.brows && <path d="M7 7.5 L9.5 8.5 M17 7.5 L14.5 8.5" stroke={c.stroke} strokeWidth="1.5" strokeLinecap="round"/>}
-      <path d={c.mouth} stroke={c.stroke} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-    </svg>
-  );
-};
+// ── Icons ─────────────────────────────────────────────────────────────────────
 
 const IconTarget = ({ className = 'w-5 h-5' }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -48,59 +27,6 @@ const IconClock = ({ className = 'w-4 h-4' }: { className?: string }) => (
     <path d="M12 7v5l3 3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
-
-const STRESS_LEVELS = [
-  { level: 1 as const, labelKey: 'stressOverwhelmed', card: 'bg-red-50 text-red-700',    tipKey: 'stressTip1' },
-  { level: 2 as const, labelKey: 'stressStruggling',  card: 'bg-orange-50 text-orange-700', tipKey: 'stressTip2' },
-  { level: 3 as const, labelKey: 'stressOkay',        card: 'bg-gray-100 text-gray-700',  tipKey: 'stressTip3' },
-  { level: 4 as const, labelKey: 'stressGood',        card: 'bg-blue-50 text-blue-700',   tipKey: 'stressTip4' },
-  { level: 5 as const, labelKey: 'stressThriving',    card: 'bg-green-50 text-green-700', tipKey: 'stressTip5' },
-];
-
-const StressCheckup = () => {
-  const { logStress, todayStress } = useGoalStore();
-  const { t } = useLanguage();
-  const today = todayStress();
-  const [dismissed, setDismissed] = useState(false);
-
-  const info = STRESS_LEVELS.find(s => s.level === today?.level);
-
-  if (today && info) {
-    return (
-      <div className={`flex items-center gap-3 rounded px-3 py-2.5 ${info.card}`}>
-        <StressFace level={info.level} size={24} />
-        <div className="flex-1 min-w-0">
-          <span className="text-sm font-bold">{t(info.labelKey)} today · </span>
-          <span className="text-sm opacity-75 line-clamp-1">{t(info.tipKey)}</span>
-        </div>
-        <button onClick={() => logStress(today.level)} className="text-xs opacity-40 hover:opacity-80 transition shrink-0 ml-1" title="Change">✎</button>
-      </div>
-    );
-  }
-
-  if (dismissed) return null;
-
-  return (
-    <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[14px] font-bold text-[#223a5a]">{t('howAreYouHoldingUp')}</p>
-        <button onClick={() => setDismissed(true)} className="text-[#c1cbd5] hover:text-[#6f839c] transition text-sm">✕</button>
-      </div>
-      <div className="flex gap-2 flex-wrap">
-        {STRESS_LEVELS.map(s => (
-          <button
-            key={s.level}
-            onClick={() => logStress(s.level)}
-            className="flex flex-col items-center gap-1 px-3 py-2 rounded border border-[#dfe3eb] hover:border-[#c1cbd5] hover:bg-[#f4f6fa] active:scale-95 transition"
-          >
-            <StressFace level={s.level} size={32} />
-            <span className="text-[12px] text-[#6f839c] font-bold">{t(s.labelKey)}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 // ── Goal widget ───────────────────────────────────────────────────────────────
 
@@ -552,28 +478,28 @@ const Module = ({
   noPad?: boolean;
   className?: string;
 }) => (
-  <div className={`bg-white border border-[#dfe3eb] rounded overflow-hidden ${className}`}>
-    <div className="flex items-center justify-between px-[18px] border-b border-[#dfe3eb]" style={{ minHeight: 52 }}>
-      <h3 className="text-[11px] font-black text-[#6f839c] uppercase tracking-[1px]">{title}</h3>
+  <div className={`bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm ${className}`}>
+    <div className="flex items-center justify-between px-5 border-b border-gray-100" style={{ minHeight: 52 }}>
+      <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{title}</h3>
       <div className="flex items-center gap-1.5">
         {action}
         {editMode && onMoveUp && (
-          <button onClick={onMoveUp} className="text-[13px] text-[#6f839c] hover:text-[#0a1a25] border border-[#dfe3eb] hover:border-[#c1cbd5] rounded px-1.5 py-0.5 leading-none transition">↑</button>
+          <button onClick={onMoveUp} className="text-[13px] text-gray-400 hover:text-[#0a1a25] border border-gray-200 hover:border-gray-300 rounded-lg px-1.5 py-0.5 leading-none transition">↑</button>
         )}
         {editMode && onMoveDown && (
-          <button onClick={onMoveDown} className="text-[13px] text-[#6f839c] hover:text-[#0a1a25] border border-[#dfe3eb] hover:border-[#c1cbd5] rounded px-1.5 py-0.5 leading-none transition">↓</button>
+          <button onClick={onMoveDown} className="text-[13px] text-gray-400 hover:text-[#0a1a25] border border-gray-200 hover:border-gray-300 rounded-lg px-1.5 py-0.5 leading-none transition">↓</button>
         )}
         {editMode && onHide && (
           <button
             onClick={onHide}
-            className="text-[11px] font-bold text-[#6f839c] hover:text-red-500 border border-[#dfe3eb] hover:border-red-300 rounded px-2 py-0.5 transition"
+            className="text-[11px] font-bold text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-300 rounded-lg px-2 py-0.5 transition"
           >
             Hide
           </button>
         )}
       </div>
     </div>
-    <div className={noPad ? '' : 'px-[18px] py-[18px]'}>
+    <div className={noPad ? '' : 'px-5 py-5'}>
       {children}
     </div>
   </div>
@@ -586,19 +512,19 @@ const StatCard = ({ label, value, sub, color, onClick }: {
 }) => (
   <button
     onClick={onClick}
-    className="bg-white border border-[#dfe3eb] rounded p-[18px] text-left w-full hover:border-[#c1cbd5] hover:shadow-[0_0_10px_0_rgba(15,44,65,0.1)] transition-all active:scale-[0.98]"
+    className="bg-white border border-gray-200 rounded-2xl p-5 text-left w-full hover:border-gray-300 hover:shadow-md transition-all active:scale-[0.98] shadow-sm"
   >
-    <p className="text-[11px] font-black uppercase tracking-[0.8px] text-[#6f839c] mb-3 truncate">{label}</p>
-    <p className={`text-[38px] font-black leading-none tabular-nums ${color || 'text-[#0a1a25]'}`}>
+    <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-3 truncate">{label}</p>
+    <p className={`text-[36px] font-black leading-none tabular-nums ${color || 'text-[#0a1a25]'}`}>
       <AnimatedNumber value={value} />
     </p>
-    {sub && <p className="text-[12px] text-[#6f839c] mt-1.5">{sub}</p>}
+    {sub && <p className="text-[12px] text-gray-400 mt-1.5">{sub}</p>}
   </button>
 );
 
 // ── Widget visibility ─────────────────────────────────────────────────────────
 
-const WIDGET_KEYS = ['news', 'stories', 'newJobs', 'followUps', 'interviews', 'applications', 'quickActions', 'goal', 'calendar', 'stress', 'pipeline', 'weeklyActivity'] as const;
+const WIDGET_KEYS = ['news', 'stories', 'newJobs', 'followUps', 'interviews', 'applications', 'quickActions', 'goal', 'calendar', 'pipeline', 'weeklyActivity'] as const;
 type WidgetKey = typeof WIDGET_KEYS[number];
 
 const WIDGET_LABELS: Record<WidgetKey, string> = {
@@ -611,7 +537,6 @@ const WIDGET_LABELS: Record<WidgetKey, string> = {
   quickActions: 'Quick Actions',
   goal: 'Goal Tracker',
   calendar: 'Calendar',
-  stress: 'Stress Check-in',
   pipeline: 'Pipeline Funnel',
   weeklyActivity: 'Weekly Activity',
 };
@@ -632,7 +557,7 @@ function useWidgetVisibility() {
   return { visible, toggle };
 }
 
-const LEFT_WIDGET_KEYS = ['news', 'newJobs', 'stories', 'followUps', 'interviews', 'applications', 'pipeline', 'weeklyActivity', 'quickActions'] as const;
+const LEFT_WIDGET_KEYS = ['news', 'newJobs', 'stories', 'followUps', 'interviews', 'applications', 'pipeline', 'weeklyActivity'] as const;
 type LeftWidgetKey = typeof LEFT_WIDGET_KEYS[number];
 
 function useWidgetOrder() {
@@ -795,14 +720,14 @@ const ApplicationBoard = ({
   return (
     <div>
       {/* Pipeline strip */}
-      <div className="grid grid-cols-4 border-b border-[#dfe3eb]">
+      <div className="grid grid-cols-4 border-b border-gray-100">
         {statuses.map((status, i) => {
           const count = counts[status];
           const active = count > 0;
           return (
             <div
               key={status}
-              className={`flex flex-col items-center py-4 ${i < 3 ? 'border-r border-[#dfe3eb]' : ''}`}
+              className={`flex flex-col items-center py-4 ${i < 3 ? 'border-r border-gray-100' : ''}`}
             >
               <span className={`text-[28px] font-black tabular-nums leading-none ${active ? 'text-[#0a1a25]' : 'text-[#c1cbd5]'}`}>
                 {count}
@@ -817,7 +742,7 @@ const ApplicationBoard = ({
 
       {/* Job list */}
       {total > 0 ? (
-        <div className="divide-y divide-[#dfe3eb]">
+        <div className="divide-y divide-gray-100">
           {recentJobs.map(({ job, status }) => (
             <JobCard key={job.id} job={job} status={status} onClick={() => onJobClick(job.id)} />
           ))}
@@ -951,28 +876,28 @@ function useStreak() {
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
 const DashboardSkeleton = () => (
-  <div className="bg-[#f4f6fa] min-h-screen">
-    <div className="bg-white border-b border-[#dfe3eb] px-6 py-4">
-      <div className="h-6 w-48 bg-[#dfe3eb] rounded animate-pulse mb-1.5" />
-      <div className="h-3.5 w-32 bg-[#f4f6fa] rounded animate-pulse" />
+  <div className="bg-[#f4f6fa] min-h-screen" style={{ fontFamily: "'Figtree', system-ui, sans-serif" }}>
+    <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="h-6 w-48 bg-gray-200 rounded-xl animate-pulse mb-1.5" />
+      <div className="h-3.5 w-32 bg-gray-100 rounded-xl animate-pulse" />
     </div>
     <div className="max-w-5xl mx-auto px-6 py-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white border border-[#dfe3eb] rounded p-[18px]">
-            <div className="h-3 w-16 bg-[#dfe3eb] rounded animate-pulse mb-4" />
-            <div className="h-10 w-12 bg-[#f4f6fa] rounded animate-pulse" />
+          <div key={i} className="bg-white border border-gray-200 rounded-2xl p-5">
+            <div className="h-3 w-16 bg-gray-200 rounded-lg animate-pulse mb-4" />
+            <div className="h-10 w-12 bg-gray-100 rounded-lg animate-pulse" />
           </div>
         ))}
       </div>
       <div className="flex gap-4">
         <div className="flex-1 space-y-4">
           {[...Array(2)].map((_, i) => (
-            <div key={i} className="bg-white border border-[#dfe3eb] rounded h-32 animate-pulse" />
+            <div key={i} className="bg-white border border-gray-200 rounded-2xl h-32 animate-pulse" />
           ))}
         </div>
         <div className="lg:w-72 space-y-4">
-          <div className="bg-white border border-[#dfe3eb] rounded h-48 animate-pulse" />
+          <div className="bg-white border border-gray-200 rounded-2xl h-48 animate-pulse" />
         </div>
       </div>
     </div>
@@ -1069,31 +994,32 @@ export const DashboardPage = () => {
   const totalTracked = (stats?.saved || 0) + (stats?.applied || 0) + (stats?.interviewing || 0) + (stats?.offered || 0);
 
   return (
-    <div className="bg-[#f4f6fa] min-h-screen">
+    <div className="bg-[#f4f6fa] min-h-screen" style={{ fontFamily: "'Figtree', system-ui, sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800;900&display=swap');`}</style>
 
       {/* Page header */}
-      <div className="bg-white border-b border-[#dfe3eb] px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
         <div>
           <h1 className="text-[22px] font-black leading-tight text-[#0a1a25]">{greeting}, {displayName} 👋</h1>
-          <p className="text-[13px] text-[#6f839c] mt-0.5">{todayFormatted}</p>
+          <p className="text-[13px] text-gray-400 mt-0.5">{todayFormatted}</p>
         </div>
         <div className="flex items-center gap-3">
           {streak > 1 && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded text-amber-700 text-[12px] font-black">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-full text-amber-700 text-[12px] font-black">
               🔥 {streak}-day streak
             </div>
           )}
           {stats && (
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded text-green-700 text-[12px] font-black">
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full text-green-700 text-[12px] font-black">
               {Math.round(((stats.interviewing || 0) + (stats.offered || 0)) / Math.max(stats.applied || 1, 1) * 100)}% response rate
             </div>
           )}
           <button
             onClick={() => setEditMode(e => !e)}
-            className={`text-[13px] font-black px-4 py-2 rounded border transition ${
+            className={`text-[13px] font-bold px-4 py-2 rounded-full border transition ${
               editMode
                 ? 'bg-[#0a1a25] text-white border-[#0a1a25]'
-                : 'bg-white text-[#223a5a] border-[#dfe3eb] hover:bg-[#f4f6fa] hover:border-[#c1cbd5]'
+                : 'bg-white text-[#0a1a25] border-gray-200 hover:bg-gray-50 hover:border-gray-300'
             }`}
           >
             {editMode ? '✓ Done' : '✏ Edit Dashboard'}
@@ -1105,13 +1031,13 @@ export const DashboardPage = () => {
 
         {/* Edit mode: hidden widgets restore */}
         {editMode && hiddenKeys.length > 0 && (
-          <div className="mb-4 p-3 bg-white border border-[#dfe3eb] rounded flex flex-wrap gap-2 items-center animate-fade-in">
-            <span className="text-[11px] font-black text-[#6f839c] uppercase tracking-wide">Hidden:</span>
+          <div className="mb-4 p-4 bg-white border border-gray-200 rounded-2xl flex flex-wrap gap-2 items-center animate-fade-in shadow-sm">
+            <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Hidden:</span>
             {hiddenKeys.map(key => (
               <button
                 key={key}
                 onClick={() => toggle(key)}
-                className="text-[12px] font-bold text-[#223a5a] bg-[#f4f6fa] border border-[#dfe3eb] rounded px-2 py-1 hover:border-[#16a34a] hover:text-[#16a34a] transition"
+                className="text-[12px] font-bold text-[#0a1a25] bg-gray-50 border border-gray-200 rounded-full px-3 py-1 hover:border-[#16a34a] hover:text-[#16a34a] transition"
               >
                 + {WIDGET_LABELS[key]}
               </button>
@@ -1176,19 +1102,19 @@ export const DashboardPage = () => {
                 if (visible.newJobs && stats && stats.new > 0) content = (
                   <div
                     onClick={() => navigate('/jobs')}
-                    className={`bg-white border border-[#dfe3eb] rounded overflow-hidden cursor-pointer hover:border-[#16a34a] hover:shadow-[0_0_12px_0_rgba(22,163,74,0.15)] transition-all group ${editMode ? 'ring-2 ring-dashed ring-[#dfe3eb]' : ''}`}
+                    className={`bg-white border border-gray-200 rounded-2xl overflow-hidden cursor-pointer hover:border-green-300 hover:shadow-md transition-all group shadow-sm ${editMode ? 'ring-2 ring-dashed ring-gray-300' : ''}`}
                   >
-                    <div className="flex items-center justify-between px-[18px] border-b border-[#dfe3eb]" style={{ minHeight: 52 }}>
-                      <h3 className="text-[11px] font-black text-[#6f839c] uppercase tracking-[1px]">Unreviewed Jobs</h3>
+                    <div className="flex items-center justify-between px-5 border-b border-gray-100" style={{ minHeight: 52 }}>
+                      <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Unreviewed Jobs</h3>
                       {editMode && (
                         <div className="flex items-center gap-1.5">
-                          {moveUp && <button onClick={e => { e.stopPropagation(); moveUp(); }} className="text-[13px] text-[#6f839c] hover:text-[#0a1a25] border border-[#dfe3eb] hover:border-[#c1cbd5] rounded px-1.5 py-0.5 leading-none transition">↑</button>}
-                          {moveDown && <button onClick={e => { e.stopPropagation(); moveDown(); }} className="text-[13px] text-[#6f839c] hover:text-[#0a1a25] border border-[#dfe3eb] hover:border-[#c1cbd5] rounded px-1.5 py-0.5 leading-none transition">↓</button>}
-                          <button onClick={e => { e.stopPropagation(); toggle('newJobs'); }} className="text-[11px] font-bold text-[#6f839c] hover:text-red-500 border border-[#dfe3eb] hover:border-red-300 rounded px-2 py-0.5 transition">Hide</button>
+                          {moveUp && <button onClick={e => { e.stopPropagation(); moveUp(); }} className="text-[13px] text-gray-400 hover:text-[#0a1a25] border border-gray-200 rounded-lg px-1.5 py-0.5 leading-none transition">↑</button>}
+                          {moveDown && <button onClick={e => { e.stopPropagation(); moveDown(); }} className="text-[13px] text-gray-400 hover:text-[#0a1a25] border border-gray-200 rounded-lg px-1.5 py-0.5 leading-none transition">↓</button>}
+                          <button onClick={e => { e.stopPropagation(); toggle('newJobs'); }} className="text-[11px] font-bold text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-300 rounded-lg px-2 py-0.5 transition">Hide</button>
                         </div>
                       )}
                     </div>
-                    <div className="px-[18px] py-[18px] flex items-center justify-between">
+                    <div className="px-5 py-5 flex items-center justify-between">
                       <div>
                         <p className="text-[38px] font-black text-[#16a34a] leading-none tabular-nums"><AnimatedNumber value={stats.new} /></p>
                         {stats.new_today > 0 && <p className="text-[12px] text-[#6f839c] mt-1">+{stats.new_today} added today</p>}
@@ -1260,32 +1186,6 @@ export const DashboardPage = () => {
                     <WeeklyActivity boardJobs={boardJobs} />
                   </Module>
                 );
-              } else if (key === 'quickActions') {
-                if (visible.quickActions) content = (
-                  <Module title="Quick Actions" editMode={editMode} onHide={() => toggle('quickActions')} onMoveUp={moveUp} onMoveDown={moveDown}>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { icon: '🔍', label: t('browseJobs'), sub: `${stats?.new || 0} new`, onClick: () => navigate('/jobs') },
-                        { icon: '🌍', label: t('englishJobs'), sub: t('englishJobsDesc'), onClick: () => navigate('/english-jobs') },
-                        { icon: '📊', label: t('analytics'), sub: t('analyticsDesc'), onClick: () => navigate('/analytics') },
-                        { icon: fetching ? '⏳' : '🔄', label: t('fetchJobs'), sub: fetching ? t('fetching') : t('autoFetchNote'), onClick: isDemo ? undefined : handleFetchJobs, disabled: fetching || isDemo },
-                      ].map((card, i) => (
-                        <button key={i} onClick={card.onClick} disabled={'disabled' in card && card.disabled} className="flex items-center gap-3 p-3 bg-[#f4f6fa] hover:bg-white border border-[#dfe3eb] hover:border-[#c1cbd5] rounded transition text-left disabled:opacity-50 hover:shadow-[0_0_8px_0_rgba(15,44,65,0.08)]">
-                          <span className="text-2xl shrink-0">{card.icon}</span>
-                          <div className="min-w-0">
-                            <p className="text-[13px] font-black text-[#0a1a25] truncate">{card.label}</p>
-                            <p className="text-[11px] text-[#6f839c] truncate leading-snug">{card.sub}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    {fetchMsg && (
-                      <p className={`text-[12px] mt-3 text-center font-bold ${fetchMsg.includes('failed') || fetchMsg.includes('fehlgeschlagen') ? 'text-red-500' : 'text-[#16a34a]'}`}>
-                        {fetchMsg}
-                      </p>
-                    )}
-                  </Module>
-                );
               }
 
               if (!content) return null;
@@ -1316,10 +1216,30 @@ export const DashboardPage = () => {
           {/* Right sidebar */}
           <div className="lg:w-72 shrink-0 flex flex-col gap-4">
 
-            {/* Stress check-in */}
-            {visible.stress && (
-              <Module title="How are you feeling?" editMode={editMode} onHide={() => toggle('stress')}>
-                <StressCheckup />
+            {/* Quick Actions */}
+            {visible.quickActions && (
+              <Module title="Quick Actions" editMode={editMode} onHide={() => toggle('quickActions')}>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {[
+                    { icon: '🔍', label: t('browseJobs'), sub: `${stats?.new || 0} new`, onClick: () => navigate('/jobs') },
+                    { icon: '🌍', label: t('englishJobs'), sub: t('englishJobsDesc'), onClick: () => navigate('/english-jobs') },
+                    { icon: '📊', label: t('analytics'), sub: t('analyticsDesc'), onClick: () => navigate('/analytics') },
+                    { icon: fetching ? '⏳' : '🔄', label: t('fetchJobs'), sub: fetching ? t('fetching') : t('autoFetchNote'), onClick: isDemo ? undefined : handleFetchJobs, disabled: fetching || isDemo },
+                  ].map((card, i) => (
+                    <button key={i} onClick={card.onClick} disabled={'disabled' in card && card.disabled} className="flex items-center gap-2.5 p-3 bg-gray-50 hover:bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition text-left disabled:opacity-50 hover:shadow-sm">
+                      <span className="text-xl shrink-0">{card.icon}</span>
+                      <div className="min-w-0">
+                        <p className="text-[12px] font-black text-[#0a1a25] truncate">{card.label}</p>
+                        <p className="text-[10px] text-gray-400 truncate leading-snug">{card.sub}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {fetchMsg && (
+                  <p className={`text-[12px] mt-3 text-center font-bold ${fetchMsg.includes('failed') || fetchMsg.includes('fehlgeschlagen') ? 'text-red-500' : 'text-[#16a34a]'}`}>
+                    {fetchMsg}
+                  </p>
+                )}
               </Module>
             )}
 
@@ -1344,4 +1264,3 @@ export const DashboardPage = () => {
   );
 };
 
-export { StressCheckup };
