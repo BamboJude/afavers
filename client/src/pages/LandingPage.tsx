@@ -265,7 +265,7 @@ export const LandingPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col overflow-x-hidden" style={{ fontFamily: "'Figtree', system-ui, sans-serif" }}>
+    <div className="min-h-screen bg-white flex flex-col" style={{ fontFamily: "'Figtree', system-ui, sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800;900&display=swap');
         @keyframes fadeUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
