@@ -50,11 +50,11 @@ const IconClock = ({ className = 'w-4 h-4' }: { className?: string }) => (
 );
 
 const STRESS_LEVELS = [
-  { level: 1 as const, labelKey: 'stressOverwhelmed', card: 'bg-red-50 border-red-200 text-red-700',    tipKey: 'stressTip1' },
-  { level: 2 as const, labelKey: 'stressStruggling',  card: 'bg-orange-50 border-orange-200 text-orange-700', tipKey: 'stressTip2' },
-  { level: 3 as const, labelKey: 'stressOkay',        card: 'bg-gray-100 border-gray-200 text-gray-700',  tipKey: 'stressTip3' },
-  { level: 4 as const, labelKey: 'stressGood',        card: 'bg-blue-50 border-blue-200 text-blue-700',   tipKey: 'stressTip4' },
-  { level: 5 as const, labelKey: 'stressThriving',    card: 'bg-green-50 border-green-200 text-green-700', tipKey: 'stressTip5' },
+  { level: 1 as const, labelKey: 'stressOverwhelmed', card: 'bg-red-50 text-red-700',    tipKey: 'stressTip1' },
+  { level: 2 as const, labelKey: 'stressStruggling',  card: 'bg-orange-50 text-orange-700', tipKey: 'stressTip2' },
+  { level: 3 as const, labelKey: 'stressOkay',        card: 'bg-gray-100 text-gray-700',  tipKey: 'stressTip3' },
+  { level: 4 as const, labelKey: 'stressGood',        card: 'bg-blue-50 text-blue-700',   tipKey: 'stressTip4' },
+  { level: 5 as const, labelKey: 'stressThriving',    card: 'bg-green-50 text-green-700', tipKey: 'stressTip5' },
 ];
 
 const StressCheckup = () => {
@@ -67,10 +67,10 @@ const StressCheckup = () => {
 
   if (today && info) {
     return (
-      <div className={`mb-5 rounded-xl border px-4 py-2.5 flex items-center gap-3 animate-fade-in ${info.card}`}>
+      <div className={`flex items-center gap-3 rounded px-3 py-2.5 ${info.card}`}>
         <StressFace level={info.level} size={24} />
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-semibold">{t(info.labelKey)} today · </span>
+          <span className="text-sm font-bold">{t(info.labelKey)} today · </span>
           <span className="text-sm opacity-75 line-clamp-1">{t(info.tipKey)}</span>
         </div>
         <button onClick={() => logStress(today.level)} className="text-xs opacity-40 hover:opacity-80 transition shrink-0 ml-1" title="Change">✎</button>
@@ -81,20 +81,20 @@ const StressCheckup = () => {
   if (dismissed) return null;
 
   return (
-    <div className="mb-5 bg-white border border-gray-200 rounded-xl p-4 animate-fade-in">
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-base font-semibold text-gray-700">{t('howAreYouHoldingUp')}</p>
-        <button onClick={() => setDismissed(true)} className="text-gray-300 hover:text-gray-500 transition text-sm">✕</button>
+        <p className="text-[14px] font-bold text-[#223a5a]">{t('howAreYouHoldingUp')}</p>
+        <button onClick={() => setDismissed(true)} className="text-[#c1cbd5] hover:text-[#6f839c] transition text-sm">✕</button>
       </div>
       <div className="flex gap-2 flex-wrap">
         {STRESS_LEVELS.map(s => (
           <button
             key={s.level}
             onClick={() => logStress(s.level)}
-            className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:scale-95 transition"
+            className="flex flex-col items-center gap-1 px-3 py-2 rounded border border-[#dfe3eb] hover:border-[#c1cbd5] hover:bg-[#f4f6fa] active:scale-95 transition"
           >
             <StressFace level={s.level} size={32} />
-            <span className="text-sm text-gray-500 font-medium">{t(s.labelKey)}</span>
+            <span className="text-[12px] text-[#6f839c] font-bold">{t(s.labelKey)}</span>
           </button>
         ))}
       </div>
@@ -143,26 +143,29 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
 
   if (!goal && !setting) {
     return (
-      <div className="mb-6 bg-white border border-dashed border-gray-300 rounded-xl p-4 flex items-center gap-4 hover:border-gray-400 transition-colors animate-fade-in cursor-pointer group" onClick={() => setSetting(true)}>
-        <IconTarget className="w-6 h-6 text-gray-400" />
+      <div
+        className="flex items-center gap-4 border border-dashed border-[#c1cbd5] rounded p-4 hover:border-[#16a34a] transition-colors cursor-pointer group"
+        onClick={() => setSetting(true)}
+      >
+        <IconTarget className="w-5 h-5 text-[#6f839c]" />
         <div className="flex-1">
-          <p className="text-base font-semibold text-gray-700 group-hover:text-gray-900">{t('setAGoal')}</p>
-          <p className="text-sm text-gray-400">{t('stayMotivated')}</p>
+          <p className="text-[14px] font-bold text-[#223a5a] group-hover:text-[#0a1a25]">{t('setAGoal')}</p>
+          <p className="text-[12px] text-[#6f839c]">{t('stayMotivated')}</p>
         </div>
-        <span className="text-xs font-semibold text-gray-400 group-hover:text-gray-700 transition-colors">{t('setArrow')}</span>
+        <span className="text-[12px] font-bold text-[#6f839c] group-hover:text-[#16a34a] transition-colors">{t('setArrow')}</span>
       </div>
     );
   }
 
   if (setting) {
     return (
-      <div className="mb-6 bg-white border border-gray-200 rounded-xl p-4 animate-scale-in">
-        <p className="text-base font-semibold text-gray-700 mb-3">{t('whatsYourGoal')}</p>
+      <div className="animate-scale-in">
+        <p className="text-[14px] font-bold text-[#223a5a] mb-3">{t('whatsYourGoal')}</p>
         <div className="flex gap-2 mb-3">
           {(['applications', 'interviews'] as const).map(tp => (
             <button key={tp} onClick={() => { setType(tp); setTarget(GOAL_PRESETS[tp][1]); }}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition active:scale-95 ${
-                type === tp ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+              className={`px-3 py-1.5 text-[12px] font-bold rounded border transition active:scale-95 ${
+                type === tp ? 'bg-[#0a1a25] text-white border-[#0a1a25]' : 'bg-white text-[#6f839c] border-[#dfe3eb] hover:border-[#c1cbd5]'
               }`}
             >
               {tp === 'applications' ? t('applicationsSentGoal') : t('interviewsReachedGoal')}
@@ -172,8 +175,8 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
         <div className="flex gap-2 mb-4 items-center">
           {GOAL_PRESETS[type].map(n => (
             <button key={n} onClick={() => setTarget(n)}
-              className={`px-4 py-2 text-sm font-bold rounded-lg border transition active:scale-95 ${
-                target === n ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+              className={`px-4 py-2 text-[13px] font-bold rounded border transition active:scale-95 ${
+                target === n ? 'bg-[#16a34a] text-white border-[#16a34a]' : 'bg-white text-[#6f839c] border-[#dfe3eb] hover:border-[#c1cbd5]'
               }`}
             >
               {n}
@@ -181,17 +184,17 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
           ))}
           <input type="number" min={1} value={target}
             onChange={e => setTarget(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-16 px-2 py-2 text-sm text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+            className="w-16 px-2 py-2 text-[13px] text-center border border-[#dfe3eb] rounded focus:ring-2 focus:ring-green-500 outline-none"
           />
         </div>
         <div className="flex gap-2">
           <button onClick={() => { setGoal({ type, target }); setSetting(false); }}
-            className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition active:scale-95"
+            className="flex-1 py-2 bg-[#16a34a] hover:bg-green-700 text-white text-[13px] font-bold rounded transition active:scale-95"
           >
             {t('saveGoal')}
           </button>
           <button onClick={() => setSetting(false)}
-            className="px-4 py-2 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50 transition"
+            className="px-4 py-2 border border-[#dfe3eb] text-[#6f839c] text-[13px] rounded hover:bg-[#f4f6fa] transition"
           >
             {t('cancel')}
           </button>
@@ -219,26 +222,26 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
           ))}
         </div>
       )}
-      <div className="mb-6 bg-white border border-gray-200 rounded-xl p-4 animate-fade-in">
+      <div className="animate-fade-in">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <IconTarget className="w-4 h-4" />
-            <span className="text-base font-semibold text-gray-700">
+            <IconTarget className="w-4 h-4 text-[#6f839c]" />
+            <span className="text-[14px] font-bold text-[#223a5a]">
               {goal!.type === 'applications' ? t('applicationsGoal') : t('interviewsGoal')}
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-base font-bold text-gray-900 tabular-nums">{current} / {goal!.target}</span>
-            <button onClick={() => clearGoal()} className="text-xs text-gray-300 hover:text-gray-500 transition" title={t('clearGoal')}>✕</button>
+            <span className="text-[15px] font-black text-[#0a1a25] tabular-nums">{current} / {goal!.target}</span>
+            <button onClick={() => clearGoal()} className="text-[11px] text-[#c1cbd5] hover:text-[#6f839c] transition" title={t('clearGoal')}>✕</button>
           </div>
         </div>
-        <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+        <div className="h-1.5 bg-[#f4f6fa] rounded-full overflow-hidden mb-2">
           <div className={`h-full rounded-full transition-all duration-700 ${barColor}`} style={{ width: `${pct}%` }} />
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-400">{t(messageKey)}</p>
+          <p className="text-[12px] text-[#6f839c]">{t(messageKey)}</p>
           <button onClick={() => { setSetting(true); setType(goal!.type); setTarget(goal!.target); }}
-            className="text-xs text-gray-300 hover:text-gray-500 transition ml-3 shrink-0"
+            className="text-[11px] text-[#c1cbd5] hover:text-[#6f839c] transition ml-3 shrink-0"
           >
             {t('edit')}
           </button>
@@ -338,23 +341,23 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
     new Date(key + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 animate-fade-in" style={{ animationDelay: '500ms' }}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{t('calendar')}</h3>
+    <div className="animate-fade-in">
+      {/* Month nav */}
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1">
           <button onClick={() => setViewDate(new Date(year, month - 1, 1))}
-            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition text-base leading-none"
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#f4f6fa] text-[#6f839c] transition text-base leading-none border border-[#dfe3eb]"
           >‹</button>
-          <span className="text-sm font-semibold text-gray-700 px-2 min-w-[150px] text-center capitalize">{monthLabel}</span>
+          <span className="text-[13px] font-bold text-[#223a5a] px-2 min-w-[140px] text-center capitalize">{monthLabel}</span>
           <button onClick={() => setViewDate(new Date(year, month + 1, 1))}
-            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition text-base leading-none"
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#f4f6fa] text-[#6f839c] transition text-base leading-none border border-[#dfe3eb]"
           >›</button>
         </div>
       </div>
 
       <div className="grid grid-cols-7 mb-1">
         {WEEKDAYS.map(d => (
-          <div key={d} className="text-center text-xs font-semibold text-gray-400 py-1">{d}</div>
+          <div key={d} className="text-center text-[11px] font-bold text-[#6f839c] uppercase tracking-wide py-1">{d}</div>
         ))}
       </div>
 
@@ -370,13 +373,13 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
 
           return (
             <button key={idx} onClick={() => handleSelectDay(key)}
-              className={`relative flex flex-col items-center justify-center py-1.5 rounded-lg transition-all active:scale-95 ${
-                isSelected ? 'bg-gray-900 text-white'
-                  : isToday ? 'bg-green-50 text-green-700 font-bold ring-2 ring-green-400'
-                  : 'hover:bg-gray-50 text-gray-700'
+              className={`relative flex flex-col items-center justify-center py-1.5 rounded transition-all active:scale-95 ${
+                isSelected ? 'bg-[#0a1a25] text-white'
+                  : isToday ? 'bg-[#dcfce7] text-[#16a34a] font-black ring-2 ring-[#16a34a]'
+                  : 'hover:bg-[#f4f6fa] text-[#223a5a]'
               }`}
             >
-              <span className="text-xs font-medium leading-none mb-0.5">{day}</span>
+              <span className="text-[12px] font-medium leading-none mb-0.5">{day}</span>
               {(hasInterview || hasFollowUp || hasCustom) && (
                 <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center max-w-[24px]">
                   {hasInterview && <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-purple-300' : 'bg-purple-500'}`} />}
@@ -391,60 +394,59 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
         })}
       </div>
 
-      <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-gray-100">
+      <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[#dfe3eb]">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-          <span className="text-xs text-gray-400">{t('calendarInterview')}</span>
+          <span className="text-[11px] text-[#6f839c]">{t('calendarInterview')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-          <span className="text-xs text-gray-400">{t('calendarFollowUp')}</span>
+          <span className="text-[11px] text-[#6f839c]">{t('calendarFollowUp')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
-          <span className="text-xs text-gray-400">Custom</span>
+          <span className="text-[11px] text-[#6f839c]">Custom</span>
         </div>
       </div>
 
       {selectedDay && (
-        <div className="mt-3 pt-3 border-t border-gray-100 animate-fade-in">
+        <div className="mt-3 pt-3 border-t border-[#dfe3eb] animate-fade-in">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-700">{formatSelectedDay(selectedDay)}</p>
+            <p className="text-[12px] font-bold text-[#223a5a]">{formatSelectedDay(selectedDay)}</p>
             <button
               onClick={() => { setShowForm(f => !f); setFormTitle(''); setFormTime(''); }}
-              className="flex items-center gap-1 px-2 py-1 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition active:scale-95"
+              className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold text-[#16a34a] bg-[#dcfce7] hover:bg-green-100 border border-green-200 rounded transition active:scale-95"
             >
               + Add event
             </button>
           </div>
 
           {showForm && (
-            <div className="mb-3 p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2 animate-fade-in">
+            <div className="mb-3 p-3 bg-[#f4f6fa] rounded border border-[#dfe3eb] space-y-2 animate-fade-in">
               <input type="text" placeholder="Event title..." value={formTitle}
                 onChange={e => setFormTitle(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAddEvent()}
                 autoFocus
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white"
+                className="w-full px-3 py-2 text-[13px] border border-[#dfe3eb] rounded focus:ring-2 focus:ring-green-500 outline-none bg-white"
               />
               <div className="flex gap-2">
                 <select value={formType} onChange={e => setFormType(e.target.value as CalendarEventType)}
-                  className="flex-1 px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-gray-700"
+                  className="flex-1 px-2 py-1.5 text-[12px] border border-[#dfe3eb] rounded focus:ring-2 focus:ring-green-500 outline-none bg-white text-[#223a5a]"
                 >
                   {(Object.entries(EVENT_TYPE_META) as [CalendarEventType, { label: string }][]).map(([k, v]) => (
                     <option key={k} value={k}>{v.label}</option>
                   ))}
                 </select>
                 <input type="time" value={formTime} onChange={e => setFormTime(e.target.value)}
-                  className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-gray-700"
+                  className="px-2 py-1.5 text-[12px] border border-[#dfe3eb] rounded focus:ring-2 focus:ring-green-500 outline-none bg-white text-[#223a5a]"
                 />
               </div>
-              {/* Remind me toggle */}
               {formTime && (
                 <button
                   type="button"
                   onClick={() => setFormRemind(v => !v)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border transition text-xs font-medium ${
-                    formRemind ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-200 text-gray-500'
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded border transition text-[12px] font-bold ${
+                    formRemind ? 'bg-[#dcfce7] border-green-200 text-[#16a34a]' : 'bg-white border-[#dfe3eb] text-[#6f839c]'
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -453,19 +455,19 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
                     </svg>
                     Remind me at this time
                   </span>
-                  <div className={`w-8 h-4 rounded-full transition-colors ${formRemind ? 'bg-green-500' : 'bg-gray-200'}`}>
+                  <div className={`w-8 h-4 rounded-full transition-colors ${formRemind ? 'bg-[#16a34a]' : 'bg-[#dfe3eb]'}`}>
                     <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${formRemind ? 'translate-x-4' : 'translate-x-0'}`} />
                   </div>
                 </button>
               )}
               <div className="flex gap-2">
                 <button onClick={handleAddEvent} disabled={!formTitle.trim()}
-                  className="flex-1 py-1.5 text-xs font-semibold bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white rounded-lg transition"
+                  className="flex-1 py-1.5 text-[12px] font-bold bg-[#16a34a] hover:bg-green-700 disabled:opacity-40 text-white rounded transition"
                 >
                   Save
                 </button>
                 <button onClick={() => setShowForm(false)}
-                  className="px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition"
+                  className="px-3 py-1.5 text-[12px] text-[#6f839c] border border-[#dfe3eb] rounded hover:bg-[#f4f6fa] transition"
                 >
                   Cancel
                 </button>
@@ -475,29 +477,29 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
 
           <div className="space-y-1.5">
             {selInterviews.map(j => (
-              <div key={j.id} onClick={() => navigate(`/jobs/${j.id}`)} className="flex items-center gap-2 text-xs cursor-pointer hover:opacity-70 transition group">
+              <div key={j.id} onClick={() => navigate(`/jobs/${j.id}`)} className="flex items-center gap-2 text-[12px] cursor-pointer hover:opacity-70 transition group">
                 <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-                <span className="text-gray-700 font-medium truncate flex-1">{j.title} · {j.company}</span>
-                <span className="text-gray-400 text-[10px] shrink-0">Interview</span>
+                <span className="text-[#223a5a] font-bold truncate flex-1">{j.title} · {j.company}</span>
+                <span className="text-[#6f839c] text-[11px] shrink-0">Interview</span>
               </div>
             ))}
             {selFollowUps.map(f => (
-              <div key={f.id} onClick={() => navigate(`/jobs/${f.id}`)} className="flex items-center gap-2 text-xs cursor-pointer hover:opacity-70 transition">
+              <div key={f.id} onClick={() => navigate(`/jobs/${f.id}`)} className="flex items-center gap-2 text-[12px] cursor-pointer hover:opacity-70 transition">
                 <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                <span className="text-gray-700 font-medium truncate flex-1">{f.title} · {f.company}</span>
-                <span className="text-gray-400 text-[10px] shrink-0">Follow-up</span>
+                <span className="text-[#223a5a] font-bold truncate flex-1">{f.title} · {f.company}</span>
+                <span className="text-[#6f839c] text-[11px] shrink-0">Follow-up</span>
               </div>
             ))}
             {selCustom.map(e => (
-              <div key={e.id} className="flex items-center gap-2 text-xs group">
+              <div key={e.id} className="flex items-center gap-2 text-[12px] group">
                 <span className={`w-2 h-2 rounded-full shrink-0 ${EVENT_TYPE_META[e.type].dot}`} />
-                <span className="text-gray-700 font-medium truncate flex-1">
-                  {e.time && <span className="text-gray-400 mr-1">{e.time}</span>}
+                <span className="text-[#223a5a] font-bold truncate flex-1">
+                  {e.time && <span className="text-[#6f839c] mr-1">{e.time}</span>}
                   {e.title}
                 </span>
-                <span className="text-gray-400 text-[10px] shrink-0">{EVENT_TYPE_META[e.type].label}</span>
+                <span className="text-[#6f839c] text-[11px] shrink-0">{EVENT_TYPE_META[e.type].label}</span>
                 <button onClick={() => removeEvent(e.id)}
-                  className="ml-1 text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100 text-base leading-none shrink-0"
+                  className="ml-1 text-[#c1cbd5] hover:text-red-500 transition opacity-0 group-hover:opacity-100 shrink-0"
                   title="Delete event"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -507,7 +509,7 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
               </div>
             ))}
             {selInterviews.length === 0 && selFollowUps.length === 0 && selCustom.length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-1">{t('noEventsDay')}</p>
+              <p className="text-[12px] text-[#6f839c] text-center py-1">{t('noEventsDay')}</p>
             )}
           </div>
         </div>
@@ -535,9 +537,142 @@ const AnimatedNumber = ({ value }: { value: number }) => {
   return <>{display.toLocaleString()}</>;
 };
 
-// ── Application board (IG-style hero) ────────────────────────────────────────
+// ── Dawn Module wrapper ───────────────────────────────────────────────────────
 
-// ── Job Stories (IG-style horizontal scroll) ─────────────────────────────────
+const Module = ({
+  title, action, children, editMode, onHide, onMoveUp, onMoveDown, noPad = false, className = '',
+}: {
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  editMode?: boolean;
+  onHide?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  noPad?: boolean;
+  className?: string;
+}) => (
+  <div className={`bg-white border border-[#dfe3eb] rounded overflow-hidden ${className}`}>
+    <div className="flex items-center justify-between px-[18px] border-b border-[#dfe3eb]" style={{ minHeight: 52 }}>
+      <h3 className="text-[11px] font-black text-[#6f839c] uppercase tracking-[1px]">{title}</h3>
+      <div className="flex items-center gap-1.5">
+        {action}
+        {editMode && onMoveUp && (
+          <button onClick={onMoveUp} className="text-[13px] text-[#6f839c] hover:text-[#0a1a25] border border-[#dfe3eb] hover:border-[#c1cbd5] rounded px-1.5 py-0.5 leading-none transition">↑</button>
+        )}
+        {editMode && onMoveDown && (
+          <button onClick={onMoveDown} className="text-[13px] text-[#6f839c] hover:text-[#0a1a25] border border-[#dfe3eb] hover:border-[#c1cbd5] rounded px-1.5 py-0.5 leading-none transition">↓</button>
+        )}
+        {editMode && onHide && (
+          <button
+            onClick={onHide}
+            className="text-[11px] font-bold text-[#6f839c] hover:text-red-500 border border-[#dfe3eb] hover:border-red-300 rounded px-2 py-0.5 transition"
+          >
+            Hide
+          </button>
+        )}
+      </div>
+    </div>
+    <div className={noPad ? '' : 'px-[18px] py-[18px]'}>
+      {children}
+    </div>
+  </div>
+);
+
+// ── Stat card ─────────────────────────────────────────────────────────────────
+
+const StatCard = ({ label, value, sub, color, onClick }: {
+  label: string; value: number; sub?: string; color?: string; onClick?: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    className="bg-white border border-[#dfe3eb] rounded p-[18px] text-left w-full hover:border-[#c1cbd5] hover:shadow-[0_0_10px_0_rgba(15,44,65,0.1)] transition-all active:scale-[0.98]"
+  >
+    <p className="text-[11px] font-black uppercase tracking-[0.8px] text-[#6f839c] mb-3 truncate">{label}</p>
+    <p className={`text-[38px] font-black leading-none tabular-nums ${color || 'text-[#0a1a25]'}`}>
+      <AnimatedNumber value={value} />
+    </p>
+    {sub && <p className="text-[12px] text-[#6f839c] mt-1.5">{sub}</p>}
+  </button>
+);
+
+// ── Widget visibility ─────────────────────────────────────────────────────────
+
+const WIDGET_KEYS = ['news', 'stories', 'newJobs', 'followUps', 'interviews', 'applications', 'quickActions', 'goal', 'calendar', 'stress', 'pipeline', 'weeklyActivity'] as const;
+type WidgetKey = typeof WIDGET_KEYS[number];
+
+const WIDGET_LABELS: Record<WidgetKey, string> = {
+  news: 'News Feed',
+  stories: 'New Jobs Feed',
+  newJobs: 'New Jobs Banner',
+  followUps: 'Follow-up Reminders',
+  interviews: 'Upcoming Interviews',
+  applications: 'Application Board',
+  quickActions: 'Quick Actions',
+  goal: 'Goal Tracker',
+  calendar: 'Calendar',
+  stress: 'Stress Check-in',
+  pipeline: 'Pipeline Funnel',
+  weeklyActivity: 'Weekly Activity',
+};
+
+function useWidgetVisibility() {
+  const [visible, setVisible] = useState<Record<WidgetKey, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem('dashboard_widgets_v2');
+      if (stored) return { ...Object.fromEntries(WIDGET_KEYS.map(k => [k, true])), ...JSON.parse(stored) };
+    } catch {}
+    return Object.fromEntries(WIDGET_KEYS.map(k => [k, true])) as Record<WidgetKey, boolean>;
+  });
+  const toggle = (key: WidgetKey) => setVisible(v => {
+    const next = { ...v, [key]: !v[key] };
+    localStorage.setItem('dashboard_widgets_v2', JSON.stringify(next));
+    return next;
+  });
+  return { visible, toggle };
+}
+
+const LEFT_WIDGET_KEYS = ['news', 'newJobs', 'stories', 'followUps', 'interviews', 'applications', 'pipeline', 'weeklyActivity', 'quickActions'] as const;
+type LeftWidgetKey = typeof LEFT_WIDGET_KEYS[number];
+
+function useWidgetOrder() {
+  const [order, setOrder] = useState<LeftWidgetKey[]>(() => {
+    try {
+      const stored = localStorage.getItem('dashboard_widget_order_v1');
+      if (stored) {
+        const parsed = JSON.parse(stored) as LeftWidgetKey[];
+        const missing = LEFT_WIDGET_KEYS.filter(k => !parsed.includes(k));
+        return [...parsed.filter((k): k is LeftWidgetKey => LEFT_WIDGET_KEYS.includes(k as LeftWidgetKey)), ...missing];
+      }
+    } catch {}
+    return [...LEFT_WIDGET_KEYS];
+  });
+  const move = (key: LeftWidgetKey, dir: -1 | 1) => {
+    setOrder(prev => {
+      const idx = prev.indexOf(key);
+      const newIdx = idx + dir;
+      if (newIdx < 0 || newIdx >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+      localStorage.setItem('dashboard_widget_order_v1', JSON.stringify(next));
+      return next;
+    });
+  };
+  const reorder = (fromKey: LeftWidgetKey, toKey: LeftWidgetKey) => {
+    setOrder(prev => {
+      const next = [...prev];
+      const fromIdx = next.indexOf(fromKey);
+      const toIdx = next.indexOf(toKey);
+      next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, fromKey);
+      localStorage.setItem('dashboard_widget_order_v1', JSON.stringify(next));
+      return next;
+    });
+  };
+  return { order, move, reorder };
+}
+
+// ── Job Stories ───────────────────────────────────────────────────────────────
 
 const STORY_COLORS = [
   'from-green-400 to-emerald-600',
@@ -561,43 +696,35 @@ const JobStories = ({ jobs, onJobClick }: { jobs: Job[]; onJobClick: (id: number
   };
 
   return (
-    <div className="mb-6 animate-fade-in" style={{ animationDelay: '50ms' }}>
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">New Jobs</p>
-        <span className="text-xs text-gray-400">{jobs.length} unreviewed</span>
-      </div>
-      <div className="flex gap-3.5 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
-        {jobs.map((job, i) => {
-          const seen = seenIds.has(job.id);
-          const gradient = STORY_COLORS[i % STORY_COLORS.length];
-          const initials = (job.company || '?')
-            .split(' ')
-            .slice(0, 2)
-            .map(w => w[0]?.toUpperCase() || '')
-            .join('');
+    <div className="flex gap-3.5 overflow-x-auto pb-2 -mx-[18px] px-[18px] scrollbar-hide">
+      {jobs.map((job, i) => {
+        const seen = seenIds.has(job.id);
+        const gradient = STORY_COLORS[i % STORY_COLORS.length];
+        const initials = (job.company || '?')
+          .split(' ')
+          .slice(0, 2)
+          .map(w => w[0]?.toUpperCase() || '')
+          .join('');
 
-          return (
-            <button
-              key={job.id}
-              onClick={() => handleClick(job.id)}
-              className="flex flex-col items-center gap-1.5 shrink-0 active:scale-95 transition group"
-            >
-              {/* Story ring */}
-              <div className={`p-[2.5px] rounded-full ${seen ? 'bg-gray-200' : `bg-gradient-to-br ${gradient}`}`}>
-                <div className="w-14 h-14 rounded-full bg-white p-[2px]">
-                  <div className={`w-full h-full rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
-                    <span className="text-white font-bold text-sm leading-none">{initials}</span>
-                  </div>
+        return (
+          <button
+            key={job.id}
+            onClick={() => handleClick(job.id)}
+            className="flex flex-col items-center gap-1.5 shrink-0 active:scale-95 transition group"
+          >
+            <div className={`p-[2.5px] rounded-full ${seen ? 'bg-[#dfe3eb]' : `bg-gradient-to-br ${gradient}`}`}>
+              <div className="w-14 h-14 rounded-full bg-white p-[2px]">
+                <div className={`w-full h-full rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+                  <span className="text-white font-black text-sm leading-none">{initials}</span>
                 </div>
               </div>
-              {/* Label */}
-              <span className={`text-[10px] font-medium text-center leading-tight max-w-[64px] line-clamp-2 ${seen ? 'text-gray-400' : 'text-gray-700'}`}>
-                {job.company}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+            </div>
+            <span className={`text-[10px] font-bold text-center leading-tight max-w-[64px] line-clamp-2 ${seen ? 'text-[#c1cbd5]' : 'text-[#223a5a]'}`}>
+              {job.company}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 };
@@ -606,41 +733,17 @@ const JobStories = ({ jobs, onJobClick }: { jobs: Job[]; onJobClick: (id: number
 
 type BoardStatus = 'saved' | 'applied' | 'interviewing' | 'offered';
 
-const StatusIconSaved = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-  </svg>
-);
-const StatusIconApplied = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-const StatusIconInterviewing = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-  </svg>
-);
-const StatusIconOffered = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-  </svg>
-);
-
 const STATUS_CONFIG: Record<BoardStatus, {
   label: string;
-  icon: React.ReactNode;
-  gradient: string;
-  ring: string;
   bg: string;
   text: string;
-  cardAccent: string;
   dot: string;
+  leftBorder: string;
 }> = {
-  saved:        { label: 'Saved',        icon: <StatusIconSaved />,        gradient: 'from-amber-400 to-yellow-300',    ring: 'ring-amber-400',  bg: 'bg-amber-50',   text: 'text-amber-800',  cardAccent: 'border-l-amber-400',  dot: 'bg-amber-400' },
-  applied:      { label: 'Applied',      icon: <StatusIconApplied />,      gradient: 'from-green-500 to-emerald-400',   ring: 'ring-green-500',  bg: 'bg-green-50',   text: 'text-green-800',  cardAccent: 'border-l-green-500',  dot: 'bg-green-500' },
-  interviewing: { label: 'Interviewing', icon: <StatusIconInterviewing />, gradient: 'from-purple-500 to-violet-400',   ring: 'ring-purple-500', bg: 'bg-purple-50',  text: 'text-purple-800', cardAccent: 'border-l-purple-500', dot: 'bg-purple-500' },
-  offered:      { label: 'Offered',      icon: <StatusIconOffered />,      gradient: 'from-emerald-500 to-teal-400',    ring: 'ring-emerald-500',bg: 'bg-emerald-50', text: 'text-emerald-800',cardAccent: 'border-l-emerald-500',dot: 'bg-emerald-500' },
+  saved:        { label: 'Saved',        bg: 'bg-amber-50',   text: 'text-amber-700',  dot: 'bg-amber-400',  leftBorder: '#d97706' },
+  applied:      { label: 'Applied',      bg: 'bg-green-50',   text: 'text-green-700',  dot: 'bg-green-500',  leftBorder: '#16a34a' },
+  interviewing: { label: 'Interviewing', bg: 'bg-purple-50',  text: 'text-purple-700', dot: 'bg-purple-500', leftBorder: '#7c3aed' },
+  offered:      { label: 'Offered',      bg: 'bg-emerald-50', text: 'text-emerald-700',dot: 'bg-emerald-500',leftBorder: '#059669' },
 };
 
 const JobCard = ({ job, status, onClick }: { job: Job; status: BoardStatus; onClick: () => void }) => {
@@ -652,20 +755,16 @@ const JobCard = ({ job, status, onClick }: { job: Job; status: BoardStatus; onCl
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-xl border border-gray-100 border-l-4 ${cfg.cardAccent} p-3.5 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.98] w-48 shrink-0`}
+      className="flex items-center gap-3 px-[18px] py-3 cursor-pointer hover:bg-[#f4f6fa] transition-all group border-l-[3px]"
+      style={{ borderLeftColor: cfg.leftBorder }}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <p className="text-sm font-bold text-gray-900 leading-tight line-clamp-2 flex-1">{job.title}</p>
+      <div className="flex-1 min-w-0">
+        <p className="text-[14px] font-bold text-[#0a1a25] truncate leading-snug">{job.title}</p>
+        <p className="text-[12px] text-[#6f839c] truncate mt-0.5">{job.company}{job.location ? ` · ${job.location}` : ''}</p>
       </div>
-      <p className="text-sm text-gray-500 font-medium truncate mb-2.5">{job.company}</p>
-      {job.location && (
-        <p className="text-[10px] text-gray-400 truncate mb-2">{job.location}</p>
-      )}
-      <div className="flex items-center justify-between">
-        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
-          {dateStr}
-        </span>
-        <span className="text-[10px] text-gray-400">→</span>
+      <div className="flex flex-col items-end shrink-0 gap-1">
+        <span className={`text-[11px] font-black px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
+        <span className="text-[11px] text-[#c1cbd5]">{dateStr}</span>
       </div>
     </div>
   );
@@ -674,12 +773,10 @@ const JobCard = ({ job, status, onClick }: { job: Job; status: BoardStatus; onCl
 const ApplicationBoard = ({
   stats,
   boardJobs,
-  onStatusClick,
   onJobClick,
 }: {
   stats: DashboardStats;
   boardJobs: Record<BoardStatus, Job[]>;
-  onStatusClick: (_status: BoardStatus) => void;
   onJobClick: (id: number) => void;
 }) => {
   const statuses: BoardStatus[] = ['saved', 'applied', 'interviewing', 'offered'];
@@ -691,137 +788,194 @@ const ApplicationBoard = ({
   };
 
   const total = statuses.reduce((s, k) => s + counts[k], 0);
+  const recentJobs = statuses
+    .flatMap(s => (boardJobs[s] || []).map(j => ({ job: j, status: s })))
+    .slice(0, 6);
 
   return (
-    <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
-      {/* Section header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-base font-bold text-gray-900">Applications</h2>
-          <p className="text-sm text-gray-400 mt-0.5">{total} total tracked</p>
-        </div>
-        <button
-          onClick={() => onStatusClick('applied')}
-          className="text-xs font-semibold text-green-600 hover:text-green-700 transition"
-        >
-          Full board →
-        </button>
-      </div>
-
-      {/* IG-style story bubbles */}
-      <div className="flex gap-4 mb-5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-        {statuses.map((status) => {
-          const cfg = STATUS_CONFIG[status];
+    <div>
+      {/* Pipeline strip */}
+      <div className="grid grid-cols-4 border-b border-[#dfe3eb]">
+        {statuses.map((status, i) => {
           const count = counts[status];
-          const hasItems = count > 0;
-
+          const active = count > 0;
           return (
-            <button
+            <div
               key={status}
-              onClick={() => onStatusClick(status)}
-              className="flex flex-col items-center gap-1.5 shrink-0 active:scale-95 transition"
+              className={`flex flex-col items-center py-4 ${i < 3 ? 'border-r border-[#dfe3eb]' : ''}`}
             >
-              {/* Story ring + circle */}
-              <div className={`p-[3px] rounded-full ${hasItems ? `bg-gradient-to-br ${cfg.gradient}` : 'bg-gray-200'}`}>
-                <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center flex-col gap-0.5">
-                  <div className={hasItems ? 'text-gray-700' : 'text-gray-400'}>{cfg.icon}</div>
-                  {hasItems && (
-                    <span className="text-[10px] font-bold text-gray-800 leading-none tabular-nums">{count}</span>
-                  )}
-                  {!hasItems && (
-                    <span className="text-[10px] text-gray-400 leading-none">0</span>
-                  )}
-                </div>
-              </div>
-              <span className="text-[10px] font-semibold text-gray-600 text-center leading-tight max-w-[64px]">
-                {cfg.label}
+              <span className={`text-[28px] font-black tabular-nums leading-none ${active ? 'text-[#0a1a25]' : 'text-[#c1cbd5]'}`}>
+                {count}
               </span>
-            </button>
+              <span className="text-[10px] font-black text-[#6f839c] uppercase tracking-[0.5px] mt-1">
+                {STATUS_CONFIG[status].label}
+              </span>
+            </div>
           );
         })}
       </div>
 
-      {/* Kanban lanes — horizontal scroll */}
-      {total > 0 && (
-        <div className="overflow-x-auto -mx-6 px-6 scrollbar-hide">
-          <div className="flex gap-3 pb-2" style={{ minWidth: 'max-content' }}>
-            {statuses.map((status) => {
-              const cfg = STATUS_CONFIG[status];
-              const jobs = boardJobs[status] || [];
-              const count = counts[status];
-              if (count === 0) return null;
-
-              return (
-                <div key={status} className="flex flex-col gap-2">
-                  {/* Lane header */}
-                  <div className="flex items-center gap-1.5 px-0.5">
-                    <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                    <span className="text-sm font-semibold text-gray-600">{cfg.label}</span>
-                    <span className="text-sm text-gray-400 ml-1 tabular-nums">({count})</span>
-                  </div>
-
-                  {/* Job cards */}
-                  {jobs.map(job => (
-                    <JobCard
-                      key={job.id}
-                      job={job}
-                      status={status}
-                      onClick={() => onJobClick(job.id)}
-                    />
-                  ))}
-
-                  {/* Show more */}
-                  {count > jobs.length && (
-                    <button
-                      onClick={() => onStatusClick(status)}
-                      className="w-48 py-2.5 rounded-xl border border-dashed border-gray-200 text-xs text-gray-400 hover:border-gray-400 hover:text-gray-600 transition text-center"
-                    >
-                      +{count - jobs.length} more
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+      {/* Job list */}
+      {total > 0 ? (
+        <div className="divide-y divide-[#dfe3eb]">
+          {recentJobs.map(({ job, status }) => (
+            <JobCard key={job.id} job={job} status={status} onClick={() => onJobClick(job.id)} />
+          ))}
         </div>
-      )}
-
-      {/* Empty state */}
-      {total === 0 && (
-        <div className="text-center py-8 bg-white rounded-xl border border-dashed border-gray-200">
-          <svg className="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-          </svg>
-          <p className="text-base font-semibold text-gray-600 mb-1">No applications yet</p>
-          <p className="text-sm text-gray-400">Save or apply to jobs to see them here</p>
+      ) : (
+        <div className="py-10 text-center px-[18px]">
+          <p className="text-[14px] text-[#6f839c]">No applications yet</p>
+          <p className="text-[12px] text-[#c1cbd5] mt-1">Save or apply to jobs to see them here</p>
         </div>
       )}
     </div>
   );
 };
 
+// ── Pipeline Funnel ───────────────────────────────────────────────────────────
+
+const PipelineFunnel = ({ stats }: { stats: DashboardStats }) => {
+  const stages = [
+    { label: 'Saved',       value: stats.saved || 0,        color: 'bg-amber-400',  text: 'text-amber-700',  light: 'bg-amber-50' },
+    { label: 'Applied',     value: stats.applied || 0,      color: 'bg-green-500',  text: 'text-green-700',  light: 'bg-green-50' },
+    { label: 'Interviewing',value: stats.interviewing || 0, color: 'bg-purple-500', text: 'text-purple-700', light: 'bg-purple-50' },
+    { label: 'Offered',     value: stats.offered || 0,      color: 'bg-emerald-500',text: 'text-emerald-700',light: 'bg-emerald-50' },
+  ];
+  const max = Math.max(...stages.map(s => s.value), 1);
+
+  return (
+    <div className="space-y-2.5">
+      {stages.map((s, i) => {
+        const prev = stages[i - 1];
+        const convRate = prev && prev.value > 0 ? Math.round((s.value / prev.value) * 100) : null;
+        const barW = Math.max(4, Math.round((s.value / max) * 100));
+        return (
+          <div key={s.label}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[12px] font-bold text-[#223a5a]">{s.label}</span>
+              <div className="flex items-center gap-2">
+                {convRate !== null && (
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${s.light} ${s.text}`}>
+                    {convRate}% conversion
+                  </span>
+                )}
+                <span className="text-[14px] font-black text-[#0a1a25] tabular-nums w-6 text-right">{s.value}</span>
+              </div>
+            </div>
+            <div className="h-2 bg-[#f4f6fa] rounded-full overflow-hidden">
+              <div className={`h-full ${s.color} rounded-full transition-all duration-700`} style={{ width: `${barW}%` }} />
+            </div>
+          </div>
+        );
+      })}
+      {stages[1].value > 0 && (
+        <div className="pt-2 border-t border-[#dfe3eb] flex justify-between text-[11px] text-[#6f839c]">
+          <span>Response rate</span>
+          <span className="font-black text-[#0a1a25]">
+            {Math.round(((stats.interviewing || 0) + (stats.offered || 0)) / Math.max(stats.applied || 1, 1) * 100)}%
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── Weekly Activity ────────────────────────────────────────────────────────────
+
+const WeeklyActivity = ({ boardJobs }: { boardJobs: Record<string, { applied_date?: string | null; created_at: string }[]> }) => {
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d;
+  });
+
+  const allJobs = Object.values(boardJobs).flat();
+  const counts = days.map(d => {
+    const key = d.toISOString().slice(0, 10);
+    return allJobs.filter(j => {
+      const date = (j.applied_date || j.created_at || '').slice(0, 10);
+      return date === key;
+    }).length;
+  });
+
+  const max = Math.max(...counts, 1);
+  const total = counts.reduce((a, b) => a + b, 0);
+  const dayLabels = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  return (
+    <div>
+      <div className="flex items-end gap-1.5 h-16 mb-2">
+        {counts.map((c, i) => {
+          const h = Math.max(4, Math.round((c / max) * 100));
+          const isToday = i === 6;
+          return (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <div className={`w-full rounded-sm transition-all duration-500 ${isToday ? 'bg-[#16a34a]' : c > 0 ? 'bg-[#bbf7d0]' : 'bg-[#f4f6fa]'}`} style={{ height: `${h}%` }} />
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex gap-1.5">
+        {days.map((d, i) => (
+          <div key={i} className="flex-1 text-center text-[10px] text-[#6f839c] font-bold">{dayLabels[d.getDay()]}</div>
+        ))}
+      </div>
+      <div className="flex justify-between mt-2 pt-2 border-t border-[#dfe3eb]">
+        <span className="text-[11px] text-[#6f839c]">This week</span>
+        <span className="text-[12px] font-black text-[#0a1a25]">{total} actions</span>
+      </div>
+    </div>
+  );
+};
+
+// ── Streak tracker ────────────────────────────────────────────────────────────
+
+function useStreak() {
+  const [streak, setStreak] = useState(0);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('afavers_streak');
+      const data = raw ? JSON.parse(raw) : null;
+      const today = new Date().toISOString().slice(0, 10);
+      if (!data) { localStorage.setItem('afavers_streak', JSON.stringify({ date: today, count: 1 })); setStreak(1); return; }
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      const yKey = yesterday.toISOString().slice(0, 10);
+      if (data.date === today) { setStreak(data.count); }
+      else if (data.date === yKey) { const next = { date: today, count: data.count + 1 }; localStorage.setItem('afavers_streak', JSON.stringify(next)); setStreak(next.count); }
+      else { localStorage.setItem('afavers_streak', JSON.stringify({ date: today, count: 1 })); setStreak(1); }
+    } catch { setStreak(1); }
+  }, []);
+  return streak;
+}
+
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
 const DashboardSkeleton = () => (
-  <div className="px-6 py-8 max-w-3xl mx-auto">
-    <div className="mb-6">
-      <div className="h-6 w-36 bg-gray-200 rounded-full animate-pulse mb-1.5" />
-      <div className="h-3.5 w-28 bg-gray-100 rounded-full animate-pulse" />
+  <div className="bg-[#f4f6fa] min-h-screen">
+    <div className="bg-white border-b border-[#dfe3eb] px-6 py-4">
+      <div className="h-6 w-48 bg-[#dfe3eb] rounded animate-pulse mb-1.5" />
+      <div className="h-3.5 w-32 bg-[#f4f6fa] rounded animate-pulse" />
     </div>
-    <div className="mb-6">
-      <div className="h-4 w-24 bg-gray-200 rounded-full animate-pulse mb-3" />
-      <div className="flex gap-4">
+    <div className="max-w-5xl mx-auto px-6 py-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="w-16 h-16 rounded-full bg-gray-200 animate-pulse shrink-0" />
+          <div key={i} className="bg-white border border-[#dfe3eb] rounded p-[18px]">
+            <div className="h-3 w-16 bg-[#dfe3eb] rounded animate-pulse mb-4" />
+            <div className="h-10 w-12 bg-[#f4f6fa] rounded animate-pulse" />
+          </div>
         ))}
       </div>
+      <div className="flex gap-4">
+        <div className="flex-1 space-y-4">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="bg-white border border-[#dfe3eb] rounded h-32 animate-pulse" />
+          ))}
+        </div>
+        <div className="lg:w-72 space-y-4">
+          <div className="bg-white border border-[#dfe3eb] rounded h-48 animate-pulse" />
+        </div>
+      </div>
     </div>
-    <div className="flex gap-3 overflow-hidden mb-6">
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="w-48 h-28 rounded-xl bg-gray-100 animate-pulse shrink-0" />
-      ))}
-    </div>
-    <div className="h-28 bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl animate-pulse" />
   </div>
 );
 
@@ -839,6 +993,7 @@ export const DashboardPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { greeting, displayName, todayFormatted } = useGreeting(user?.email);
+  const streak = useStreak();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [followUps, setFollowUps] = useState<FollowUpAlert[]>([]);
   const [upcomingInterviews, setUpcomingInterviews] = useState<Job[]>([]);
@@ -849,6 +1004,13 @@ export const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [fetchMsg, setFetchMsg] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const { visible, toggle } = useWidgetVisibility();
+  const { order: widgetOrder, move: moveWidget, reorder: reorderWidgets } = useWidgetOrder();
+  const [draggedKey, setDraggedKey] = useState<LeftWidgetKey | null>(null);
+  const [dragOverKey, setDragOverKey] = useState<LeftWidgetKey | null>(null);
+
+  const hiddenKeys = WIDGET_KEYS.filter(k => !visible[k]);
 
   useEffect(() => {
     loadStats();
@@ -862,12 +1024,10 @@ export const DashboardPage = () => {
       })
       .catch(() => {});
 
-    // Fetch story jobs (latest new/unreviewed)
     jobsService.getJobs({ status: 'new', limit: 10, sortBy: 'created_at', sortOrder: 'DESC' })
       .then(r => setStoryJobs(r.jobs))
       .catch(() => {});
 
-    // Fetch board jobs for each status
     const statuses: BoardStatus[] = ['saved', 'applied', 'interviewing', 'offered'];
     Promise.all(
       statuses.map(status => jobsService.getJobs({ status, limit: 4 }).then(r => ({ status, jobs: r.jobs })))
@@ -906,162 +1066,280 @@ export const DashboardPage = () => {
 
   if (loading) return <DashboardSkeleton />;
 
+  const totalTracked = (stats?.saved || 0) + (stats?.applied || 0) + (stats?.interviewing || 0) + (stats?.offered || 0);
+
   return (
-    <div className="px-6 py-6 max-w-5xl mx-auto w-full">
+    <div className="bg-[#f4f6fa] min-h-screen">
 
-      {/* Greeting */}
-      <div className="mb-5 animate-fade-in">
-        <h1 className="text-2xl font-bold text-gray-900">{greeting}, {displayName} 👋</h1>
-        <p className="text-sm text-gray-400 mt-0.5">{todayFormatted}</p>
-      </div>
-
-      {/* News carousel */}
-      {newsOnDashboard && <NewsCarousel />}
-
-      {/* Job stories — latest unreviewed */}
-      <JobStories jobs={filteredStoryJobs} onJobClick={(id) => navigate(`/jobs/${id}`)} />
-
-      {/* New jobs hero banner */}
-      {stats && stats.new > 0 && (
-        <div
-          onClick={() => navigate('/jobs')}
-          className="mb-6 bg-gradient-to-r from-green-500 to-blue-600 rounded-2xl p-5 text-white cursor-pointer hover:from-green-600 hover:to-blue-700 transition-all duration-300 shadow-lg shadow-green-100 hover:shadow-xl hover:shadow-green-200 hover:-translate-y-0.5 active:scale-[0.99] animate-scale-in"
-        >
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-green-100 text-sm font-medium mb-1">{t('unreviewedJobs')}</p>
-              <p className="text-4xl font-bold tracking-tight"><AnimatedNumber value={stats.new} /></p>
-              {stats.new_today > 0 && (
-                <p className="text-green-100 text-sm mt-1.5">+{stats.new_today} {t('addedToday')}</p>
-              )}
+      {/* Page header */}
+      <div className="bg-white border-b border-[#dfe3eb] px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+        <div>
+          <h1 className="text-[22px] font-black leading-tight text-[#0a1a25]">{greeting}, {displayName} 👋</h1>
+          <p className="text-[13px] text-[#6f839c] mt-0.5">{todayFormatted}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {streak > 1 && (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded text-amber-700 text-[12px] font-black">
+              🔥 {streak}-day streak
             </div>
-            <div className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-semibold transition border border-white/30">
-              {t('reviewNow')} →
+          )}
+          {stats && (
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded text-green-700 text-[12px] font-black">
+              {Math.round(((stats.interviewing || 0) + (stats.offered || 0)) / Math.max(stats.applied || 1, 1) * 100)}% response rate
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Follow-up reminders */}
-      {followUps.length > 0 && (
-        <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl p-4 animate-fade-in">
-          <p className="text-base font-semibold text-amber-800 mb-2.5 flex items-center gap-1.5"><IconClock className="w-4 h-4" /> {t('followUpsDue')} ({followUps.length})</p>
-          <div className="space-y-1">
-            {followUps.map(f => (
-              <div key={f.id} onClick={() => navigate(`/jobs/${f.id}`)}
-                className="flex justify-between items-center text-sm cursor-pointer hover:bg-amber-100 rounded-lg px-3 py-1.5 transition active:scale-[0.99]"
-              >
-                <span className="text-amber-900 font-medium truncate">{f.title} · {f.company}</span>
-                <span className="text-amber-600 shrink-0 ml-3">{new Date(f.follow_up_date).toLocaleDateString('de-DE')}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Upcoming interviews */}
-      {upcomingInterviews.length > 0 && (
-        <div className="mb-5 bg-purple-50 border border-purple-200 rounded-xl p-4 animate-fade-in">
-          <p className="text-base font-semibold text-purple-800 mb-2.5 flex items-center gap-1.5">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-            </svg>
-            {t('upcomingInterviews')} ({upcomingInterviews.length})
-          </p>
-          <div className="space-y-1">
-            {upcomingInterviews.map(j => (
-              <div key={j.id} onClick={() => navigate(`/jobs/${j.id}`)}
-                className="flex justify-between items-center text-sm cursor-pointer hover:bg-purple-100 rounded-lg px-3 py-1.5 transition active:scale-[0.99]"
-              >
-                <span className="text-purple-900 font-medium truncate">{j.title} · {j.company}</span>
-                <span className="text-purple-600 shrink-0 ml-3">{new Date(j.interview_date!).toLocaleDateString('de-DE')}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Goal widget */}
-      {stats && <GoalWidget stats={stats} />}
-
-      {/* Quick actions — 2×2 mobile, 4-col desktop */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        {([
-          {
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            ),
-            iconBg: 'bg-blue-50 text-blue-600',
-            label: t('browseJobs'), sub: `${stats?.new || 0} new`, color: 'hover:border-blue-300', onClick: () => navigate('/jobs'),
-          },
-          {
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            ),
-            iconBg: 'bg-indigo-50 text-indigo-600',
-            label: t('englishJobs'), sub: t('englishJobsDesc'), color: 'hover:border-indigo-300', onClick: () => navigate('/english-jobs'),
-          },
-          {
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            ),
-            iconBg: 'bg-pink-50 text-pink-600',
-            label: t('analytics'), sub: t('analyticsDesc'), color: 'hover:border-pink-300', onClick: () => navigate('/analytics'),
-          },
-          {
-            icon: fetching ? (
-              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            ),
-            iconBg: 'bg-green-50 text-green-600',
-            label: t('fetchJobs'), sub: fetching ? t('fetching') : t('autoFetchNote'), color: 'hover:border-green-300', onClick: isDemo ? undefined : handleFetchJobs, disabled: fetching || isDemo,
-          },
-        ] as const).map((card, i) => (
+          )}
           <button
-            key={card.label}
-            onClick={card.onClick}
-            disabled={'disabled' in card && card.disabled}
-            className={`bg-white rounded-xl border-2 border-gray-100 ${card.color} p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.97] disabled:opacity-50 animate-fade-in`}
-            style={{ animationDelay: `${i * 40}ms` }}
+            onClick={() => setEditMode(e => !e)}
+            className={`text-[13px] font-black px-4 py-2 rounded border transition ${
+              editMode
+                ? 'bg-[#0a1a25] text-white border-[#0a1a25]'
+                : 'bg-white text-[#223a5a] border-[#dfe3eb] hover:bg-[#f4f6fa] hover:border-[#c1cbd5]'
+            }`}
           >
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${card.iconBg}`}>
-              {card.icon}
-            </div>
-            <p className="text-sm font-semibold text-gray-800">{card.label}</p>
-            <p className="text-xs text-gray-400 mt-0.5 leading-snug line-clamp-1">{card.sub}</p>
+            {editMode ? '✓ Done' : '✏ Edit Dashboard'}
           </button>
-        ))}
+        </div>
       </div>
-      {fetchMsg && (
-        <p className={`text-xs mb-4 text-center animate-fade-in ${fetchMsg.includes('failed') || fetchMsg.includes('fehlgeschlagen') ? 'text-red-500' : 'text-green-600'}`}>
-          {fetchMsg}
-        </p>
-      )}
 
-      {/* ★ APPLICATION BOARD ★ */}
-      {stats && (
-        <ApplicationBoard
-          stats={stats}
-          boardJobs={boardJobs}
-          onStatusClick={() => navigate('/kanban')}
-          onJobClick={(id) => navigate(`/jobs/${id}`)}
-        />
-      )}
+      <div className="max-w-5xl mx-auto px-6 py-5">
 
-      {/* Calendar */}
-      <MiniCalendar upcomingInterviews={upcomingInterviews} followUps={followUps} />
+        {/* Edit mode: hidden widgets restore */}
+        {editMode && hiddenKeys.length > 0 && (
+          <div className="mb-4 p-3 bg-white border border-[#dfe3eb] rounded flex flex-wrap gap-2 items-center animate-fade-in">
+            <span className="text-[11px] font-black text-[#6f839c] uppercase tracking-wide">Hidden:</span>
+            {hiddenKeys.map(key => (
+              <button
+                key={key}
+                onClick={() => toggle(key)}
+                className="text-[12px] font-bold text-[#223a5a] bg-[#f4f6fa] border border-[#dfe3eb] rounded px-2 py-1 hover:border-[#16a34a] hover:text-[#16a34a] transition"
+              >
+                + {WIDGET_LABELS[key]}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Stats strip */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
+          <StatCard
+            label="Total Jobs"
+            value={stats?.total || 0}
+            sub={stats?.new ? `${stats.new} unreviewed` : undefined}
+            color="text-[#16a34a]"
+            onClick={() => navigate('/jobs')}
+          />
+          <StatCard
+            label="Saved"
+            value={stats?.saved || 0}
+            color="text-[#d97706]"
+            onClick={() => navigate('/kanban')}
+          />
+          <StatCard
+            label="Applied"
+            value={stats?.applied || 0}
+            color="text-[#16a34a]"
+            onClick={() => navigate('/kanban')}
+          />
+          <StatCard
+            label="Interviewing"
+            value={stats?.interviewing || 0}
+            color="text-[#7c3aed]"
+            onClick={() => navigate('/kanban')}
+          />
+          <StatCard
+            label="Offered"
+            value={stats?.offered || 0}
+            sub={stats?.offered ? '🎉 Congrats!' : 'Keep going!'}
+            color="text-[#059669]"
+            onClick={() => navigate('/kanban')}
+          />
+        </div>
+
+        {/* Main 2-col layout */}
+        <div className="flex flex-col lg:flex-row gap-4">
+
+          {/* Left column */}
+          <div className="flex-1 min-w-0 flex flex-col gap-4">
+            {widgetOrder.map((key, idx) => {
+              const moveUp = idx > 0 ? () => moveWidget(key, -1) : undefined;
+              const moveDown = idx < widgetOrder.length - 1 ? () => moveWidget(key, 1) : undefined;
+
+              let content: React.ReactNode = null;
+
+              if (key === 'news') {
+                if (visible.news && newsOnDashboard) content = (
+                  <Module title="News" editMode={editMode} onHide={() => toggle('news')} onMoveUp={moveUp} onMoveDown={moveDown} noPad>
+                    <div className="px-[18px] py-[14px]"><NewsCarousel /></div>
+                  </Module>
+                );
+              } else if (key === 'newJobs') {
+                if (visible.newJobs && stats && stats.new > 0) content = (
+                  <div
+                    onClick={() => navigate('/jobs')}
+                    className={`bg-white border border-[#dfe3eb] rounded overflow-hidden cursor-pointer hover:border-[#16a34a] hover:shadow-[0_0_12px_0_rgba(22,163,74,0.15)] transition-all group ${editMode ? 'ring-2 ring-dashed ring-[#dfe3eb]' : ''}`}
+                  >
+                    <div className="flex items-center justify-between px-[18px] border-b border-[#dfe3eb]" style={{ minHeight: 52 }}>
+                      <h3 className="text-[11px] font-black text-[#6f839c] uppercase tracking-[1px]">Unreviewed Jobs</h3>
+                      {editMode && (
+                        <div className="flex items-center gap-1.5">
+                          {moveUp && <button onClick={e => { e.stopPropagation(); moveUp(); }} className="text-[13px] text-[#6f839c] hover:text-[#0a1a25] border border-[#dfe3eb] hover:border-[#c1cbd5] rounded px-1.5 py-0.5 leading-none transition">↑</button>}
+                          {moveDown && <button onClick={e => { e.stopPropagation(); moveDown(); }} className="text-[13px] text-[#6f839c] hover:text-[#0a1a25] border border-[#dfe3eb] hover:border-[#c1cbd5] rounded px-1.5 py-0.5 leading-none transition">↓</button>}
+                          <button onClick={e => { e.stopPropagation(); toggle('newJobs'); }} className="text-[11px] font-bold text-[#6f839c] hover:text-red-500 border border-[#dfe3eb] hover:border-red-300 rounded px-2 py-0.5 transition">Hide</button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="px-[18px] py-[18px] flex items-center justify-between">
+                      <div>
+                        <p className="text-[38px] font-black text-[#16a34a] leading-none tabular-nums"><AnimatedNumber value={stats.new} /></p>
+                        {stats.new_today > 0 && <p className="text-[12px] text-[#6f839c] mt-1">+{stats.new_today} added today</p>}
+                      </div>
+                      <span className="text-[13px] font-black text-[#16a34a] group-hover:text-green-700 transition">Review now →</span>
+                    </div>
+                  </div>
+                );
+              } else if (key === 'stories') {
+                if (visible.stories && filteredStoryJobs.length > 0) content = (
+                  <Module title={`New Jobs · ${filteredStoryJobs.length} unreviewed`} editMode={editMode} onHide={() => toggle('stories')} onMoveUp={moveUp} onMoveDown={moveDown} noPad>
+                    <div className="px-[18px] py-[14px]">
+                      <JobStories jobs={filteredStoryJobs} onJobClick={(id) => navigate(`/jobs/${id}`)} />
+                    </div>
+                  </Module>
+                );
+              } else if (key === 'followUps') {
+                if (visible.followUps && followUps.length > 0) content = (
+                  <Module title={`Follow-ups Due · ${followUps.length}`} editMode={editMode} onHide={() => toggle('followUps')} onMoveUp={moveUp} onMoveDown={moveDown} noPad>
+                    <div className="divide-y divide-[#dfe3eb]">
+                      {followUps.map(f => (
+                        <div key={f.id} onClick={() => navigate(`/jobs/${f.id}`)} className="flex justify-between items-center px-[18px] py-3 cursor-pointer hover:bg-[#f4f6fa] transition border-l-[3px] border-l-amber-400">
+                          <span className="text-[14px] font-bold text-[#223a5a] truncate flex-1 flex items-center gap-2">
+                            <IconClock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            {f.title} · {f.company}
+                          </span>
+                          <span className="text-[12px] text-[#6f839c] shrink-0 ml-3">{new Date(f.follow_up_date).toLocaleDateString('de-DE')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Module>
+                );
+              } else if (key === 'interviews') {
+                if (visible.interviews && upcomingInterviews.length > 0) content = (
+                  <Module title={`Upcoming Interviews · ${upcomingInterviews.length}`} editMode={editMode} onHide={() => toggle('interviews')} onMoveUp={moveUp} onMoveDown={moveDown} noPad>
+                    <div className="divide-y divide-[#dfe3eb]">
+                      {upcomingInterviews.map(j => (
+                        <div key={j.id} onClick={() => navigate(`/jobs/${j.id}`)} className="flex justify-between items-center px-[18px] py-3 cursor-pointer hover:bg-[#f4f6fa] transition border-l-[3px] border-l-purple-500">
+                          <span className="text-[14px] font-bold text-[#223a5a] truncate flex-1">{j.title} · {j.company}</span>
+                          <span className="text-[12px] text-[#6f839c] shrink-0 ml-3">{new Date(j.interview_date!).toLocaleDateString('de-DE')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Module>
+                );
+              } else if (key === 'applications') {
+                if (visible.applications && stats) content = (
+                  <Module
+                    title={`Applications · ${totalTracked} tracked`}
+                    action={<button onClick={() => navigate('/kanban')} className="text-[12px] font-black text-[#16a34a] hover:text-green-700 transition">Full board →</button>}
+                    editMode={editMode}
+                    onHide={() => toggle('applications')}
+                    onMoveUp={moveUp}
+                    onMoveDown={moveDown}
+                    noPad
+                  >
+                    <ApplicationBoard stats={stats} boardJobs={boardJobs} onJobClick={(id) => navigate(`/jobs/${id}`)} />
+                  </Module>
+                );
+              } else if (key === 'pipeline') {
+                if (visible.pipeline && stats) content = (
+                  <Module title="Pipeline Funnel" editMode={editMode} onHide={() => toggle('pipeline')} onMoveUp={moveUp} onMoveDown={moveDown}>
+                    <PipelineFunnel stats={stats} />
+                  </Module>
+                );
+              } else if (key === 'weeklyActivity') {
+                if (visible.weeklyActivity) content = (
+                  <Module title="Weekly Activity" editMode={editMode} onHide={() => toggle('weeklyActivity')} onMoveUp={moveUp} onMoveDown={moveDown}>
+                    <WeeklyActivity boardJobs={boardJobs} />
+                  </Module>
+                );
+              } else if (key === 'quickActions') {
+                if (visible.quickActions) content = (
+                  <Module title="Quick Actions" editMode={editMode} onHide={() => toggle('quickActions')} onMoveUp={moveUp} onMoveDown={moveDown}>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { icon: '🔍', label: t('browseJobs'), sub: `${stats?.new || 0} new`, onClick: () => navigate('/jobs') },
+                        { icon: '🌍', label: t('englishJobs'), sub: t('englishJobsDesc'), onClick: () => navigate('/english-jobs') },
+                        { icon: '📊', label: t('analytics'), sub: t('analyticsDesc'), onClick: () => navigate('/analytics') },
+                        { icon: fetching ? '⏳' : '🔄', label: t('fetchJobs'), sub: fetching ? t('fetching') : t('autoFetchNote'), onClick: isDemo ? undefined : handleFetchJobs, disabled: fetching || isDemo },
+                      ].map((card, i) => (
+                        <button key={i} onClick={card.onClick} disabled={'disabled' in card && card.disabled} className="flex items-center gap-3 p-3 bg-[#f4f6fa] hover:bg-white border border-[#dfe3eb] hover:border-[#c1cbd5] rounded transition text-left disabled:opacity-50 hover:shadow-[0_0_8px_0_rgba(15,44,65,0.08)]">
+                          <span className="text-2xl shrink-0">{card.icon}</span>
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-black text-[#0a1a25] truncate">{card.label}</p>
+                            <p className="text-[11px] text-[#6f839c] truncate leading-snug">{card.sub}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    {fetchMsg && (
+                      <p className={`text-[12px] mt-3 text-center font-bold ${fetchMsg.includes('failed') || fetchMsg.includes('fehlgeschlagen') ? 'text-red-500' : 'text-[#16a34a]'}`}>
+                        {fetchMsg}
+                      </p>
+                    )}
+                  </Module>
+                );
+              }
+
+              if (!content) return null;
+
+              return (
+                <div
+                  key={key}
+                  draggable={editMode}
+                  onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDraggedKey(key); }}
+                  onDragOver={e => { e.preventDefault(); if (key !== draggedKey) setDragOverKey(key); }}
+                  onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverKey(null); }}
+                  onDrop={e => {
+                    e.preventDefault();
+                    if (draggedKey && key !== draggedKey) reorderWidgets(draggedKey, key);
+                    setDraggedKey(null);
+                    setDragOverKey(null);
+                  }}
+                  onDragEnd={() => { setDraggedKey(null); setDragOverKey(null); }}
+                  style={{ opacity: draggedKey === key ? 0.4 : 1 }}
+                  className={`transition-opacity ${editMode ? 'cursor-grab active:cursor-grabbing' : ''} ${dragOverKey === key && draggedKey !== key ? 'ring-2 ring-[#16a34a] rounded' : ''}`}
+                >
+                  {content}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Right sidebar */}
+          <div className="lg:w-72 shrink-0 flex flex-col gap-4">
+
+            {/* Stress check-in */}
+            {visible.stress && (
+              <Module title="How are you feeling?" editMode={editMode} onHide={() => toggle('stress')}>
+                <StressCheckup />
+              </Module>
+            )}
+
+            {/* Goal tracker */}
+            {visible.goal && stats && (
+              <Module title="Goal Tracker" editMode={editMode} onHide={() => toggle('goal')}>
+                <GoalWidget stats={stats} />
+              </Module>
+            )}
+
+            {/* Calendar */}
+            {visible.calendar && (
+              <Module title="Calendar" editMode={editMode} onHide={() => toggle('calendar')}>
+                <MiniCalendar upcomingInterviews={upcomingInterviews} followUps={followUps} />
+              </Module>
+            )}
+
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
