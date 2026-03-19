@@ -27,9 +27,13 @@ app.use(helmet());
 
 // CORS — allow web, Capacitor iOS, browser extensions, and local dev
 const ALLOWED_ORIGINS = [
-  env.CLIENT_URL,           // https://afavers.com
+  env.CLIENT_URL,
+  'https://afavers.online',
+  'https://www.afavers.online',
+  'https://afavers-client.vercel.app',
   'capacitor://localhost',  // Capacitor iOS app
   'http://localhost:5173',  // Vite dev server
+  'http://localhost:5174',
   'http://localhost:3000',
 ];
 app.use(cors({
