@@ -280,7 +280,8 @@ export const LandingPage = () => {
         .nav-pill{background:rgba(255,255,255,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(0,0,0,0.08);border-radius:9999px;box-shadow:0 2px 16px rgba(0,0,0,0.06)}
       `}</style>
 
-      {/* ── Announcement bar ── */}
+      {/* ── Announcement bar + Nav (sticky together) ── */}
+      <div className="sticky top-0 z-50">
       <div className="bg-[#0a1a25] text-white text-xs font-semibold py-2.5 px-4 text-center flex items-center justify-center gap-3">
         <span className="hidden sm:flex items-center gap-1.5">
           <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-green-400"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
@@ -292,7 +293,7 @@ export const LandingPage = () => {
       </div>
 
       {/* ── Nav (OVO pill style) ── */}
-      <div className="sticky top-0 z-50 flex justify-center px-4 py-3 bg-white/60 backdrop-blur-xl">
+      <div className="flex justify-center px-4 py-3 bg-white/80 backdrop-blur-xl">
         <nav className="nav-pill w-full max-w-5xl px-4 h-14 flex items-center justify-between">
           <img src="/logo.png" alt="afavers" className="h-16 w-auto"
             onError={e => { const t = e.target as HTMLImageElement; t.style.display = 'none'; (t.parentElement as HTMLElement).insertAdjacentHTML('afterbegin', '<span style="font-size:1.2rem;font-weight:900;color:#0a1a25;letter-spacing:-0.5px">afavers</span>'); }} />
@@ -313,6 +314,7 @@ export const LandingPage = () => {
           </div>
         </nav>
       </div>
+      </div>{/* end sticky wrapper */}
 
       {/* ── Hero ── */}
       <section className="relative min-h-[88vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden">
