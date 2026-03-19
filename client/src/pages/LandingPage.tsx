@@ -271,47 +271,64 @@ export const LandingPage = () => {
         @keyframes fadeUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
         @keyframes shimmer{0%,100%{background-position:0% center}50%{background-position:100% center}}
         @keyframes scaleIn{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}
+        @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
         .fade-up{animation:fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) both}
         .scale-in{animation:scaleIn 1s cubic-bezier(0.16,1,0.3,1) both}
         .shimmer-text{background:linear-gradient(90deg,#16a34a,#059669,#0d9488,#16a34a);background-size:300% auto;background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s ease infinite}
         .scrollbar-hide::-webkit-scrollbar{display:none}
         .scrollbar-hide{-ms-overflow-style:none;scrollbar-width:none}
+        .nav-pill{background:rgba(255,255,255,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(0,0,0,0.08);border-radius:9999px;box-shadow:0 2px 16px rgba(0,0,0,0.06)}
       `}</style>
 
-      {/* ── Nav ── */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-2xl border-b border-black/5">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <img src="/logo.png" alt="afavers" className="h-20 w-auto"
-            onError={e => { const t = e.target as HTMLImageElement; t.style.display = 'none'; (t.parentElement as HTMLElement).insertAdjacentHTML('afterbegin', '<span style="font-size:1.25rem;font-weight:900;color:#0a1a25">afavers</span>'); }} />
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#use-cases" className="text-sm text-gray-500 hover:text-gray-900 transition font-medium">Features</a>
-            <a href="#jobs" className="text-sm text-gray-500 hover:text-gray-900 transition font-medium">Live Jobs</a>
+      {/* ── Announcement bar ── */}
+      <div className="bg-[#0a1a25] text-white text-xs font-semibold py-2.5 px-4 text-center flex items-center justify-center gap-3">
+        <span className="hidden sm:flex items-center gap-1.5">
+          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-green-400"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+          Chrome &amp; Firefox extension now available
+        </span>
+        <span className="sm:hidden">Browser extension available</span>
+        <span className="text-white/30">·</span>
+        <a href="#extension" className="underline underline-offset-2 text-green-400 hover:text-green-300 transition">Install free →</a>
+      </div>
+
+      {/* ── Nav (OVO pill style) ── */}
+      <div className="sticky top-0 z-50 flex justify-center px-4 py-3 bg-white/60 backdrop-blur-xl">
+        <nav className="nav-pill w-full max-w-5xl px-4 h-14 flex items-center justify-between">
+          <img src="/logo.png" alt="afavers" className="h-16 w-auto"
+            onError={e => { const t = e.target as HTMLImageElement; t.style.display = 'none'; (t.parentElement as HTMLElement).insertAdjacentHTML('afterbegin', '<span style="font-size:1.2rem;font-weight:900;color:#0a1a25;letter-spacing:-0.5px">afavers</span>'); }} />
+          <div className="hidden md:flex items-center gap-1">
+            {[['Features','#use-cases'],['Extension','#extension'],['Live Jobs','#jobs']].map(([label, href]) => (
+              <a key={label} href={href} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100/70 rounded-full transition font-medium">{label}</a>
+            ))}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {isAuthenticated ? (
-              <Link to="/dashboard" className="px-5 py-2.5 bg-[#0a1a25] hover:bg-gray-800 text-white text-sm font-semibold rounded-full transition">Dashboard →</Link>
+              <Link to="/dashboard" className="px-5 py-2 bg-[#0a1a25] hover:bg-gray-800 text-white text-sm font-semibold rounded-full transition">Dashboard →</Link>
             ) : (
               <>
-                <Link to="/login" className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition">Log in</Link>
-                <Link to="/register" className="px-5 py-2.5 bg-[#0a1a25] hover:bg-gray-800 text-white text-sm font-bold rounded-full transition">Get started free</Link>
+                <Link to="/login" className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-full">Log in</Link>
+                <Link to="/register" className="px-5 py-2 bg-[#16a34a] hover:bg-green-700 text-white text-sm font-bold rounded-full transition shadow-sm">Get started</Link>
               </>
             )}
           </div>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       {/* ── Hero ── */}
-      <section className="relative min-h-[92vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden bg-white">
-        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px,transparent 1px),linear-gradient(90deg,#e5e7eb 1px,transparent 1px)', backgroundSize: '60px 60px', opacity: 0.3 }} />
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 40%,rgba(255,255,255,1) 30%,transparent 100%)' }} />
+      <section className="relative min-h-[88vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+        {/* Gradient background like OVO */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(160deg, #f0fdf4 0%, #ffffff 35%, #f0f9ff 65%, #f5f3ff 100%)' }} />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-200/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-10 right-1/4 w-80 h-80 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 w-[600px] h-64 bg-green-50/60 rounded-full blur-3xl -translate-x-1/2 pointer-events-none" />
 
         <div ref={heroRef.ref} className="relative max-w-5xl mx-auto">
-          <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-semibold mb-10 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`}>
+          <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-green-200 text-green-700 text-xs font-semibold mb-8 shadow-sm ${heroRef.inView ? 'fade-up' : 'opacity-0'}`}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
             Auto-updated every 2 hours · Germany's green jobs
           </div>
 
-          <h1 className={`text-6xl sm:text-8xl font-black text-[#0a1a25] leading-[0.95] tracking-tight mb-8 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '80ms' }}>
+          <h1 className={`text-6xl sm:text-8xl font-black text-[#0a1a25] leading-[0.95] tracking-tight mb-6 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '80ms' }}>
             Your job search,<br /><span className="shimmer-text">on autopilot.</span>
           </h1>
 
@@ -319,16 +336,16 @@ export const LandingPage = () => {
             afavers fetches, filters, and tracks every relevant green job in Germany — automatically. You focus on applying.
           </p>
 
-          <div className={`flex flex-col sm:flex-row gap-3 justify-center mb-16 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '240ms' }}>
+          <div className={`flex flex-col sm:flex-row gap-3 justify-center mb-10 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '240ms' }}>
             <Link to="/register" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#0a1a25] hover:bg-gray-800 text-white font-bold rounded-2xl text-base transition-all hover:shadow-2xl hover:-translate-y-0.5">
               Start for free <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
             </Link>
-            <Link to="/demo" className="inline-flex items-center justify-center px-8 py-4 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-2xl text-base transition">
+            <Link to="/demo" className="inline-flex items-center justify-center px-8 py-4 bg-white/80 border border-gray-200 hover:bg-white text-gray-700 font-semibold rounded-2xl text-base transition shadow-sm">
               Browse live jobs
             </Link>
           </div>
 
-          <div className={`flex items-center justify-center gap-3 text-sm text-gray-400 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '320ms' }}>
+          <div className={`flex items-center justify-center gap-3 text-sm text-gray-400 mb-16 ${heroRef.inView ? 'fade-up' : 'opacity-0'}`} style={{ animationDelay: '320ms' }}>
             <div className="flex -space-x-2">
               {['#16a34a','#3b82f6','#8b5cf6','#f59e0b','#ef4444'].map((c, i) => (
                 <div key={i} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[11px] font-black text-white" style={{ background: c }}>{['M','A','J','T','S'][i]}</div>
@@ -341,8 +358,8 @@ export const LandingPage = () => {
         </div>
 
         {/* Dashboard mockup */}
-        <div className={`relative mt-20 w-full max-w-4xl mx-auto ${heroRef.inView ? 'scale-in' : 'opacity-0'}`} style={{ animationDelay: '400ms' }}>
-          <div className="rounded-2xl border border-gray-200 overflow-hidden" style={{ boxShadow: '0 40px 80px -20px rgba(0,0,0,0.18)' }}>
+        <div className={`relative w-full max-w-4xl mx-auto ${heroRef.inView ? 'scale-in' : 'opacity-0'}`} style={{ animationDelay: '400ms' }}>
+          <div className="rounded-2xl border border-gray-200/80 overflow-hidden" style={{ boxShadow: '0 40px 80px -20px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04)' }}>
             <div className="bg-[#f8f9fa] border-b border-gray-200 px-4 py-3 flex items-center gap-3">
               <div className="flex gap-1.5"><div className="w-3 h-3 rounded-full bg-red-400" /><div className="w-3 h-3 rounded-full bg-amber-400" /><div className="w-3 h-3 rounded-full bg-green-400" /></div>
               <div className="flex-1 bg-white rounded-lg px-3 py-1.5 text-xs text-gray-400 text-center border border-gray-200">afavers.online/dashboard</div>
@@ -446,6 +463,89 @@ export const LandingPage = () => {
             </div>
             <div><p className="text-gray-900 font-bold text-sm mb-1">See all jobs</p><p className="text-gray-400 text-xs">Track & apply in one place</p></div>
             <Link to="/register" className="w-full text-center px-4 py-2.5 bg-[#0a1a25] hover:bg-gray-800 text-white text-sm font-bold rounded-xl transition">Sign up free →</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Browser Extension ── */}
+      <section id="extension" className="py-24 px-6 bg-white border-y border-gray-100">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-[#16a34a] text-xs font-bold uppercase tracking-widest mb-3">Browser Extension</p>
+            <h2 className="text-4xl sm:text-5xl font-black text-[#0a1a25] mb-4">Save any job from any website.<br />In one click.</h2>
+            <p className="text-gray-500 text-lg max-w-xl mx-auto">Browsing LinkedIn, StepStone, or any job board? Click the afavers extension and save that job straight to your tracker — no copy-pasting.</p>
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <a href="https://chromewebstore.google.com" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-6 py-3 bg-[#0a1a25] hover:bg-gray-800 text-white font-semibold rounded-2xl transition hover:shadow-lg hover:-translate-y-0.5">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.001h-.002l-5.344 9.257c.206.01.413.016.621.016 6.627 0 12-5.373 12-12 0-1.54-.29-3.011-.818-4.364zM12 10.545a1.455 1.455 0 1 0 0 2.91 1.455 1.455 0 0 0 0-2.91z"/></svg>
+                Add to Chrome
+              </a>
+              <a href="https://addons.mozilla.org" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-6 py-3 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-2xl transition">
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" fill="#FF6611"/><path d="M12 4.5c-1.8 0-3.45.63-4.75 1.67.48-.1.98-.17 1.5-.17 3.59 0 6.5 2.91 6.5 6.5 0 1.2-.33 2.33-.9 3.3A7.5 7.5 0 0 0 12 4.5z" fill="white" opacity="0.6"/></svg>
+                Add to Firefox
+              </a>
+            </div>
+          </div>
+
+          {/* How to use steps */}
+          <div className="grid sm:grid-cols-3 gap-6">
+            {[
+              {
+                step: '01',
+                icon: (
+                  <svg className="w-6 h-6 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                ),
+                title: 'Install the extension',
+                desc: 'Add afavers to Chrome or Firefox in seconds. It sits quietly in your browser toolbar.',
+              },
+              {
+                step: '02',
+                icon: (
+                  <svg className="w-6 h-6 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                ),
+                title: 'Browse any job board',
+                desc: 'LinkedIn, StepStone, Indeed, XING — browse wherever you normally look for jobs.',
+              },
+              {
+                step: '03',
+                icon: (
+                  <svg className="w-6 h-6 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                ),
+                title: 'Click to save & track',
+                desc: 'Hit the afavers icon on any job page. It\'s instantly saved to your dashboard — title, company, URL and all.',
+              },
+            ].map((s, i) => (
+              <div key={i} className="relative bg-[#f4f6fa] rounded-2xl p-7 border border-gray-100 hover:border-green-200 hover:shadow-md transition-all">
+                <div className="text-5xl font-black text-gray-200 leading-none mb-4 select-none">{s.step}</div>
+                <div className="w-11 h-11 bg-white rounded-xl border border-gray-200 flex items-center justify-center mb-4 shadow-sm">
+                  {s.icon}
+                </div>
+                <h3 className="font-bold text-[#0a1a25] text-base mb-2">{s.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Extension mockup */}
+          <div className="mt-12 flex justify-center">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-xl p-5 w-72">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                <div className="w-6 h-6 rounded bg-[#16a34a] flex items-center justify-center">
+                  <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                </div>
+                <span className="text-sm font-bold text-[#0a1a25]">afavers</span>
+                <span className="ml-auto text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">● Connected</span>
+              </div>
+              <p className="text-xs text-gray-500 mb-1 font-medium">Job detected on this page</p>
+              <p className="text-sm font-bold text-[#0a1a25] mb-0.5 truncate">Sustainability Manager (m/w/d)</p>
+              <p className="text-xs text-gray-400 mb-4">GreenConsult GmbH · LinkedIn</p>
+              <button className="w-full py-2.5 bg-[#16a34a] hover:bg-green-700 text-white text-sm font-bold rounded-xl transition flex items-center justify-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                Save to afavers
+              </button>
+              <p className="text-[10px] text-gray-400 text-center mt-2">Saved jobs sync to your dashboard instantly</p>
+            </div>
           </div>
         </div>
       </section>
