@@ -6,40 +6,40 @@
 
   <!-- Landing page -->
   <url>
-    <loc>https://afavers.com/</loc>
-    <lastmod>2026-03-11</lastmod>
+    <loc>https://afavers.online/</loc>
+    <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- Sign up — high priority for acquisition -->
   <url>
-    <loc>https://afavers.com/register</loc>
-    <lastmod>2026-03-11</lastmod>
+    <loc>https://afavers.online/register</loc>
+    <lastmod>2026-03-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- Log in -->
-  <url>
-    <loc>https://afavers.com/login</loc>
-    <lastmod>2026-03-11</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
   <!-- Demo — public preview of the tracker -->
   <url>
-    <loc>https://afavers.com/demo</loc>
-    <lastmod>2026-03-11</lastmod>
+    <loc>https://afavers.online/demo</loc>
+    <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
-  <!-- Password recovery -->
+  <!-- Log in -->
   <url>
-    <loc>https://afavers.com/forgot-password</loc>
-    <lastmod>2026-03-11</lastmod>
+    <loc>https://afavers.online/login</loc>
+    <lastmod>2026-03-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Disclaimer / legal -->
+  <url>
+    <loc>https://afavers.online/disclaimer</loc>
+    <lastmod>2026-03-15</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
