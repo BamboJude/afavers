@@ -70,6 +70,38 @@ export const markRead = async (req: AuthRequest, res: Response): Promise<void> =
   }
 };
 
+/** POST /api/admin/messages/:id/reply — send reply email */
+export const replyMessage = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const id = parseInt(req.params['id'] as string);
+    const { body } = req.body as { body: string };
+    if (!body?.trim()) { res.status(400).json({ error: 'Reply body is required.' }); return; }
+
+    const result = await pool.query(`SELECT * FROM contact_messages WHERE id = $1`, [id]);
+    const msg = result.rows[0] as { name: string; email: string; subject: string } | undefined;
+    if (!msg) { res.status(404).json({ error: 'Message not found.' }); return; }
+
+    const transporter = getMailTransporter();
+    if (!transporter) { res.status(503).json({ error: 'Mail not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS.' }); return; }
+
+    await transporter.sendMail({
+      from: `"afavers" <${CONTACT_EMAIL}>`,
+      to: `${msg.name} <${msg.email}>`,
+      replyTo: CONTACT_EMAIL,
+      subject: `Re: ${msg.subject}`,
+      text: body.trim(),
+      html: body.trim().replace(/\n/g, '<br/>'),
+    });
+
+    // Auto-mark as read
+    await pool.query(`UPDATE contact_messages SET is_read = TRUE WHERE id = $1`, [id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Reply error:', error);
+    res.status(500).json({ error: 'Failed to send reply.' });
+  }
+};
+
 /** DELETE /api/admin/messages/:id */
 export const deleteMessage = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
