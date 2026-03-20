@@ -484,12 +484,12 @@ export const LandingPage = () => {
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#0a1a25] mb-4">Save any job from any website.<br className="hidden sm:block" /> In one click.</h2>
             <p className="text-gray-500 text-base sm:text-lg max-w-xl mx-auto">Browsing LinkedIn, StepStone, or any job board? Click the afavers extension and save that job straight to your tracker — no copy-pasting.</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8">
-              <a href="https://chromewebstore.google.com" target="_blank" rel="noopener noreferrer"
+              <a href="/afavers-chrome-extension.zip" download="afavers-chrome-extension.zip"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 py-3 bg-[#0a1a25] hover:bg-gray-800 text-white font-semibold rounded-2xl transition hover:shadow-lg hover:-translate-y-0.5">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.001h-.002l-5.344 9.257c.206.01.413.016.621.016 6.627 0 12-5.373 12-12 0-1.54-.29-3.011-.818-4.364zM12 10.545a1.455 1.455 0 1 0 0 2.91 1.455 1.455 0 0 0 0-2.91z"/></svg>
-                Add to Chrome
+                Download for Chrome
               </a>
-              <a href="https://addons.mozilla.org" target="_blank" rel="noopener noreferrer"
+              <a href="https://addons.mozilla.org/firefox/addon/afavers-job-capture/" target="_blank" rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 py-3 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-2xl transition">
                 <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" fill="#FF6611"/><path d="M12 4.5c-1.8 0-3.45.63-4.75 1.67.48-.1.98-.17 1.5-.17 3.59 0 6.5 2.91 6.5 6.5 0 1.2-.33 2.33-.9 3.3A7.5 7.5 0 0 0 12 4.5z" fill="white" opacity="0.6"/></svg>
                 Add to Firefox
