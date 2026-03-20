@@ -76,6 +76,8 @@ export const AdminPage = () => {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [expandedMsg, setExpandedMsg] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState<Record<number, string>>({});
+  const [replying, setReplying] = useState<number | null>(null);
 
   // ── Load data by tab ──────────────────────────────────────────────────
   useEffect(() => {
@@ -128,6 +130,20 @@ export const AdminPage = () => {
       setMessages(prev => prev.map(m => m.id === id ? { ...m, is_read: true } : m));
       setUnreadCount(c => Math.max(0, c - 1));
     } catch { flash('Failed to mark as read', true); }
+  };
+
+  const handleReply = async (id: number) => {
+    const body = replyText[id]?.trim();
+    if (!body) return;
+    setReplying(id);
+    try {
+      await api.post(`/admin/messages/${id}/reply`, { body });
+      setReplyText(prev => ({ ...prev, [id]: '' }));
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, is_read: true } : m));
+      setUnreadCount(c => Math.max(0, c - 1));
+      flash('Reply sent ✓');
+    } catch { flash('Failed to send reply', true); }
+    finally { setReplying(null); }
   };
 
   const handleDeleteMessage = async (id: number) => {
@@ -486,14 +502,30 @@ export const AdminPage = () => {
                   </div>
                 </div>
                 {expandedMsg === msg.id && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{msg.message}</p>
-                    <a
-                      href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject)}`}
-                      className="inline-block mt-3 text-xs font-semibold text-green-600 hover:underline"
-                    >
-                      Reply via email →
-                    </a>
+                    <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Reply to {msg.name} · <span className="text-green-600">{msg.email}</span>
+                      </p>
+                      <textarea
+                        rows={4}
+                        value={replyText[msg.id] || ''}
+                        onChange={e => setReplyText(prev => ({ ...prev, [msg.id]: e.target.value }))}
+                        placeholder="Write your reply…"
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500 resize-none bg-white"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleReply(msg.id)}
+                          disabled={replying === msg.id || !replyText[msg.id]?.trim()}
+                          className="px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-xs font-semibold rounded-lg transition"
+                        >
+                          {replying === msg.id ? 'Sending…' : 'Send Reply'}
+                        </button>
+                        <span className="text-xs text-gray-400">Sends from contact@afavers.online</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
