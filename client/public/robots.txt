@@ -1,11 +1,13 @@
+# ── Default: all crawlers ──────────────────────────────────────────────────
 User-agent: *
 Allow: /
 Allow: /login
 Allow: /register
 Allow: /demo
 Allow: /forgot-password
+Allow: /disclaimer
 
-# Protected app pages — no value for crawlers
+# Protected app pages — require login, no value for crawlers
 Disallow: /dashboard
 Disallow: /jobs
 Disallow: /jobs/
@@ -19,5 +21,55 @@ Disallow: /reminders
 Disallow: /settings
 Disallow: /setup
 Disallow: /reset-password
+Disallow: /news
+Disallow: /admin
+Disallow: /admin-login
+
+# ── AI crawlers — explicitly allowed ──────────────────────────────────────
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# ── Scrapers we don't want ────────────────────────────────────────────────
+User-agent: Bytespider
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
 
 Sitemap: https://afavers.com/sitemap.xml

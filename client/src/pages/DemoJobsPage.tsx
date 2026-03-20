@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -56,6 +57,15 @@ export const DemoJobsPage = () => {
   );
 
   return (
+    <>
+    <Helmet>
+      <title>Live Job Demo – afavers | Green Jobs in Germany</title>
+      <meta name="description" content="Browse real green and sustainability jobs in Germany fetched live from Bundesagentur für Arbeit. No login required. See how afavers tracks your applications." />
+      <link rel="canonical" href="https://afavers.com/demo" />
+      <meta property="og:title" content="Live Job Demo – afavers" />
+      <meta property="og:description" content="Browse real green jobs in Germany fetched live from Bundesagentur für Arbeit. No login required." />
+      <meta property="og:url" content="https://afavers.com/demo" />
+    </Helmet>
     <div className="min-h-screen bg-gray-50 flex flex-col" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
 
       {/* ── Sign-up banner ── */}
@@ -209,5 +219,6 @@ export const DemoJobsPage = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
