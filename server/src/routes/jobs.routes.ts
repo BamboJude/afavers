@@ -4,6 +4,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth.middleware.js
 import { fetchAndSaveJobs } from '../services/fetchers/jobFetcher.service.js';
 import { pool } from '../config/database.js';
 import * as jobModel from '../models/job.model.js';
+import { handleAction } from '../services/gamification.service.js';
 
 const router = express.Router();
 
@@ -285,6 +286,23 @@ router.patch('/:id/status', async (req: AuthRequest, res) => {
       applied_date:   resolvedAppliedDate,
       follow_up_date: followUpDate  ? new Date(followUpDate)  : undefined,
     });
+
+    // Award XP based on status transition (fire-and-forget, never block the response)
+    const actionMap: Record<string, 'save_job' | 'apply' | 'follow_up' | 'interview' | 'offer'> = {
+      saved:        'save_job',
+      applied:      'apply',
+      interviewing: 'interview',
+      offered:      'offer',
+    };
+    const gamificationAction = actionMap[status];
+    if (gamificationAction && req.userId) {
+      handleAction(req.userId, gamificationAction, jobId).catch(() => {});
+    }
+
+    // Also award XP for follow_up being set
+    if (followUpDate && req.userId) {
+      handleAction(req.userId, 'follow_up', jobId).catch(() => {});
+    }
 
     const job = await jobModel.findById(jobId, req.userId);
     res.json({ success: true, job });

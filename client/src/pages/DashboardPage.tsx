@@ -10,6 +10,7 @@ import { useReminderStore } from '../store/reminderStore';
 import { scheduleReminder } from '../services/notification.service';
 import { usePreferencesStore, jobMatchesFilter } from '../store/preferencesStore';
 import { NewsCarousel } from '../components/common/NewsCarousel';
+import { GamificationWidget } from '../components/common/GamificationWidget';
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -1251,6 +1252,9 @@ export const DashboardPage = () => {
                 <MiniCalendar upcomingInterviews={upcomingInterviews} followUps={followUps} />
               </Module>
             )}
+
+            {/* Gamification */}
+            <GamificationWidget />
 
           </div>
         </div>
