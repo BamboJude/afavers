@@ -1,6 +1,6 @@
 // afavers Job Capture — popup script
 const API_URL = 'https://server-production-ebd2b.up.railway.app';
-const DASHBOARD_URL = 'https://afavers.com/jobs';
+const DASHBOARD_URL = 'https://afavers.online/jobs';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────
 const views = {
