@@ -546,7 +546,12 @@ function useWidgetVisibility() {
   const [visible, setVisible] = useState<Record<WidgetKey, boolean>>(() => {
     try {
       const stored = localStorage.getItem('dashboard_widgets_v2');
-      if (stored) return { ...Object.fromEntries(WIDGET_KEYS.map(k => [k, true])), ...JSON.parse(stored) };
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return { ...Object.fromEntries(WIDGET_KEYS.map(k => [k, true])), ...parsed };
+        }
+      }
     } catch {}
     return Object.fromEntries(WIDGET_KEYS.map(k => [k, true])) as Record<WidgetKey, boolean>;
   });
@@ -944,7 +949,7 @@ export const DashboardPage = () => {
     jobsService.getFollowUps().then(setFollowUps).catch(() => {});
     jobsService.getJobs({ status: 'interviewing', limit: 20 })
       .then(r => {
-        const withDate = r.jobs
+        const withDate = (r.jobs ?? [])
           .filter(j => j.interview_date)
           .sort((a, b) => new Date(a.interview_date!).getTime() - new Date(b.interview_date!).getTime());
         setUpcomingInterviews(withDate);
@@ -952,7 +957,7 @@ export const DashboardPage = () => {
       .catch(() => {});
 
     jobsService.getJobs({ status: 'new', limit: 10, sortBy: 'created_at', sortOrder: 'DESC' })
-      .then(r => setStoryJobs(r.jobs))
+      .then(r => setStoryJobs(r.jobs ?? []))
       .catch(() => {});
 
     const statuses: BoardStatus[] = ['saved', 'applied', 'interviewing', 'offered'];
@@ -960,7 +965,7 @@ export const DashboardPage = () => {
       statuses.map(status => jobsService.getJobs({ status, limit: 4 }).then(r => ({ status, jobs: r.jobs })))
     ).then(results => {
       const map = {} as Record<BoardStatus, Job[]>;
-      results.forEach(r => { map[r.status] = r.jobs; });
+      results.forEach(r => { map[r.status] = r.jobs ?? []; });
       setBoardJobs(map);
     }).catch(() => {});
   }, []);
