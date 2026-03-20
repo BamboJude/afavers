@@ -199,7 +199,7 @@ export const AdminPage = () => {
           <span className="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase tracking-wide">Admin</span>
           <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
         </div>
-        <p className="text-sm text-gray-400">Platform management · afavers.com</p>
+        <p className="text-sm text-gray-400">Platform management · afavers.online</p>
       </div>
 
       {/* Tabs */}
