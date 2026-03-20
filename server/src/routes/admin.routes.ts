@@ -34,14 +34,14 @@ router.get('/inbox', async (_req: AuthRequest, res: Response) => {
 
 router.patch('/inbox/:uid/seen', async (req: AuthRequest, res: Response) => {
   try {
-    await markSeen(parseInt(req.params.uid));
+    await markSeen(parseInt(req.params['uid'] as string));
     res.json({ success: true });
   } catch { res.status(500).json({ error: 'Failed' }); }
 });
 
 router.delete('/inbox/:uid', async (req: AuthRequest, res: Response) => {
   try {
-    await deleteEmail(parseInt(req.params.uid));
+    await deleteEmail(parseInt(req.params['uid'] as string));
     res.json({ success: true });
   } catch { res.status(500).json({ error: 'Failed' }); }
 });
