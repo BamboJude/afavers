@@ -1,31 +1,32 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useEffect, lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
-import { ResetPasswordPage } from './pages/ResetPasswordPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { JobsPage } from './pages/JobsPage';
-import { JobDetailPage } from './pages/JobDetailPage';
-import { KanbanPage } from './pages/KanbanPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { SetupPage } from './pages/SetupPage';
-import { EnglishJobsPage } from './pages/EnglishJobsPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
-import { HotpicksPage } from './pages/HotpicksPage';
-import { InterviewPrepPage } from './pages/InterviewPrepPage';
-import { CareerGuidesPage } from './pages/CareerGuidesPage';
-import { LandingPage } from './pages/LandingPage';
-import { DisclaimerPage } from './pages/DisclaimerPage';
-import { DemoJobsPage } from './pages/DemoJobsPage';
-import { RemindersPage } from './pages/RemindersPage';
-import { NewsPage } from './pages/NewsPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { AdminRoute } from './routes/AdminRoute';
-import { AdminPage } from './pages/AdminPage';
-import { AdminLoginPage } from './pages/AdminLoginPage';
 import { AppLayout } from './components/layout/AppLayout';
+
+const LoginPage         = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const RegisterPage      = lazy(() => import('./pages/RegisterPage').then(m => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
+const DashboardPage     = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
+const JobsPage          = lazy(() => import('./pages/JobsPage').then(m => ({ default: m.JobsPage })));
+const JobDetailPage     = lazy(() => import('./pages/JobDetailPage').then(m => ({ default: m.JobDetailPage })));
+const KanbanPage        = lazy(() => import('./pages/KanbanPage').then(m => ({ default: m.KanbanPage })));
+const SettingsPage      = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const SetupPage         = lazy(() => import('./pages/SetupPage').then(m => ({ default: m.SetupPage })));
+const EnglishJobsPage   = lazy(() => import('./pages/EnglishJobsPage').then(m => ({ default: m.EnglishJobsPage })));
+const AnalyticsPage     = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
+const HotpicksPage      = lazy(() => import('./pages/HotpicksPage').then(m => ({ default: m.HotpicksPage })));
+const InterviewPrepPage = lazy(() => import('./pages/InterviewPrepPage').then(m => ({ default: m.InterviewPrepPage })));
+const CareerGuidesPage  = lazy(() => import('./pages/CareerGuidesPage').then(m => ({ default: m.CareerGuidesPage })));
+const LandingPage       = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
+const DisclaimerPage    = lazy(() => import('./pages/DisclaimerPage').then(m => ({ default: m.DisclaimerPage })));
+const DemoJobsPage      = lazy(() => import('./pages/DemoJobsPage').then(m => ({ default: m.DemoJobsPage })));
+const RemindersPage     = lazy(() => import('./pages/RemindersPage').then(m => ({ default: m.RemindersPage })));
+const NewsPage          = lazy(() => import('./pages/NewsPage').then(m => ({ default: m.NewsPage })));
+const AdminPage         = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
+const AdminLoginPage    = lazy(() => import('./pages/AdminLoginPage').then(m => ({ default: m.AdminLoginPage })));
 
 const TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -61,10 +62,16 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => (
   </ProtectedRoute>
 );
 
+const RootRedirect = () => {
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated);
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />;
+};
+
 function App() {
   return (
     <BrowserRouter>
       <SessionGuard />
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin" /></div>}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -91,8 +98,9 @@ function App() {
         <Route path="/admin-login" element={<AdminLoginPage />} />
         <Route path="/demo" element={<DemoJobsPage />} />
         <Route path="/disclaimer" element={<DisclaimerPage />} />
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<RootRedirect />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

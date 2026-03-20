@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+* {
+  font-family: 'Lato', 'Inter', system-ui, sans-serif;
+}
+
 .scrollbar-hide {
   scrollbar-width: none;
   -ms-overflow-style: none;

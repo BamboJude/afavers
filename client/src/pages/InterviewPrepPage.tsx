@@ -67,72 +67,74 @@ export const InterviewPrepPage = () => {
         </div>
       </div>
 
-      {/* Video grid */}
-      <main className="max-w-5xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map(video => (
-            <button
-              key={video.id}
-              onClick={() => setActiveVideo(video)}
-              className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:border-green-300 hover:shadow-md transition text-left"
-            >
-              {/* Thumbnail */}
-              <div className="relative aspect-video bg-gray-200">
-                <img
-                  src={`https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}
-                  alt={video.title}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-                {/* Play button overlay */}
-                <div className="absolute inset-0 bg-black/25 group-hover:bg-black/45 transition flex items-center justify-center">
-                  <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                    <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
+      {/* Main content — videos left, guides right */}
+      <main className="max-w-7xl mx-auto px-6 py-6 flex flex-col lg:flex-row gap-8 pb-16">
+
+        {/* Left — Video grid */}
+        <div className="flex-1 min-w-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {filtered.map(video => (
+              <button
+                key={video.id}
+                onClick={() => setActiveVideo(video)}
+                className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:border-green-300 hover:shadow-md transition text-left"
+              >
+                <div className="relative aspect-video bg-gray-200">
+                  <img
+                    src={`https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}
+                    alt={video.title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/25 group-hover:bg-black/45 transition flex items-center justify-center">
+                    <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                      <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Video info */}
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-green-700 transition">
-                  {video.title}
-                </h3>
-                <p className="text-xs text-gray-400 mt-1.5">{video.channel}</p>
-              </div>
-            </button>
-          ))}
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-green-700 transition">
+                    {video.title}
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1.5">{video.channel}</p>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Right — Career Guides */}
+        <div className="lg:w-80 shrink-0">
+          <h2 className="text-lg font-bold text-gray-900 mb-1">Career Guides</h2>
+          <p className="text-sm text-gray-500 mb-5">Practical advice for your job search in Germany</p>
+          <div className="flex flex-col gap-3">
+            {[
+              { emoji: '🇩🇪', title: 'The German Job Market', desc: 'What you need to know about sectors, culture, and the application process.' },
+              { emoji: '🎓', title: 'Jobs After Graduation', desc: 'How to land your first role and make the most of your post-study visa.' },
+              { emoji: '🧠', title: 'Managing Job Search Stress', desc: 'Process goals, daily habits, and keeping your mental health in check.' },
+              { emoji: '🌱', title: 'Green Jobs in Germany', desc: 'Sustainability roles, Energiewende, and where to find them.' },
+            ].map(card => (
+              <button
+                key={card.title}
+                onClick={() => navigate('/career-guides')}
+                className="group bg-white rounded-2xl border border-gray-100 p-4 text-left hover:border-green-300 hover:shadow-md transition-all duration-200 active:scale-[0.98]"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-xl shrink-0">{card.emoji}</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 mb-1 group-hover:text-green-700 transition-colors">{card.title}</h3>
+                    <p className="text-xs text-gray-500 leading-relaxed">{card.desc}</p>
+                    <span className="mt-2 inline-block text-xs font-semibold text-green-600 group-hover:text-green-700">Read guide →</span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
       </main>
-
-      {/* ── Career Guides section ── */}
-      <section className="max-w-5xl mx-auto px-6 pb-16">
-        <div className="border-t border-gray-200 pt-10 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Career Guides & Resources</h2>
-          <p className="text-sm text-gray-500">Practical advice for your job search in Germany</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { emoji: '🇩🇪', title: 'The German Job Market', desc: 'What you need to know about sectors, culture, and the application process.' },
-            { emoji: '🎓', title: 'Jobs After Graduation', desc: 'How to land your first role and make the most of your post-study visa.' },
-            { emoji: '🧠', title: 'Managing Job Search Stress', desc: 'Process goals, daily habits, and keeping your mental health in check.' },
-            { emoji: '🌱', title: 'Green Jobs in Germany', desc: 'Sustainability roles, Energiewende, and where to find them.' },
-          ].map(card => (
-            <button
-              key={card.title}
-              onClick={() => navigate('/career-guides')}
-              className="group bg-white rounded-2xl border border-gray-100 p-5 text-left hover:border-green-300 hover:shadow-md transition-all duration-200 active:scale-[0.98]"
-            >
-              <div className="text-2xl mb-3">{card.emoji}</div>
-              <h3 className="text-sm font-bold text-gray-900 mb-1.5 group-hover:text-green-700 transition-colors">{card.title}</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">{card.desc}</p>
-              <span className="mt-3 inline-block text-xs font-semibold text-green-600 group-hover:text-green-700">Read guide →</span>
-            </button>
-          ))}
-        </div>
-      </section>
 
       {/* Video modal */}
       {activeVideo && (
@@ -141,34 +143,74 @@ export const InterviewPrepPage = () => {
           onClick={() => setActiveVideo(null)}
         >
           <div
-            className="w-full max-w-3xl bg-gray-900 rounded-2xl overflow-hidden shadow-2xl"
+            className="w-full max-w-6xl bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row"
+            style={{ maxHeight: '90vh' }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Modal header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-              <div className="min-w-0 flex-1 mr-4">
-                <h3 className="text-white text-sm font-semibold truncate">{activeVideo.title}</h3>
-                <p className="text-gray-400 text-xs mt-0.5">{activeVideo.channel}</p>
+            {/* Left — player */}
+            <div className="flex flex-col flex-1 min-w-0">
+              {/* Player header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 shrink-0">
+                <div className="min-w-0 flex-1 mr-4">
+                  <h3 className="text-white text-sm font-semibold truncate">{activeVideo.title}</h3>
+                  <p className="text-gray-400 text-xs mt-0.5">{activeVideo.channel}</p>
+                </div>
+                <button
+                  onClick={() => setActiveVideo(null)}
+                  className="text-gray-400 hover:text-white transition shrink-0"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              <button
-                onClick={() => setActiveVideo(null)}
-                className="text-gray-400 hover:text-white transition shrink-0"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+
+              {/* YouTube embed */}
+              <div className="aspect-video w-full">
+                <iframe
+                  key={activeVideo.id}
+                  src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1&rel=0`}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
             </div>
 
-            {/* YouTube embed */}
-            <div className="aspect-video">
-              <iframe
-                key={activeVideo.id}
-                src={`https://www.youtube.com/embed/${activeVideo.id}?autoplay=1&rel=0`}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+            {/* Right — playlist */}
+            <div className="md:w-72 shrink-0 border-t border-gray-700 md:border-t-0 md:border-l md:border-gray-700 flex flex-col overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-700 shrink-0">
+                <p className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Up next</p>
+              </div>
+              <div className="overflow-y-auto flex-1">
+                {VIDEOS.map(v => (
+                  <button
+                    key={v.id}
+                    onClick={() => setActiveVideo(v)}
+                    className={`w-full flex gap-3 px-3 py-2.5 hover:bg-gray-800 transition text-left ${v.id === activeVideo.id ? 'bg-gray-800' : ''}`}
+                  >
+                    <div className="relative shrink-0 w-24 aspect-video rounded-lg overflow-hidden bg-gray-700">
+                      <img
+                        src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`}
+                        alt={v.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                      {v.id === activeVideo.id && (
+                        <div className="absolute inset-0 bg-green-600/40 flex items-center justify-center">
+                          <div className="w-4 h-4 bg-green-500 rounded-full" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-xs font-medium leading-snug line-clamp-2 ${v.id === activeVideo.id ? 'text-green-400' : 'text-gray-200'}`}>
+                        {v.title}
+                      </p>
+                      <p className="text-[10px] text-gray-500 mt-1">{v.channel}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

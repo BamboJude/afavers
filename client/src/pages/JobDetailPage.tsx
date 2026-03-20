@@ -160,6 +160,26 @@ export const JobDetailPage = () => {
             >
               {t('applyNow')}
             </a>
+            {job.status === 'saved' && (
+              <button
+                onClick={() => handleStatusChange('new')}
+                disabled={updatingStatus}
+                className="px-3 py-2 border border-yellow-200 text-yellow-600 hover:bg-red-50 hover:text-red-500 hover:border-red-200 text-sm rounded-lg transition disabled:opacity-50"
+                title={t('unsaveJob')}
+              >
+                {t('unsave')}
+              </button>
+            )}
+            {job.status === 'applied' && (
+              <button
+                onClick={() => handleStatusChange('saved')}
+                disabled={updatingStatus}
+                className="px-3 py-2 border border-gray-200 text-gray-500 hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-200 text-sm rounded-lg transition disabled:opacity-50"
+                title={t('revertToSavedJob')}
+              >
+                {t('revertToSaved')}
+              </button>
+            )}
             <button
               onClick={handleHide}
               className="px-3 py-2 border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-200 text-sm rounded-lg transition"

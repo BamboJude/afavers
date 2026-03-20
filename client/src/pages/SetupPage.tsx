@@ -3,32 +3,53 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 
 const FIELD_PRESETS = [
-  { label: 'Tech / IT',      keywords: 'developer, software engineer, data analyst, DevOps, IT', emoji: '💻' },
-  { label: 'Environment',   keywords: 'umwelt, klimaschutz, nachhaltigkeit, GIS, energie',        emoji: '🌱' },
-  { label: 'Business',       keywords: 'consulting, beratung, project manager, finance, accounting', emoji: '📊' },
-  { label: 'Healthcare',     keywords: 'nurse, Pflegefachkraft, doctor, Arzt, medical',            emoji: '🏥' },
-  { label: 'Engineering',    keywords: 'Ingenieur, engineer, mechanical, electrical, civil',       emoji: '⚙️' },
-  { label: 'Marketing',      keywords: 'marketing, social media, SEO, content, brand manager',    emoji: '📣' },
+  { label: 'Tech / IT',     keywords: 'developer,software engineer,data analyst,DevOps,IT',            emoji: '💻' },
+  { label: 'Environment',   keywords: 'umwelt,klimaschutz,nachhaltigkeit,GIS,energie,renewables',       emoji: '🌱' },
+  { label: 'Business',      keywords: 'consulting,beratung,project manager,finance,accounting',          emoji: '📊' },
+  { label: 'Healthcare',    keywords: 'nurse,Pflegefachkraft,doctor,Arzt,medical',                      emoji: '🏥' },
+  { label: 'Engineering',   keywords: 'Ingenieur,engineer,mechanical,electrical,civil',                 emoji: '⚙️' },
+  { label: 'Marketing',     keywords: 'marketing,social media,SEO,content,brand manager',               emoji: '📣' },
+  { label: 'Design / UX',   keywords: 'designer,UX,UI,Grafik,product design,creative',                 emoji: '🎨' },
+  { label: 'Logistics',     keywords: 'logistics,supply chain,Spedition,warehouse,transport',           emoji: '🚛' },
 ];
 
 const LOCATION_PRESETS = [
   'Berlin', 'München', 'Hamburg', 'Frankfurt', 'Köln',
   'Düsseldorf', 'Stuttgart', 'Leipzig', 'Dortmund', 'Essen',
+  'Hannover', 'Nürnberg', 'Bremen', 'Dresden', 'Remote',
 ];
+
+const TOTAL_STEPS = 3;
+
+const ProgressDots = ({ current }: { current: number }) => (
+  <div className="flex items-center justify-center gap-2 mb-8">
+    {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+      <div
+        key={i}
+        className={`rounded-full transition-all duration-300 ${
+          i < current   ? 'w-6 h-2 bg-[#16a34a]' :
+          i === current ? 'w-8 h-2 bg-[#16a34a]' :
+                          'w-2 h-2 bg-[#dfe3eb]'
+        }`}
+      />
+    ))}
+  </div>
+);
 
 export const SetupPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [keywords, setKeywords] = useState('');
   const [locations, setLocations] = useState('');
+  const [englishOnly, setEnglishOnly] = useState(false);
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const selectedCities = locations.split(',').map(l => l.trim()).filter(Boolean);
 
   const handleFieldSelect = (preset: typeof FIELD_PRESETS[0]) => {
-    setSelectedField(preset.label);
-    setKeywords(preset.keywords);
+    setSelectedField(prev => prev === preset.label ? null : preset.label);
+    setKeywords(prev => prev === preset.keywords ? '' : preset.keywords);
   };
 
   const handleCityToggle = (city: string) => {
@@ -43,76 +64,68 @@ export const SetupPage = () => {
     setSaving(true);
     try {
       await api.put('/settings', {
-        keywords: keywords.trim() || 'developer, analyst, engineer',
-        locations: locations.trim() || 'Berlin, München, Hamburg',
+        keywords: keywords.trim() || 'developer,analyst,engineer',
+        locations: locations.trim() || 'Berlin,München,Hamburg',
       });
-    } catch {
-      // Best effort — go to dashboard anyway
-    } finally {
+      // Kick off fetch in background — don't wait
+      api.post('/jobs/fetch', {}).catch(() => {});
       navigate('/dashboard');
+    } catch {
+      navigate('/dashboard');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="max-w-lg w-full">
+    <div className="min-h-screen bg-[#f4f6fa] flex items-center justify-center p-4" style={{ fontFamily: "'Lato', 'Inter', sans-serif" }}>
+      <div className="max-w-md w-full">
 
-        {/* Progress bar — only shown for steps 1 and 2 */}
-        {step > 0 && (
-          <div className="flex items-center justify-center gap-3 mb-8">
-            {[1, 2].map(s => (
-              <div
-                key={s}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  s < step  ? 'w-10 bg-blue-500' :
-                  s === step ? 'w-14 bg-blue-500' :
-                               'w-6 bg-gray-200'
-                }`}
-              />
-            ))}
-          </div>
-        )}
+        {step > 0 && step < TOTAL_STEPS && <ProgressDots current={step - 1} />}
 
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white border border-[#dfe3eb] rounded-2xl overflow-hidden shadow-[0_4px_24px_0_rgba(15,44,65,0.08)]">
 
           {/* ── STEP 0: Welcome ── */}
           {step === 0 && (
             <div className="p-8">
+              {/* Brand header */}
               <div className="text-center mb-8">
-                <img
-                  src="/logo.png"
-                  alt="afavers"
-                  className="h-20 mx-auto mb-4"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-                <h1 className="text-2xl font-bold text-gray-900">Welcome to afavers</h1>
-                <p className="text-gray-500 text-sm mt-2">Your automated green job assistant for Germany</p>
+                <div className="w-14 h-14 rounded-2xl bg-[#16a34a] flex items-center justify-center mx-auto mb-4 shadow-[0_4px_12px_0_rgba(22,163,74,0.3)]">
+                  <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                </div>
+                <h1 className="text-[26px] font-black text-[#0a1a25] leading-tight">Welcome to afavers</h1>
+                <p className="text-[#6f839c] text-[14px] mt-2">Let's set up your personalised job feed.</p>
               </div>
 
-              <div className="space-y-4 mb-8">
+              <div className="space-y-3 mb-8">
                 {[
-                  { icon: '⏱️', text: 'Jobs fetched every 2 hours from Bundesagentur für Arbeit' },
-                  { icon: '📋', text: 'Track your applications on a visual Kanban board' },
-                  { icon: '👆', text: 'Swipe to save or skip jobs on mobile' },
-                ].map(({ icon, text }) => (
-                  <div key={text} className="flex items-start gap-3">
+                  { icon: '⏱️', title: 'Auto-fetched every 2 hours', desc: 'Jobs from Bundesagentur für Arbeit, refreshed automatically' },
+                  { icon: '📋', title: 'Track every application', desc: 'Kanban board, follow-ups, interview dates — all in one place' },
+                  { icon: '🎯', title: 'Personalised for you', desc: 'Only jobs matching your field and preferred cities' },
+                ].map(({ icon, title, desc }) => (
+                  <div key={title} className="flex items-start gap-3 p-3 rounded-xl bg-[#f4f6fa]">
                     <span className="text-xl shrink-0 mt-0.5">{icon}</span>
-                    <p className="text-gray-700 text-sm leading-relaxed">{text}</p>
+                    <div>
+                      <p className="text-[13px] font-black text-[#0a1a25]">{title}</p>
+                      <p className="text-[12px] text-[#6f839c] leading-snug mt-0.5">{desc}</p>
+                    </div>
                   </div>
                 ))}
               </div>
 
               <button
                 onClick={() => setStep(1)}
-                className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition shadow-md hover:shadow-lg"
+                className="w-full bg-[#16a34a] hover:bg-green-700 text-white font-black py-3.5 px-4 rounded-xl transition text-[15px] shadow-[0_2px_8px_0_rgba(22,163,74,0.3)] active:scale-[0.98]"
               >
-                Get started →
+                Set up my feed →
               </button>
               <button
                 onClick={() => navigate('/dashboard')}
-                className="w-full text-sm text-gray-400 hover:text-gray-600 transition mt-3 py-1"
+                className="w-full text-[13px] text-[#c1cbd5] hover:text-[#6f839c] transition mt-3 py-1.5 font-bold"
               >
-                Skip setup
+                Skip — I'll set up later
               </button>
             </div>
           )}
@@ -121,53 +134,50 @@ export const SetupPage = () => {
           {step === 1 && (
             <div className="p-8">
               <div className="text-center mb-7">
-                <div className="text-5xl mb-3">🎯</div>
-                <h1 className="text-2xl font-bold text-gray-900">What kind of jobs are you looking for?</h1>
-                <p className="text-gray-500 text-sm mt-2">afavers will fetch matching jobs every 2 hours automatically</p>
+                <div className="text-4xl mb-3">🎯</div>
+                <h2 className="text-[22px] font-black text-[#0a1a25]">What kind of jobs?</h2>
+                <p className="text-[#6f839c] text-[13px] mt-1.5">Pick a field or type your own keywords</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="grid grid-cols-2 gap-2.5 mb-5">
                 {FIELD_PRESETS.map(preset => (
                   <button
                     key={preset.label}
                     onClick={() => handleFieldSelect(preset)}
-                    className={`text-left p-4 rounded-xl border-2 transition-all ${
+                    className={`text-left p-3.5 rounded-xl border-2 transition-all active:scale-[0.97] ${
                       selectedField === preset.label
-                        ? 'border-blue-500 bg-blue-50 shadow-sm'
-                        : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/40'
+                        ? 'border-[#16a34a] bg-[#f0fdf4] shadow-sm'
+                        : 'border-[#dfe3eb] hover:border-[#c1cbd5] hover:bg-[#f4f6fa]'
                     }`}
                   >
                     <div className="text-2xl mb-1">{preset.emoji}</div>
-                    <div className="font-semibold text-gray-800 text-sm">{preset.label}</div>
-                    <div className="text-gray-400 text-xs mt-0.5 truncate">{preset.keywords.split(',')[0]}...</div>
+                    <div className="font-black text-[#0a1a25] text-[13px]">{preset.label}</div>
+                    <div className="text-[#6f839c] text-[11px] mt-0.5 truncate">{preset.keywords.split(',')[0]}…</div>
                   </button>
                 ))}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Or enter custom keywords <span className="text-gray-400">(comma-separated)</span>
+                <label className="block text-[12px] font-black text-[#6f839c] uppercase tracking-wide mb-1.5">
+                  Custom keywords <span className="normal-case font-normal">(comma-separated)</span>
                 </label>
                 <textarea
                   rows={2}
                   value={keywords}
                   onChange={e => { setKeywords(e.target.value); setSelectedField(null); }}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm resize-none"
+                  className="w-full px-3 py-2.5 border border-[#dfe3eb] rounded-xl focus:ring-2 focus:ring-[#16a34a] focus:border-transparent outline-none text-[13px] resize-none text-[#0a1a25] bg-[#f4f6fa]"
                   placeholder="e.g. project manager, analyst, Ingenieur"
                 />
               </div>
 
               <div className="flex justify-between items-center mt-6">
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  className="text-sm text-gray-400 hover:text-gray-600 transition"
-                >
-                  Skip for now
+                <button onClick={() => setStep(0)} className="text-[13px] font-bold text-[#c1cbd5] hover:text-[#6f839c] transition">
+                  ← Back
                 </button>
                 <button
                   onClick={() => setStep(2)}
                   disabled={!keywords.trim()}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition shadow-sm"
+                  className="px-6 py-2.5 bg-[#0a1a25] hover:bg-[#223a5a] disabled:opacity-30 disabled:cursor-not-allowed text-white font-black rounded-xl transition text-[13px] active:scale-[0.98]"
                 >
                   Next →
                 </button>
@@ -179,9 +189,9 @@ export const SetupPage = () => {
           {step === 2 && (
             <div className="p-8">
               <div className="text-center mb-7">
-                <div className="text-5xl mb-3">📍</div>
-                <h1 className="text-2xl font-bold text-gray-900">Where are you looking?</h1>
-                <p className="text-gray-500 text-sm mt-2">Select the cities you want to search in</p>
+                <div className="text-4xl mb-3">📍</div>
+                <h2 className="text-[22px] font-black text-[#0a1a25]">Where are you looking?</h2>
+                <p className="text-[#6f839c] text-[13px] mt-1.5">Select cities — pick as many as you like</p>
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4">
@@ -189,10 +199,10 @@ export const SetupPage = () => {
                   <button
                     key={city}
                     onClick={() => handleCityToggle(city)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all ${
+                    className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold border-2 transition-all active:scale-95 ${
                       selectedCities.includes(city)
-                        ? 'bg-blue-500 text-white border-blue-500 shadow-sm'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-blue-400'
+                        ? 'bg-[#16a34a] text-white border-[#16a34a] shadow-sm'
+                        : 'bg-white text-[#223a5a] border-[#dfe3eb] hover:border-[#16a34a] hover:text-[#16a34a]'
                     }`}
                   >
                     {city}
@@ -200,48 +210,66 @@ export const SetupPage = () => {
                 ))}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Or type custom locations
+              <div className="mb-5">
+                <label className="block text-[12px] font-black text-[#6f839c] uppercase tracking-wide mb-1.5">
+                  Other cities
                 </label>
                 <input
                   type="text"
                   value={locations}
                   onChange={e => setLocations(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                  placeholder="e.g. München, remote, Frankfurt"
+                  className="w-full px-3 py-2.5 border border-[#dfe3eb] rounded-xl focus:ring-2 focus:ring-[#16a34a] focus:border-transparent outline-none text-[13px] text-[#0a1a25] bg-[#f4f6fa]"
+                  placeholder="e.g. Bonn, Wuppertal, remote"
                 />
               </div>
 
+              {/* English jobs toggle */}
+              <button
+                type="button"
+                onClick={() => setEnglishOnly(v => !v)}
+                className={`w-full flex items-center justify-between p-3.5 rounded-xl border-2 transition-all ${
+                  englishOnly ? 'border-[#16a34a] bg-[#f0fdf4]' : 'border-[#dfe3eb] bg-[#f4f6fa] hover:border-[#c1cbd5]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🌍</span>
+                  <div className="text-left">
+                    <p className="text-[13px] font-black text-[#0a1a25]">Show English-language jobs only</p>
+                    <p className="text-[11px] text-[#6f839c]">Filter for positions where English is the working language</p>
+                  </div>
+                </div>
+                <div className={`w-10 h-5 rounded-full transition-colors shrink-0 ${englishOnly ? 'bg-[#16a34a]' : 'bg-[#dfe3eb]'}`}>
+                  <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${englishOnly ? 'translate-x-5' : 'translate-x-0'}`} />
+                </div>
+              </button>
+
               <div className="flex justify-between items-center mt-6">
-                <button
-                  onClick={() => setStep(1)}
-                  className="text-sm text-gray-400 hover:text-gray-600 transition"
-                >
+                <button onClick={() => setStep(1)} className="text-[13px] font-bold text-[#c1cbd5] hover:text-[#6f839c] transition">
                   ← Back
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={saving || !locations.trim()}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition shadow-sm"
+                  disabled={saving || (!locations.trim() && selectedCities.length === 0)}
+                  className="px-6 py-2.5 bg-[#16a34a] hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed text-white font-black rounded-xl transition text-[13px] shadow-[0_2px_8px_0_rgba(22,163,74,0.3)] active:scale-[0.98] flex items-center gap-2"
                 >
                   {saving ? (
-                    <span className="flex items-center gap-2">
+                    <>
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                       </svg>
-                      Saving...
-                    </span>
-                  ) : 'Start Searching 🚀'}
+                      Setting up…
+                    </>
+                  ) : 'Find my jobs 🚀'}
                 </button>
               </div>
             </div>
           )}
+
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-5">
-          You can change these anytime in Settings
+        <p className="text-center text-[12px] text-[#c1cbd5] mt-5 font-bold">
+          You can change all preferences anytime in Settings
         </p>
       </div>
     </div>

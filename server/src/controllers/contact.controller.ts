@@ -3,7 +3,7 @@ import { pool } from '../config/database.js';
 import { getMailTransporter } from '../services/mail.service.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 
-const CONTACT_EMAIL = 'contacts@afavers.com';
+const CONTACT_EMAIL = 'contact@afavers.online';
 
 /** POST /api/contact — public, no auth required */
 export const submitContact = async (req: Request, res: Response): Promise<void> => {
