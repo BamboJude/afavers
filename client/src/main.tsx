@@ -18,6 +18,33 @@ if (Capacitor.isNativePlatform()) {
   StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
 }
 
+// ── Cache nuke — clears SW caches, unregisters service workers, clears storage ─
+async function nukeCache() {
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+  } catch {}
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.reload();
+}
+
+// ── Version check — if app version changed, auto-clear stale SW cache ─────────
+const APP_VERSION = '__APP_VERSION__';
+const storedVersion = localStorage.getItem('app_version');
+if (storedVersion && storedVersion !== APP_VERSION) {
+  // Version mismatch: nuke silently then come back fresh
+  nukeCache();
+} else {
+  localStorage.setItem('app_version', APP_VERSION);
+}
+
 // ── Error boundary ────────────────────────────────────────────────────────────
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
   constructor(props: { children: React.ReactNode }) {
@@ -30,16 +57,12 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Er
   render() {
     if (this.state.error) {
       return (
-        <div style={{ padding: 32, fontFamily: 'monospace', background: '#fff', minHeight: '100vh' }}>
-          <h2 style={{ color: '#dc2626' }}>App Error</h2>
-          <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13, color: '#374151' }}>
-            {this.state.error.message}
-            {'\n\n'}
-            {this.state.error.stack}
-          </pre>
+        <div style={{ padding: 32, fontFamily: 'system-ui, sans-serif', background: '#fff', minHeight: '100vh' }}>
+          <h2 style={{ color: '#dc2626' }}>Something went wrong</h2>
+          <p style={{ color: '#6b7280', fontSize: 14 }}>A cached version of the app may be out of date.</p>
           <button
-            onClick={() => { localStorage.clear(); window.location.reload(); }}
-            style={{ marginTop: 16, padding: '8px 16px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+            onClick={nukeCache}
+            style={{ marginTop: 16, padding: '10px 20px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
           >
             Clear cache &amp; reload
           </button>
