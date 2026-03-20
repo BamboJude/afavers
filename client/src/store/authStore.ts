@@ -20,7 +20,7 @@ interface AuthState {
   updateActivity: () => void;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
 
 async function authRequest(path: string, email: string, password: string, adminKey?: string) {
   const response = await fetch(`${API_URL}/api/auth/${path}`, {

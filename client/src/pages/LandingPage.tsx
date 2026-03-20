@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
 const CARD_COLORS = ['bg-emerald-500','bg-blue-500','bg-violet-500','bg-orange-500','bg-cyan-500','bg-green-600','bg-pink-500','bg-amber-500','bg-teal-500','bg-indigo-500'];
 
 const SAMPLE_JOBS = [
