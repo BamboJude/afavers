@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
 
 // Create axios instance with default config
 export const api = axios.create({
