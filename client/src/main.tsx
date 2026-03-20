@@ -36,14 +36,15 @@ async function nukeCache() {
 }
 
 // ── Version check — if app version changed, auto-clear stale SW cache ─────────
-const APP_VERSION = '__APP_VERSION__';
-const storedVersion = localStorage.getItem('app_version');
-if (storedVersion && storedVersion !== APP_VERSION) {
-  // Version mismatch: nuke silently then come back fresh
-  nukeCache();
-} else {
-  localStorage.setItem('app_version', APP_VERSION);
-}
+try {
+  const APP_VERSION = '__APP_VERSION__';
+  const storedVersion = localStorage.getItem('app_version');
+  if (storedVersion && storedVersion !== APP_VERSION) {
+    nukeCache(); // version mismatch: nuke and reload
+  } else {
+    localStorage.setItem('app_version', APP_VERSION);
+  }
+} catch { /* localStorage blocked (private mode etc.) — continue normally */ }
 
 // ── Error boundary ────────────────────────────────────────────────────────────
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
