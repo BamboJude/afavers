@@ -112,7 +112,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         {/* Sidebar brand header */}
         <div className="h-14 flex items-center justify-between px-5 border-b border-gray-100 shrink-0">
           <span style={{
-            fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+            fontFamily: "'Figtree', system-ui, sans-serif",
             fontSize: 22, fontWeight: 800, letterSpacing: -0.5, color: '#111827',
           }}>
             Afa<span style={{ color: '#f97316' }}>v</span>ers
@@ -218,7 +218,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             {/* Brand name centred */}
             <Link to="/dashboard" className="absolute left-1/2 -translate-x-1/2">
               <span style={{
-                fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+                fontFamily: "'Figtree', system-ui, sans-serif",
                 fontSize: 22, fontWeight: 800, letterSpacing: -0.5, color: '#111827',
               }}>
                 Afa<span style={{ color: '#f97316' }}>v</span>ers
