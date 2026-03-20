@@ -27,6 +27,16 @@ interface JobStats {
   recentFetches: { day: string; count: number }[];
 }
 
+interface InboxEmail {
+  uid: number;
+  from: string;
+  fromName: string;
+  subject: string;
+  date: string;
+  body: string;
+  seen: boolean;
+}
+
 interface ContactMessage {
   id: number;
   name: string;
@@ -37,7 +47,7 @@ interface ContactMessage {
   created_at: string;
 }
 
-type Tab = 'overview' | 'users' | 'jobs' | 'messages';
+type Tab = 'overview' | 'users' | 'jobs' | 'messages' | 'inbox';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const STATUS_COLORS: Record<string, string> = {
@@ -78,6 +88,14 @@ export const AdminPage = () => {
   const [expandedMsg, setExpandedMsg] = useState<number | null>(null);
   const [replyText, setReplyText] = useState<Record<number, string>>({});
   const [replying, setReplying] = useState<number | null>(null);
+  const [inbox, setInbox] = useState<InboxEmail[]>([]);
+  const [inboxError, setInboxError] = useState('');
+  const [expandedEmail, setExpandedEmail] = useState<number | null>(null);
+  const [inboxReply, setInboxReply] = useState<Record<number, string>>({});
+  const [sendingReply, setSendingReply] = useState<number | null>(null);
+  const [composing, setComposing] = useState(false);
+  const [compose, setCompose] = useState({ to: '', subject: '', body: '' });
+  const [sending, setSending] = useState(false);
 
   // ── Load data by tab ──────────────────────────────────────────────────
   useEffect(() => {
@@ -85,6 +103,7 @@ export const AdminPage = () => {
     if (tab === 'users')    loadUsers(userPage, userSearch);
     if (tab === 'jobs')     loadJobStats();
     if (tab === 'messages') loadMessages();
+    if (tab === 'inbox')    loadInbox();
   }, [tab]);
 
   const loadStats = async () => {
@@ -112,6 +131,53 @@ export const AdminPage = () => {
     try { setJobStats((await api.get<JobStats>('/admin/jobs/stats')).data); }
     catch { setError('Failed to load job stats'); }
     finally { setLoading(false); }
+  };
+
+  const loadInbox = async () => {
+    setLoading(true); setInboxError('');
+    try {
+      const res = await api.get<{ emails: InboxEmail[] }>('/admin/inbox');
+      setInbox(res.data.emails);
+    } catch (e: any) {
+      setInboxError(e?.response?.data?.error || 'Failed to load inbox');
+    } finally { setLoading(false); }
+  };
+
+  const handleInboxReply = async (email: InboxEmail) => {
+    const body = inboxReply[email.uid]?.trim();
+    if (!body) return;
+    setSendingReply(email.uid);
+    try {
+      await api.post('/admin/inbox/send', {
+        to: `${email.fromName} <${email.from}>`,
+        subject: `Re: ${email.subject}`,
+        body,
+      });
+      await api.patch(`/admin/inbox/${email.uid}/seen`, {});
+      setInbox(prev => prev.map(e => e.uid === email.uid ? { ...e, seen: true } : e));
+      setInboxReply(prev => ({ ...prev, [email.uid]: '' }));
+      flash('Reply sent ✓');
+    } catch { flash('Failed to send', true); }
+    finally { setSendingReply(null); }
+  };
+
+  const handleDeleteInbox = async (uid: number) => {
+    try {
+      await api.delete(`/admin/inbox/${uid}`);
+      setInbox(prev => prev.filter(e => e.uid !== uid));
+    } catch { flash('Delete failed', true); }
+  };
+
+  const handleComposeSend = async () => {
+    if (!compose.to || !compose.subject || !compose.body) return;
+    setSending(true);
+    try {
+      await api.post('/admin/inbox/send', compose);
+      setCompose({ to: '', subject: '', body: '' });
+      setComposing(false);
+      flash('Email sent ✓');
+    } catch { flash('Send failed', true); }
+    finally { setSending(false); }
   };
 
   const loadMessages = async () => {
@@ -184,11 +250,13 @@ export const AdminPage = () => {
     loadUsers(1, userSearch);
   };
 
+  const inboxUnread = inbox.filter(e => !e.seen).length;
   const tabs: { key: Tab; label: string }[] = [
     { key: 'overview',  label: 'Overview' },
     { key: 'users',     label: `Users${userTotal ? ` (${userTotal})` : ''}` },
     { key: 'jobs',      label: 'Jobs' },
-    { key: 'messages',  label: `Messages${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
+    { key: 'messages',  label: `Forms${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
+    { key: 'inbox',     label: `Inbox${inboxUnread > 0 ? ` (${inboxUnread})` : ''}` },
   ];
 
   return (
@@ -532,6 +600,89 @@ export const AdminPage = () => {
             ))}
           </div>
         )
+      )}
+
+      {/* ── INBOX TAB ── */}
+      {tab === 'inbox' && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-400">{inbox.length} emails · contact@afavers.online</p>
+            <div className="flex gap-2">
+              <button onClick={loadInbox} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition">Refresh</button>
+              <button onClick={() => setComposing(true)} className="text-xs px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition">+ Compose</button>
+            </div>
+          </div>
+
+          {inboxError && <p className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-3">{inboxError} — make sure SMTP_HOST, SMTP_USER, SMTP_PASS are set in Railway.</p>}
+
+          {loading ? <SkeletonTable /> : inbox.length === 0 && !inboxError ? (
+            <p className="text-sm text-gray-400 text-center py-12">Inbox is empty.</p>
+          ) : inbox.map(email => (
+            <div key={email.uid} className={`bg-white rounded-2xl border p-4 ${email.seen ? 'border-gray-200' : 'border-green-400 bg-green-50/20'}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedEmail(expandedEmail === email.uid ? null : email.uid)}>
+                  <div className="flex items-center gap-2">
+                    {!email.seen && <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full shrink-0">New</span>}
+                    <span className="text-sm font-semibold text-gray-900 truncate">{email.subject}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    <span className="font-medium">{email.fromName || email.from}</span>
+                    {email.fromName && email.fromName !== email.from && ` · ${email.from}`}
+                    {' · '}{new Date(email.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                <button onClick={() => handleDeleteInbox(email.uid)} className="text-xs text-red-400 hover:text-red-600 transition shrink-0">Delete</button>
+              </div>
+
+              {expandedEmail === email.uid && (
+                <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
+                  <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans">{email.body}</pre>
+                  <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Reply to <span className="text-green-600">{email.from}</span></p>
+                    <textarea
+                      rows={4}
+                      value={inboxReply[email.uid] || ''}
+                      onChange={e => setInboxReply(prev => ({ ...prev, [email.uid]: e.target.value }))}
+                      placeholder="Write your reply…"
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500 resize-none bg-white"
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleInboxReply(email)}
+                        disabled={sendingReply === email.uid || !inboxReply[email.uid]?.trim()}
+                        className="px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-xs font-semibold rounded-lg transition"
+                      >
+                        {sendingReply === email.uid ? 'Sending…' : 'Send Reply'}
+                      </button>
+                      <span className="text-xs text-gray-400">From: contact@afavers.online</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Compose modal */}
+          {composing && (
+            <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-0">
+              <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-gray-900">New Email</h3>
+                  <button onClick={() => setComposing(false)} className="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+                </div>
+                <input value={compose.to} onChange={e => setCompose(p => ({ ...p, to: e.target.value }))} placeholder="To (email)" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500" />
+                <input value={compose.subject} onChange={e => setCompose(p => ({ ...p, subject: e.target.value }))} placeholder="Subject" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500" />
+                <textarea rows={6} value={compose.body} onChange={e => setCompose(p => ({ ...p, body: e.target.value }))} placeholder="Message…" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500 resize-none" />
+                <div className="flex gap-3">
+                  <button onClick={() => setComposing(false)} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+                  <button onClick={handleComposeSend} disabled={sending || !compose.to || !compose.subject || !compose.body} className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition">
+                    {sending ? 'Sending…' : 'Send'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* ── Confirm Delete Modal ── */}

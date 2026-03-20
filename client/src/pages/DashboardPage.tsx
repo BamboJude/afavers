@@ -566,7 +566,8 @@ function useWidgetOrder() {
     try {
       const stored = localStorage.getItem('dashboard_widget_order_v1');
       if (stored) {
-        const parsed = JSON.parse(stored) as LeftWidgetKey[];
+        const parsed = JSON.parse(stored);
+        if (!Array.isArray(parsed)) return [...LEFT_WIDGET_KEYS];
         const missing = LEFT_WIDGET_KEYS.filter(k => !parsed.includes(k));
         return [...parsed.filter((k): k is LeftWidgetKey => LEFT_WIDGET_KEYS.includes(k as LeftWidgetKey)), ...missing];
       }
