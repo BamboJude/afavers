@@ -76,8 +76,8 @@ export const GamificationWidget = () => {
     fetch(`${API_URL}/api/gamification`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then(r => r.json())
-      .then(setProfile)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.xp) setProfile(data); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [token, isDemo]);
