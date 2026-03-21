@@ -61,6 +61,7 @@ router.post('/inbox/send', async (req: AuthRequest, res: Response) => {
     });
     res.json({ success: true });
   } catch (err: any) {
+    console.error('[SMTP send error]', err);
     res.status(500).json({ error: err.message || 'Send failed' });
   }
 });
