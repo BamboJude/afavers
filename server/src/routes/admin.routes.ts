@@ -3,7 +3,7 @@ import { authenticateToken, requireAdmin } from '../middleware/auth.middleware.j
 import { getStats, listUsers, toggleAdmin, deleteUser, getJobStats } from '../controllers/admin.controller.js';
 import { listMessages, markRead, deleteMessage, replyMessage } from '../controllers/contact.controller.js';
 import { fetchInbox, markSeen, deleteEmail } from '../services/inbox.service.js';
-import { getMailTransporter } from '../services/mail.service.js';
+import { sendMail } from '../services/mail.service.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 import { Response } from 'express';
 
@@ -50,15 +50,7 @@ router.post('/inbox/send', async (req: AuthRequest, res: Response) => {
   try {
     const { to, subject, body } = req.body as { to: string; subject: string; body: string };
     if (!to || !subject || !body) { res.status(400).json({ error: 'to, subject and body required' }); return; }
-    const transporter = getMailTransporter();
-    if (!transporter) { res.status(503).json({ error: 'Mail not configured' }); return; }
-    await transporter.sendMail({
-      from: '"afavers" <contact@afavers.online>',
-      to,
-      subject,
-      text: body,
-      html: body.replace(/\n/g, '<br/>'),
-    });
+    await sendMail({ to, subject, text: body });
     res.json({ success: true });
   } catch (err: any) {
     console.error('[SMTP send error]', err);

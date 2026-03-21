@@ -14,6 +14,7 @@ interface EnvConfig {
   SMTP_HOST?: string;
   SMTP_USER?: string;
   SMTP_PASS?: string;
+  RESEND_API_KEY?: string;
   REGISTER_SECRET?: string;
   ADMIN_SECRET?: string;
 }
@@ -49,6 +50,7 @@ export const env: EnvConfig = {
   SMTP_HOST: process.env.SMTP_HOST,
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASS: process.env.SMTP_PASS,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
   REGISTER_SECRET: process.env.REGISTER_SECRET,
   ADMIN_SECRET: process.env.ADMIN_SECRET,
 };

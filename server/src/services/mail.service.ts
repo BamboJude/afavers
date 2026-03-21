@@ -1,25 +1,44 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { env } from '../config/env.js';
 
-export function getMailTransporter() {
-  if (!env.SMTP_USER || !env.SMTP_PASS) return null;
+const FROM = '"afavers" <contact@afavers.online>';
 
-  // cPanel / generic SMTP host (e.g. mail.afavers.com)
-  if (env.SMTP_HOST) {
-    return nodemailer.createTransport({
-      host: env.SMTP_HOST,
-      port: 587,
-      secure: false,       // STARTTLS (Railway blocks 465)
-      requireTLS: true,
-      auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
-      connectionTimeout: 10000,
-      socketTimeout: 15000,
-    });
+export async function sendMail({
+  to,
+  subject,
+  text,
+  html,
+  replyTo,
+}: {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+  replyTo?: string;
+}): Promise<void> {
+  if (!env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY not set — add it in Railway environment variables');
   }
 
-  // Fallback: Gmail
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
+  const resend = new Resend(env.RESEND_API_KEY);
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to,
+    subject,
+    text,
+    html: html ?? text.replace(/\n/g, '<br/>'),
+    ...(replyTo ? { replyTo } : {}),
   });
+
+  if (error) throw new Error(error.message);
+}
+
+/** Legacy compat: returns a nodemailer-like object for old callers */
+export function getMailTransporter() {
+  if (!env.RESEND_API_KEY) return null;
+  return {
+    sendMail: async (opts: { from?: string; to: string; subject: string; text: string; html?: string; replyTo?: string }) => {
+      await sendMail({ to: opts.to, subject: opts.subject, text: opts.text, html: opts.html, replyTo: opts.replyTo });
+    },
+  };
 }

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { pool } from '../config/database.js';
-import { getMailTransporter } from '../services/mail.service.js';
+import { sendMail } from '../services/mail.service.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 
 const CONTACT_EMAIL = 'contact@afavers.online';
@@ -24,18 +24,16 @@ export const submitContact = async (req: Request, res: Response): Promise<void> 
       [name.trim(), email.trim().toLowerCase(), subject.trim(), message.trim()]
     );
 
-    // Send email notification to contacts@afavers.com
-    const transporter = getMailTransporter();
-    if (transporter) {
-      await transporter.sendMail({
-        from: `"afavers Contact" <${CONTACT_EMAIL}>`,
+    // Send email notification
+    try {
+      await sendMail({
         to: CONTACT_EMAIL,
         replyTo: email,
         subject: `[afavers] ${subject}`,
         text: `From: ${name} <${email}>\n\n${message}`,
         html: `<p><strong>From:</strong> ${name} &lt;${email}&gt;</p><hr/><p>${message.replace(/\n/g, '<br/>')}</p>`,
       });
-    }
+    } catch { /* non-fatal — message is already saved to DB */ }
 
     res.json({ success: true });
   } catch (error) {
@@ -81,16 +79,11 @@ export const replyMessage = async (req: AuthRequest, res: Response): Promise<voi
     const msg = result.rows[0] as { name: string; email: string; subject: string } | undefined;
     if (!msg) { res.status(404).json({ error: 'Message not found.' }); return; }
 
-    const transporter = getMailTransporter();
-    if (!transporter) { res.status(503).json({ error: 'Mail not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS.' }); return; }
-
-    await transporter.sendMail({
-      from: `"afavers" <${CONTACT_EMAIL}>`,
+    await sendMail({
       to: `${msg.name} <${msg.email}>`,
       replyTo: CONTACT_EMAIL,
       subject: `Re: ${msg.subject}`,
       text: body.trim(),
-      html: body.trim().replace(/\n/g, '<br/>'),
     });
 
     // Auto-mark as read
