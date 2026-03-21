@@ -14,6 +14,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/mailparser": "^3.4.6",
     "axios": "^1.13.5",
     "bcryptjs": "^2.4.3",
     "cheerio": "^1.2.0",
@@ -24,6 +25,7 @@
     "helmet": "^8.1.0",
     "imapflow": "^1.2.16",
     "jsonwebtoken": "^9.0.3",
+    "mailparser": "^3.9.4",
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.1",
     "pg": "^8.18.0",
