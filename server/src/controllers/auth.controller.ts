@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { getMailTransporter } from '../services/mail.service.js';
+import { sendMail } from '../services/mail.service.js';
 import { pool } from '../config/database.js';
 import { env } from '../config/env.js';
 import { User, UserResponse } from '../types/index.js';
@@ -243,12 +243,11 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 
     const resetUrl = `${env.CLIENT_URL}/reset-password?token=${rawToken}`;
 
-    const transporter = getMailTransporter();
-    if (transporter) {
-      await transporter.sendMail({
-        from: `"afavers" <${env.SMTP_USER}>`,
+    try {
+      await sendMail({
         to: user.email,
         subject: 'Reset your afavers password',
+        text: `Reset your password: ${resetUrl}\n\nThis link expires in 1 hour.`,
         html: `
           <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
             <h2 style="color: #16a34a;">Reset your password</h2>
@@ -258,11 +257,11 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
             </a>
             <p style="color:#6b7280;font-size:13px;">If you didn't request this, ignore this email — your password won't change.</p>
             <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0"/>
-            <p style="color:#9ca3af;font-size:12px;">afavers.com — your automated job search assistant</p>
+            <p style="color:#9ca3af;font-size:12px;">afavers.online — your automated job search assistant</p>
           </div>
         `,
       });
-    } else {
+    } catch {
       // Fallback: log the link to Railway console
       console.log(`\n🔑 Password reset link for ${user.email}:\n${resetUrl}\n`);
     }
