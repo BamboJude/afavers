@@ -31,38 +31,38 @@ export async function fetchInbox(limit = 30): Promise<InboxEmail[]> {
 
   await client.connect();
   try {
-    const mailbox = await client.mailboxOpen('INBOX');
-    if (mailbox.exists === 0) return [];
-
+    // getMailboxLock opens the mailbox internally — don't call mailboxOpen separately
     const lock = await client.getMailboxLock('INBOX');
     try {
-      const start = Math.max(1, mailbox.exists - limit + 1);
-      for await (const msg of client.fetch(`${start}:*`, {
-        uid: true, flags: true, envelope: true, source: true,
-      })) {
-        try {
-          const parsed = await simpleParser(msg.source);
-          const fromAddr = parsed.from?.value?.[0]?.address || '';
-          const fromName = parsed.from?.value?.[0]?.name || fromAddr;
+      const exists = (client.mailbox as any)?.exists as number ?? 0;
+      if (exists > 0) {
+        const start = Math.max(1, exists - limit + 1);
+        for await (const msg of client.fetch(`${start}:*`, {
+          uid: true, flags: true, envelope: true, source: true,
+        })) {
+          try {
+            const parsed = await simpleParser(msg.source);
+            const fromAddr = parsed.from?.value?.[0]?.address || '';
+            const fromName = parsed.from?.value?.[0]?.name || fromAddr;
 
-          let body = parsed.text || '';
-          if (!body && parsed.html) {
-            // Strip HTML tags for plain text display
-            body = parsed.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            let body = parsed.text?.trim() || '';
+            if (!body && parsed.html) {
+              body = parsed.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+            if (body.length > 4000) body = body.slice(0, 4000) + '…';
+
+            emails.push({
+              uid: msg.uid,
+              from: fromAddr,
+              fromName,
+              subject: parsed.subject || '(no subject)',
+              date: (parsed.date || msg.envelope.date || new Date()).toISOString(),
+              body,
+              seen: msg.flags.has('\\Seen'),
+            });
+          } catch {
+            // skip unparseable message
           }
-          if (body.length > 4000) body = body.slice(0, 4000) + '…';
-
-          emails.push({
-            uid: msg.uid,
-            from: fromAddr,
-            fromName,
-            subject: parsed.subject || '(no subject)',
-            date: (parsed.date || msg.envelope.date || new Date()).toISOString(),
-            body,
-            seen: msg.flags.has('\\Seen'),
-          });
-        } catch {
-          // Skip unparseable message
         }
       }
     } finally {
@@ -80,7 +80,6 @@ export async function markSeen(uid: number): Promise<void> {
   if (!client) return;
   await client.connect();
   try {
-    await client.mailboxOpen('INBOX');
     const lock = await client.getMailboxLock('INBOX');
     try {
       await client.messageFlagsAdd({ uid }, ['\\Seen'], { uid: true });
@@ -93,7 +92,6 @@ export async function deleteEmail(uid: number): Promise<void> {
   if (!client) return;
   await client.connect();
   try {
-    await client.mailboxOpen('INBOX');
     const lock = await client.getMailboxLock('INBOX');
     try {
       await client.messageDelete({ uid }, { uid: true });
