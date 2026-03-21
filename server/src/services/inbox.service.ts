@@ -1,5 +1,4 @@
 import { ImapFlow } from 'imapflow';
-import { simpleParser } from 'mailparser';
 import { env } from '../config/env.js';
 
 export interface InboxEmail {
@@ -20,7 +19,6 @@ function getImapClient() {
     secure: true,
     auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
     logger: false,
-    // Prevent hanging connections
     connectionTimeout: 10000,
     greetingTimeout: 5000,
     socketTimeout: 15000,
@@ -28,14 +26,80 @@ function getImapClient() {
   } as any);
 }
 
-/** Wrap any async op with a max timeout */
-function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
-    promise,
+    p,
     new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+      setTimeout(() => reject(new Error(`${label} timed out`)), ms)
     ),
   ]);
+}
+
+/** Decode quoted-printable */
+function decodeQP(s: string): string {
+  return s
+    .replace(/=\r?\n/g, '')
+    .replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
+
+/** Extract readable body from raw MIME source */
+function extractBody(raw: string): string {
+  // Find body after blank line
+  const sep = raw.indexOf('\r\n\r\n');
+  if (sep === -1) return '';
+
+  const headers = raw.slice(0, sep).toLowerCase();
+  let body = raw.slice(sep + 4);
+
+  // Detect encoding
+  const encodingMatch = headers.match(/content-transfer-encoding:\s*(\S+)/);
+  const encoding = encodingMatch?.[1]?.trim().toLowerCase() ?? '';
+
+  // For multipart, try to find first text/plain part
+  const boundaryMatch = headers.match(/boundary="?([^"\r\n;]+)"?/);
+  if (boundaryMatch) {
+    const boundary = '--' + boundaryMatch[1].trim();
+    const parts = body.split(boundary);
+    for (const part of parts) {
+      const partLower = part.toLowerCase();
+      if (partLower.includes('content-type: text/plain') || partLower.includes('content-type:text/plain')) {
+        const partSep = part.indexOf('\r\n\r\n');
+        if (partSep !== -1) {
+          const partHeaders = part.slice(0, partSep).toLowerCase();
+          const partBody = part.slice(partSep + 4).trim();
+          const partEnc = partHeaders.match(/content-transfer-encoding:\s*(\S+)/)?.[1]?.trim().toLowerCase() ?? '';
+          if (partEnc === 'base64') {
+            return Buffer.from(partBody.replace(/\s+/g, ''), 'base64').toString('utf-8').trim();
+          }
+          if (partEnc === 'quoted-printable') {
+            return decodeQP(partBody).trim();
+          }
+          return partBody.trim();
+        }
+      }
+    }
+    // Fallback: try html part
+    for (const part of parts) {
+      const partLower = part.toLowerCase();
+      if (partLower.includes('content-type: text/html') || partLower.includes('content-type:text/html')) {
+        const partSep = part.indexOf('\r\n\r\n');
+        if (partSep !== -1) {
+          const partBody = part.slice(partSep + 4).trim();
+          return partBody.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+      }
+    }
+    return '';
+  }
+
+  // Non-multipart: decode directly
+  if (encoding === 'base64') {
+    return Buffer.from(body.replace(/\s+/g, ''), 'base64').toString('utf-8').trim();
+  }
+  if (encoding === 'quoted-printable') {
+    return decodeQP(body).trim();
+  }
+  return body.trim();
 }
 
 export async function fetchInbox(limit = 20): Promise<InboxEmail[]> {
@@ -51,48 +115,29 @@ export async function fetchInbox(limit = 20): Promise<InboxEmail[]> {
       const exists = (client.mailbox as any)?.exists as number ?? 0;
       if (exists > 0) {
         const start = Math.max(1, exists - limit + 1);
-        const rawMsgs: Array<{ uid: number; flags: Set<string>; envelope: any; source: Buffer }> = [];
-
-        // Collect all messages first (streaming)
         for await (const msg of client.fetch(`${start}:*`, {
           uid: true, flags: true, envelope: true, source: true,
         })) {
-          rawMsgs.push({
-            uid: msg.uid,
-            flags: msg.flags,
-            envelope: msg.envelope,
-            source: msg.source,
-          });
+          try {
+            const raw = msg.source.toString('utf-8');
+            let body = extractBody(raw);
+            if (body.length > 3000) body = body.slice(0, 3000) + '…';
+
+            const from = msg.envelope.from?.[0];
+            const fromAddr = from?.address ?? '';
+            const fromName = from?.name ?? fromAddr;
+
+            emails.push({
+              uid: msg.uid,
+              from: fromAddr,
+              fromName,
+              subject: msg.envelope.subject ?? '(no subject)',
+              date: (msg.envelope.date ?? new Date()).toISOString(),
+              body,
+              seen: msg.flags.has('\\Seen'),
+            });
+          } catch { /* skip bad message */ }
         }
-
-        // Parse all in parallel
-        const parsed = await Promise.all(
-          rawMsgs.map(async (msg) => {
-            try {
-              const p = await simpleParser(msg.source);
-              const fromAddr = p.from?.value?.[0]?.address || '';
-              const fromName = p.from?.value?.[0]?.name || fromAddr;
-              let body = p.text?.trim() || '';
-              if (!body && p.html) {
-                body = p.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-              }
-              if (body.length > 3000) body = body.slice(0, 3000) + '…';
-              return {
-                uid: msg.uid,
-                from: fromAddr,
-                fromName,
-                subject: p.subject || '(no subject)',
-                date: (p.date || msg.envelope.date || new Date()).toISOString(),
-                body,
-                seen: msg.flags.has('\\Seen'),
-              } satisfies InboxEmail;
-            } catch {
-              return null;
-            }
-          })
-        );
-
-        emails.push(...(parsed.filter(Boolean) as InboxEmail[]));
       }
     } finally {
       lock.release();
@@ -101,7 +146,7 @@ export async function fetchInbox(limit = 20): Promise<InboxEmail[]> {
     await client.logout();
   }
 
-  return emails.reverse(); // newest first
+  return emails.reverse();
 }
 
 export async function markSeen(uid: number): Promise<void> {
