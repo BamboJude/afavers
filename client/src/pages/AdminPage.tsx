@@ -157,7 +157,7 @@ export const AdminPage = () => {
       setInbox(prev => prev.map(e => e.uid === email.uid ? { ...e, seen: true } : e));
       setInboxReply(prev => ({ ...prev, [email.uid]: '' }));
       flash('Reply sent ✓');
-    } catch { flash('Failed to send', true); }
+    } catch (e: any) { flash(e?.response?.data?.error || 'Failed to send', true); }
     finally { setSendingReply(null); }
   };
 
@@ -176,7 +176,7 @@ export const AdminPage = () => {
       setCompose({ to: '', subject: '', body: '' });
       setComposing(false);
       flash('Email sent ✓');
-    } catch { flash('Send failed', true); }
+    } catch (e: any) { flash(e?.response?.data?.error || 'Send failed', true); }
     finally { setSending(false); }
   };
 
@@ -208,7 +208,7 @@ export const AdminPage = () => {
       setMessages(prev => prev.map(m => m.id === id ? { ...m, is_read: true } : m));
       setUnreadCount(c => Math.max(0, c - 1));
       flash('Reply sent ✓');
-    } catch { flash('Failed to send reply', true); }
+    } catch (e: any) { flash(e?.response?.data?.error || 'Failed to send reply', true); }
     finally { setReplying(null); }
   };
 
