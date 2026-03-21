@@ -8,8 +8,9 @@ export function getMailTransporter() {
   if (env.SMTP_HOST) {
     return nodemailer.createTransport({
       host: env.SMTP_HOST,
-      port: 465,
-      secure: true,
+      port: 587,
+      secure: false,       // STARTTLS (Railway blocks 465)
+      requireTLS: true,
       auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
       connectionTimeout: 10000,
       socketTimeout: 15000,
