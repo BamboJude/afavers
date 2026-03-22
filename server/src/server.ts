@@ -1,6 +1,7 @@
 import app from './app.js';
 import { env } from './config/env.js';
 import { connectDB } from './config/database.js';
+import { runMigrations } from './db/migrate.js';
 import { initializeJobFetchCron } from './jobs/jobFetchCron.js';
 
 console.log('[startup] PORT=' + process.env.PORT + ' NODE_ENV=' + process.env.NODE_ENV + ' DB=' + (process.env.DATABASE_URL ? 'set' : 'MISSING'));
@@ -10,8 +11,10 @@ process.on('unhandledRejection', (reason) => {
   console.error('[startup] Unhandled promise rejection:', reason);
 });
 
-// Connect to database
-connectDB();
+// Connect to database then run migrations
+connectDB().then(() => runMigrations()).catch(err => {
+  console.error('[startup] Migration failed:', err);
+});
 
 // Initialize job fetching cron job
 initializeJobFetchCron();
