@@ -70,17 +70,20 @@ export const GamificationWidget = () => {
   const [profile, setProfile] = useState<GamificationProfile | null>(null);
   const [tab, setTab] = useState<'missions' | 'achievements'>('missions');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isDemo || !token) { setLoading(false); return; }
     fetch(`${API_URL}/api/gamification`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.xp) setProfile(data); })
-      .catch(() => {})
+      .then(r => r.ok ? r.json() : r.json().then((e: any) => Promise.reject(e?.error || 'Failed')))
+      .then(data => { if (data?.xp) setProfile(data); else setError('Unexpected response'); })
+      .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
   }, [token, isDemo]);
+
+  if (isDemo) return null;
 
   if (loading) {
     return (
@@ -94,7 +97,14 @@ export const GamificationWidget = () => {
     );
   }
 
-  if (!profile) return null;
+  if (error || !profile) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 text-center">
+        <p className="text-xs text-gray-400">XP & Missions unavailable</p>
+        {error && <p className="text-[10px] text-red-400 mt-1">{error}</p>}
+      </div>
+    );
+  }
 
   const { xp, streak, missions, achievements } = profile;
   const activeMissions = missions.filter(m => m.status === 'active');
