@@ -1252,15 +1252,15 @@ export const DashboardPage = () => {
               </Module>
             )}
 
+            {/* Gamification */}
+            <GamificationWidget />
+
             {/* Calendar */}
             {visible.calendar && (
               <Module title="Calendar" editMode={editMode} onHide={() => toggle('calendar')}>
                 <MiniCalendar upcomingInterviews={upcomingInterviews} followUps={followUps} />
               </Module>
             )}
-
-            {/* Gamification */}
-            <GamificationWidget />
 
           </div>
         </div>
