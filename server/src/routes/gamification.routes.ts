@@ -10,7 +10,7 @@ router.use(authenticateToken);
 // GET /api/gamification — full profile (XP, level, streak, missions, achievements)
 router.get('/', async (req, res, next) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = (req as any).userId;
     const profile = await getProfile(userId);
     res.json(profile);
   } catch (err: any) {
