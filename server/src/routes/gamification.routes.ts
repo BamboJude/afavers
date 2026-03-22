@@ -13,8 +13,9 @@ router.get('/', async (req, res, next) => {
     const userId = (req as any).user.id;
     const profile = await getProfile(userId);
     res.json(profile);
-  } catch (err) {
-    next(err);
+  } catch (err: any) {
+    console.error('[gamification] error:', err);
+    res.status(500).json({ error: err?.message || 'Unknown error', detail: err?.detail, code: err?.code });
   }
 });
 
