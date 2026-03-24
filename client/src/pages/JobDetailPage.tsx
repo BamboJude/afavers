@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
 import { useLanguage } from '../store/languageStore';
+import DOMPurify from 'dompurify';
 
 const STATUS_OPTIONS: { value: Job['status']; labelKey: string; color: string; dot: string }[] = [
   { value: 'new',          labelKey: 'statusNew',          color: 'bg-blue-50 text-blue-700 border-blue-200',      dot: 'bg-blue-400' },
@@ -252,7 +253,7 @@ export const JobDetailPage = () => {
                 isHtml(job.description) ? (
                   <div
                     className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: job.description }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.description) }}
                   />
                 ) : (
                   <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm">{job.description}</p>

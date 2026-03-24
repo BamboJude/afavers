@@ -31,7 +31,7 @@ export const submitContact = async (req: Request, res: Response): Promise<void> 
         replyTo: email,
         subject: `[afavers] ${subject}`,
         text: `From: ${name} <${email}>\n\n${message}`,
-        html: `<p><strong>From:</strong> ${name} &lt;${email}&gt;</p><hr/><p>${message.replace(/\n/g, '<br/>')}</p>`,
+        html: `<p><strong>From:</strong> ${name.replace(/</g, '&lt;')} &lt;${email.replace(/</g, '&lt;')}&gt;</p><hr/><p>${message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br/>')}</p>`,
       });
     } catch { /* non-fatal — message is already saved to DB */ }
 
