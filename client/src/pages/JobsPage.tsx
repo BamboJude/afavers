@@ -395,48 +395,23 @@ export const JobsPage = () => {
       </div>
 
       {/* Search + Sort bar */}
-      <div className="max-w-5xl mx-auto px-6 py-4">
-        <div className="flex gap-3 flex-wrap">
-          {/* Combined location + search input */}
-          <div className="flex-1 min-w-48 flex flex-col sm:flex-row rounded-lg border border-gray-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
-            <select
-              value={locationFilter}
-              onChange={e => { setLocationFilter(e.target.value); setPage(1); }}
-              className="text-base text-gray-600 bg-transparent border-b sm:border-b-0 sm:border-r border-gray-200 pl-3 pr-2 py-3 outline-none cursor-pointer w-full sm:w-auto sm:max-w-[140px]"
-            >
-              <option value="">All states</option>
-              {Object.keys(STATE_CITIES).map(state => (
-                <option key={state} value={STATE_CITIES[state].join('|')}>{state}</option>
-              ))}
-            </select>
-            <div className="relative flex-1">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder={t('searchPlaceholder')}
-                value={searchInput}
-                onChange={e => setSearchInput(e.target.value)}
-                className="w-full pl-9 pr-9 py-3.5 outline-none text-base bg-transparent"
-              />
-              {searchInput && (
-                <button
-                  onClick={() => { setSearchInput(''); setPage(1); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-                  aria-label="Clear search"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
+      <div className="max-w-5xl mx-auto px-6 py-4 space-y-3">
+        {/* Row 1: State + Sort (mobile: side by side) */}
+        <div className="flex gap-3">
+          <select
+            value={locationFilter}
+            onChange={e => { setLocationFilter(e.target.value); setPage(1); }}
+            className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+          >
+            <option value="">All states</option>
+            {Object.keys(STATE_CITIES).map(state => (
+              <option key={state} value={STATE_CITIES[state].join('|')}>{state}</option>
+            ))}
+          </select>
           <select
             value={sortBy}
             onChange={e => { setSortBy(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+            className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
           >
             <option value="posted_date">{t('newestFirst')}</option>
             <option value="created_at">{t('recentlyAdded')}</option>
@@ -444,6 +419,32 @@ export const JobsPage = () => {
             <option value="title">{t('titleAZ')}</option>
             <option value="company">{t('companyAZ')}</option>
           </select>
+        </div>
+        {/* Row 2: Search (full width) */}
+        <div className="flex">
+          <div className="relative flex-1">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder={t('searchPlaceholder')}
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              className="w-full pl-9 pr-9 py-2.5 border border-gray-300 rounded-lg text-sm outline-none bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            {searchInput && (
+              <button
+                onClick={() => { setSearchInput(''); setPage(1); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                aria-label="Clear search"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
         {/* Source filter pills */}
         <div className="flex items-center gap-2 mt-3 flex-wrap">
