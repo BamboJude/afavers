@@ -398,11 +398,11 @@ export const JobsPage = () => {
       <div className="max-w-5xl mx-auto px-6 py-4">
         <div className="flex gap-3 flex-wrap">
           {/* Combined location + search input */}
-          <div className="flex-1 min-w-48 flex rounded-lg border border-gray-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+          <div className="flex-1 min-w-48 flex flex-col sm:flex-row rounded-lg border border-gray-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
             <select
               value={locationFilter}
               onChange={e => { setLocationFilter(e.target.value); setPage(1); }}
-              className="text-base text-gray-600 bg-transparent border-r border-gray-200 pl-3 pr-2 py-3.5 outline-none cursor-pointer shrink-0 max-w-[140px]"
+              className="text-base text-gray-600 bg-transparent border-b sm:border-b-0 sm:border-r border-gray-200 pl-3 pr-2 py-3 outline-none cursor-pointer w-full sm:w-auto sm:max-w-[140px]"
             >
               <option value="">All states</option>
               {Object.keys(STATE_CITIES).map(state => (
