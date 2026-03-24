@@ -22,6 +22,11 @@ interface AuthState {
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
 
+async function safeJson(response: Response) {
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
+}
+
 async function authRequest(path: string, email: string, password: string, adminKey?: string) {
   const response = await fetch(`${API_URL}/api/auth/${path}`, {
     method: 'POST',
@@ -30,11 +35,11 @@ async function authRequest(path: string, email: string, password: string, adminK
   });
 
   if (!response.ok) {
-    const err = await response.json();
+    const err = await safeJson(response);
     throw new Error(err.error || `${path} failed`);
   }
 
-  return response.json();
+  return safeJson(response);
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -57,10 +62,10 @@ export const useAuthStore = create<AuthState>()(
           headers: { 'Content-Type': 'application/json' },
         });
         if (!response.ok) {
-          const err = await response.json();
+          const err = await safeJson(response);
           throw new Error(err.error || 'Demo login failed');
         }
-        const data = await response.json();
+        const data = await safeJson(response);
         set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: true, lastActivity: Date.now() });
       },
 
