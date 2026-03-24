@@ -29,6 +29,75 @@ const IconClock = ({ className = 'w-4 h-4' }: { className?: string }) => (
   </svg>
 );
 
+const IconBriefcase = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <rect x="2" y="7" width="20" height="14" rx="2" strokeWidth="1.5"/>
+    <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" strokeWidth="1.5"/>
+    <line x1="2" y1="13" x2="22" y2="13" strokeWidth="1.5"/>
+  </svg>
+);
+
+const IconBookmark = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const IconSend = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <line x1="22" y1="2" x2="11" y2="13" strokeWidth="1.5" strokeLinecap="round"/>
+    <polygon points="22 2 15 22 11 13 2 9 22 2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const IconMic = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <rect x="9" y="2" width="6" height="11" rx="3" strokeWidth="1.5"/>
+    <path d="M5 10a7 7 0 0014 0" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="12" y1="19" x2="12" y2="23" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="8" y1="23" x2="16" y2="23" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
+const IconTrophy = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <path d="M6 9H4a2 2 0 000 4h2" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M18 9h2a2 2 0 010 4h-2" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M6 3h12v9a6 6 0 01-12 0V3z" strokeWidth="1.5"/>
+    <line x1="12" y1="18" x2="12" y2="22" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="8" y1="22" x2="16" y2="22" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
+const IconSearch = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <circle cx="11" cy="11" r="8" strokeWidth="1.5"/>
+    <path d="M21 21l-4.35-4.35" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
+const IconGlobe = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <circle cx="12" cy="12" r="10" strokeWidth="1.5"/>
+    <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" strokeWidth="1.5"/>
+  </svg>
+);
+
+const IconBarChart = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <line x1="18" y1="20" x2="18" y2="10" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="12" y1="20" x2="12" y2="4" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="6" y1="20" x2="6" y2="14" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
+const IconRefresh = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <polyline points="23 4 23 10 17 10" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
 // ── Goal widget ───────────────────────────────────────────────────────────────
 
 const GOAL_PRESETS: Record<GoalType, number[]> = {
@@ -508,18 +577,22 @@ const Module = ({
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
 
-const StatCard = ({ label, value, sub, color, onClick }: {
+const StatCard = ({ label, value, sub, color, onClick, icon, accent }: {
   label: string; value: number; sub?: string; color?: string; onClick?: () => void;
+  icon?: React.ReactNode; accent?: string;
 }) => (
   <button
     onClick={onClick}
-    className="bg-white border border-gray-200 rounded-2xl p-5 text-left w-full hover:border-gray-300 hover:shadow-md transition-all active:scale-[0.98] shadow-sm"
+    className={`${accent || 'bg-white'} border border-gray-200 rounded-2xl p-4 text-left w-full hover:shadow-md transition-all active:scale-[0.98] shadow-sm group hover:border-gray-300`}
   >
-    <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-3 truncate">{label}</p>
-    <p className={`text-[36px] font-black leading-none tabular-nums ${color || 'text-[#0a1a25]'}`}>
+    <div className="flex items-center justify-between mb-3">
+      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 truncate">{label}</p>
+      {icon && <span className="opacity-40 group-hover:opacity-70 transition-opacity">{icon}</span>}
+    </div>
+    <p className={`text-[34px] font-black leading-none tabular-nums ${color || 'text-[#0a1a25]'}`}>
       <AnimatedNumber value={value} />
     </p>
-    {sub && <p className="text-[12px] text-gray-400 mt-1.5">{sub}</p>}
+    {sub && <p className="text-[11px] text-gray-400 mt-2 font-medium">{sub}</p>}
   </button>
 );
 
@@ -1008,7 +1081,18 @@ export const DashboardPage = () => {
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
         <div>
           <h1 className="text-[22px] font-black leading-tight text-[#0a1a25]">{greeting}, {displayName} 👋</h1>
-          <p className="text-[13px] text-gray-400 mt-0.5">{todayFormatted}</p>
+          <p className="text-[12px] text-gray-400 mt-0.5">
+            {todayFormatted}
+            {(followUps.length > 0 || upcomingInterviews.length > 0 || (stats?.new_today ?? 0) > 0) && (
+              <span className="ml-2">
+                {followUps.length > 0 && <span className="text-amber-500 font-semibold">{followUps.length} follow-up{followUps.length > 1 ? 's' : ''} due</span>}
+                {followUps.length > 0 && upcomingInterviews.length > 0 && <span className="mx-1.5 text-gray-300">·</span>}
+                {upcomingInterviews.length > 0 && <span className="text-purple-500 font-semibold">{upcomingInterviews.length} interview{upcomingInterviews.length > 1 ? 's' : ''} coming up</span>}
+                {(followUps.length > 0 || upcomingInterviews.length > 0) && (stats?.new_today ?? 0) > 0 && <span className="mx-1.5 text-gray-300">·</span>}
+                {(stats?.new_today ?? 0) > 0 && <span className="text-[#16a34a] font-semibold">{stats!.new_today} new jobs today</span>}
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {streak > 1 && (
@@ -1052,33 +1136,46 @@ export const DashboardPage = () => {
           <StatCard
             label="Total Jobs"
             value={stats?.total || 0}
-            sub={stats?.new ? `${stats.new} unreviewed` : undefined}
+            sub={stats?.new ? `${stats.new} unreviewed` : 'Browse all jobs'}
             color="text-[#16a34a]"
+            accent="bg-green-50"
+            icon={<IconBriefcase className="w-4 h-4 text-[#16a34a]" />}
             onClick={() => navigate('/jobs')}
           />
           <StatCard
             label="Saved"
             value={stats?.saved || 0}
-            color="text-[#d97706]"
+            sub="Shortlisted"
+            color="text-amber-600"
+            accent="bg-amber-50"
+            icon={<IconBookmark className="w-4 h-4 text-amber-500" />}
             onClick={() => navigate('/kanban')}
           />
           <StatCard
             label="Applied"
             value={stats?.applied || 0}
-            color="text-[#16a34a]"
+            sub="Submitted"
+            color="text-blue-600"
+            accent="bg-blue-50"
+            icon={<IconSend className="w-4 h-4 text-blue-500" />}
             onClick={() => navigate('/kanban')}
           />
           <StatCard
             label="Interviewing"
             value={stats?.interviewing || 0}
+            sub="In progress"
             color="text-[#7c3aed]"
+            accent="bg-purple-50"
+            icon={<IconMic className="w-4 h-4 text-purple-500" />}
             onClick={() => navigate('/kanban')}
           />
           <StatCard
             label="Offered"
             value={stats?.offered || 0}
             sub={stats?.offered ? '🎉 Congrats!' : 'Keep going!'}
-            color="text-[#059669]"
+            color="text-emerald-600"
+            accent="bg-emerald-50"
+            icon={<IconTrophy className="w-4 h-4 text-emerald-500" />}
             onClick={() => navigate('/kanban')}
           />
         </div>
@@ -1134,7 +1231,16 @@ export const DashboardPage = () => {
                   </Module>
                 );
               } else if (key === 'followUps') {
-                if (visible.followUps && followUps.length > 0) content = (
+                if (visible.followUps && followUps.length === 0) content = (
+                  <Module title="Follow-ups Due" editMode={editMode} onHide={() => toggle('followUps')} onMoveUp={moveUp} onMoveDown={moveDown}>
+                    <div className="flex flex-col items-center py-4 gap-2">
+                      <span className="text-2xl">📬</span>
+                      <p className="text-[13px] font-bold text-gray-400">No follow-ups due</p>
+                      <p className="text-[11px] text-gray-300">Great — you're all caught up!</p>
+                    </div>
+                  </Module>
+                );
+                else if (visible.followUps && followUps.length > 0) content = (
                   <Module title={`Follow-ups Due · ${followUps.length}`} editMode={editMode} onHide={() => toggle('followUps')} onMoveUp={moveUp} onMoveDown={moveDown} noPad>
                     <div className="divide-y divide-[#dfe3eb]">
                       {followUps.map(f => (
@@ -1150,7 +1256,16 @@ export const DashboardPage = () => {
                   </Module>
                 );
               } else if (key === 'interviews') {
-                if (visible.interviews && upcomingInterviews.length > 0) content = (
+                if (visible.interviews && upcomingInterviews.length === 0) content = (
+                  <Module title="Upcoming Interviews" editMode={editMode} onHide={() => toggle('interviews')} onMoveUp={moveUp} onMoveDown={moveDown}>
+                    <div className="flex flex-col items-center py-4 gap-2">
+                      <span className="text-2xl">🎙️</span>
+                      <p className="text-[13px] font-bold text-gray-400">No interviews scheduled</p>
+                      <p className="text-[11px] text-gray-300">Keep applying — they'll show up here!</p>
+                    </div>
+                  </Module>
+                );
+                else if (visible.interviews && upcomingInterviews.length > 0) content = (
                   <Module title={`Upcoming Interviews · ${upcomingInterviews.length}`} editMode={editMode} onHide={() => toggle('interviews')} onMoveUp={moveUp} onMoveDown={moveDown} noPad>
                     <div className="divide-y divide-[#dfe3eb]">
                       {upcomingInterviews.map(j => (
@@ -1223,13 +1338,13 @@ export const DashboardPage = () => {
               <Module title="Quick Actions" editMode={editMode} onHide={() => toggle('quickActions')}>
                 <div className="grid grid-cols-2 gap-2.5">
                   {[
-                    { icon: '🔍', label: t('browseJobs'), sub: `${stats?.new || 0} new`, onClick: () => navigate('/jobs') },
-                    { icon: '🌍', label: t('englishJobs'), sub: t('englishJobsDesc'), onClick: () => navigate('/english-jobs') },
-                    { icon: '📊', label: t('analytics'), sub: t('analyticsDesc'), onClick: () => navigate('/analytics') },
-                    { icon: fetching ? '⏳' : '🔄', label: t('fetchJobs'), sub: fetching ? t('fetching') : t('autoFetchNote'), onClick: isDemo ? undefined : handleFetchJobs, disabled: fetching || isDemo },
+                    { icon: <IconSearch className="w-4 h-4" />, iconBg: 'bg-green-100 text-green-600', label: t('browseJobs'), sub: `${stats?.new || 0} new`, onClick: () => navigate('/jobs') },
+                    { icon: <IconGlobe className="w-4 h-4" />, iconBg: 'bg-blue-100 text-blue-600', label: t('englishJobs'), sub: t('englishJobsDesc'), onClick: () => navigate('/english-jobs') },
+                    { icon: <IconBarChart className="w-4 h-4" />, iconBg: 'bg-purple-100 text-purple-600', label: t('analytics'), sub: t('analyticsDesc'), onClick: () => navigate('/analytics') },
+                    { icon: <IconRefresh className={`w-4 h-4 ${fetching ? 'animate-spin' : ''}`} />, iconBg: 'bg-amber-100 text-amber-600', label: t('fetchJobs'), sub: fetching ? t('fetching') : t('autoFetchNote'), onClick: isDemo ? undefined : handleFetchJobs, disabled: fetching || isDemo },
                   ].map((card, i) => (
-                    <button key={i} onClick={card.onClick} disabled={'disabled' in card && card.disabled} className="flex items-center gap-2.5 p-3 bg-gray-50 hover:bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition text-left disabled:opacity-50 hover:shadow-sm">
-                      <span className="text-xl shrink-0">{card.icon}</span>
+                    <button key={i} onClick={card.onClick} disabled={'disabled' in card && card.disabled} className="flex items-center gap-2.5 p-3 bg-gray-50 hover:bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition text-left disabled:opacity-50 hover:shadow-sm group">
+                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg} transition-transform group-hover:scale-110`}>{card.icon}</span>
                       <div className="min-w-0">
                         <p className="text-[12px] font-black text-[#0a1a25] truncate">{card.label}</p>
                         <p className="text-[10px] text-gray-400 truncate leading-snug">{card.sub}</p>
