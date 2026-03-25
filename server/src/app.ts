@@ -9,6 +9,7 @@ import newsRoutes from './routes/news.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import contactRoutes from './routes/contact.routes.js';
 import gamificationRoutes from './routes/gamification.routes.js';
+import werkstudentRoutes from './routes/werkstudent.routes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app: Application = express();
@@ -79,6 +80,7 @@ app.use('/api/news', newsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/gamification', gamificationRoutes);
+app.use('/api/werkstudent', werkstudentRoutes);
 
 // 404 handler
 app.use(notFound);
