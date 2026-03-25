@@ -27,6 +27,7 @@ const RemindersPage     = lazy(() => import('./pages/RemindersPage').then(m => (
 const NewsPage          = lazy(() => import('./pages/NewsPage').then(m => ({ default: m.NewsPage })));
 const AdminPage         = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
 const AdminLoginPage    = lazy(() => import('./pages/AdminLoginPage').then(m => ({ default: m.AdminLoginPage })));
+const WerkstudentPage   = lazy(() => import('./pages/WerkstudentPage').then(m => ({ default: m.WerkstudentPage })));
 
 const TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -90,6 +91,7 @@ function App() {
         <Route path="/career-guides"  element={<ProtectedLayout><CareerGuidesPage /></ProtectedLayout>} />
         <Route path="/reminders"      element={<ProtectedLayout><RemindersPage /></ProtectedLayout>} />
         <Route path="/news"           element={<ProtectedLayout><NewsPage /></ProtectedLayout>} />
+        <Route path="/werkstudent"    element={<ProtectedLayout><WerkstudentPage /></ProtectedLayout>} />
         <Route path="/admin" element={
           <AdminRoute>
             <AppLayout><AdminPage /></AppLayout>
