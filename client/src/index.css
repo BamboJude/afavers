@@ -1,9 +1,101 @@
 @import 'tailwindcss';
 
+/* Enable class-based dark mode for Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
 * {
   font-family: 'Lato', 'Inter', system-ui, sans-serif;
 }
 
+/* ── CSS variables ─────────────────────────────────────────────── */
+:root {
+  --bg-page:      #f4f6fa;
+  --bg-card:      #ffffff;
+  --bg-subtle:    #f9fafb;
+  --bg-hover:     #f4f6fa;
+  --logo-color:   #111827;
+  --text-primary: #0a1a25;
+  --text-navy:    #223a5a;
+  --text-muted:   #6f839c;
+  --text-subtle:  #c1cbd5;
+  --border:       #e5e7eb;
+  --border-light: #dfe3eb;
+  --divide:       #dfe3eb;
+}
+
+.dark {
+  --bg-page:      #0f172a;
+  --bg-card:      #1e293b;
+  --bg-subtle:    #162032;
+  --bg-hover:     #2d3f55;
+  --logo-color:   #f9fafb;
+  --text-primary: #f1f5f9;
+  --text-navy:    #cbd5e1;
+  --text-muted:   #94a3b8;
+  --text-subtle:  #64748b;
+  --border:       #334155;
+  --border-light: #334155;
+  --divide:       #2d3f55;
+  color-scheme: dark;
+}
+
+/* ── Global dark mode overrides for hardcoded Tailwind hex classes ─ */
+
+/* Backgrounds */
+.dark .bg-white          { background-color: var(--bg-card) !important; }
+.dark .bg-gray-50        { background-color: var(--bg-subtle) !important; }
+.dark .bg-gray-100       { background-color: #2d3f55 !important; }
+
+/* Custom hex backgrounds used throughout the app */
+.dark [class~="bg-\[#f4f6fa\]"]  { background-color: var(--bg-page) !important; }
+.dark [class~="bg-\[#f8fafc\]"]  { background-color: var(--bg-page) !important; }
+
+/* Borders */
+.dark .border-gray-200   { border-color: var(--border) !important; }
+.dark .border-gray-100   { border-color: var(--border-light) !important; }
+.dark .border-gray-300   { border-color: #475569 !important; }
+
+/* Dividers */
+.dark .divide-gray-100 > * + * { border-color: var(--divide) !important; }
+
+/* Text */
+.dark .text-gray-900     { color: var(--text-primary) !important; }
+.dark .text-gray-800     { color: var(--text-primary) !important; }
+.dark .text-gray-700     { color: var(--text-navy) !important; }
+.dark .text-gray-600     { color: var(--text-muted) !important; }
+.dark .text-gray-500     { color: var(--text-muted) !important; }
+.dark .text-gray-400     { color: var(--text-subtle) !important; }
+
+/* Custom hex text colors */
+.dark [class~="text-\[#0a1a25\]"]  { color: var(--text-primary) !important; }
+.dark [class~="text-\[#223a5a\]"]  { color: var(--text-navy) !important; }
+.dark [class~="text-\[#6f839c\]"]  { color: var(--text-muted) !important; }
+.dark [class~="text-\[#c1cbd5\]"]  { color: var(--text-subtle) !important; }
+
+/* Hover bg overrides */
+.dark [class~="hover\:bg-\[#f4f6fa\]"]:hover { background-color: var(--bg-hover) !important; }
+.dark .hover\:bg-gray-50:hover  { background-color: var(--bg-hover) !important; }
+.dark .hover\:bg-white:hover    { background-color: var(--bg-card) !important; }
+
+/* Divide custom color */
+.dark [class~="divide-\[#dfe3eb\]"] > * + * { border-color: var(--divide) !important; }
+
+/* Border custom colors */
+.dark [class~="border-\[#dfe3eb\]"] { border-color: var(--border) !important; }
+.dark [class~="border-\[#c1cbd5\]"] { border-color: var(--border) !important; }
+.dark [class~="border-\[#e5e7eb\]"] { border-color: var(--border) !important; }
+
+/* Input fields */
+.dark input, .dark textarea, .dark select {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+.dark input::placeholder, .dark textarea::placeholder {
+  color: var(--text-subtle);
+}
+
+/* Scrollbar */
 .scrollbar-hide {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -12,6 +104,7 @@
   display: none;
 }
 
+/* Confetti */
 @keyframes confetti-fall {
   0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
   80%  { opacity: 0.9; }

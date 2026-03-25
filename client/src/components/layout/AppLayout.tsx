@@ -5,6 +5,7 @@ import { DemoBanner } from '../common/DemoBanner';
 import { LanguageToggle } from '../common/LanguageToggle';
 import { ToastContainer } from '../common/Toast';
 import { useLanguage } from '../../store/languageStore';
+import { useThemeStore } from '../../store/themeStore';
 import { useIdleTimer } from '../../hooks/useIdleTimer';
 
 const IconDashboard = () => (
@@ -65,10 +66,35 @@ const IconNews = () => (
   </svg>
 );
 
+const IconSun = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="5" strokeWidth="1.75"/>
+    <path strokeLinecap="round" strokeWidth="1.75" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+  </svg>
+);
+
+const IconMoon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+  </svg>
+);
+
+// Logo component — switches color based on theme via CSS variable
+const Logo = ({ size = 22 }: { size?: number }) => (
+  <span style={{
+    fontFamily: "'Figtree', system-ui, sans-serif",
+    fontSize: size, fontWeight: 800, letterSpacing: -0.5,
+    color: 'var(--logo-color)',
+  }}>
+    Afa<span style={{ color: '#f97316' }}>v</span>ers
+  </span>
+);
+
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuthStore();
   const { t } = useLanguage();
+  const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -79,47 +105,44 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { showWarning, secondsLeft, stayLoggedIn } = useIdleTimer(handleLogout);
 
   const isAdmin = user?.isAdmin ?? false;
+  const isDark = theme === 'dark';
 
   const navItems = [
     { to: '/dashboard',    icon: <IconDashboard />,  label: t('dashboard') },
     { to: '/jobs',         icon: <IconJobs />,        label: t('browseJobs') },
-    { to: '/hotpicks',     icon: <IconFire />, label: t('hotPicks') },
+    { to: '/hotpicks',     icon: <IconFire />,        label: t('hotPicks') },
     { to: '/english-jobs', icon: <IconGlobe />,       label: t('englishJobs') },
     { to: '/kanban',       icon: <IconKanban />,      label: t('applicationsBoard') },
-    { to: '/analytics',      icon: <IconAnalytics />,   label: t('analytics') },
-    { to: '/reminders',      icon: <IconBell />,        label: 'Reminders' },
-    { to: '/news',           icon: <IconNews />,        label: 'News' },
-    { to: '/interview-prep', icon: <IconVideo />,       label: t('interviewPrep') },
-    { to: '/settings',       icon: <IconSettings />,    label: t('settings') },
+    { to: '/analytics',    icon: <IconAnalytics />,   label: t('analytics') },
+    { to: '/reminders',    icon: <IconBell />,        label: 'Reminders' },
+    { to: '/news',         icon: <IconNews />,        label: 'News' },
+    { to: '/interview-prep', icon: <IconVideo />,     label: t('interviewPrep') },
+    { to: '/settings',     icon: <IconSettings />,    label: t('settings') },
   ];
 
-  // User initials for avatar
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? 'ME';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
 
       {/* ── Sidebar ── */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-60 bg-white border-r border-gray-200
+          fixed inset-y-0 left-0 z-50 w-60
+          bg-white dark:bg-gray-800
+          border-r border-gray-200 dark:border-gray-700
           flex flex-col shadow-sm
           transition-transform duration-200 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0
         `}
       >
-        {/* Sidebar brand header */}
-        <div className="h-14 flex items-center justify-between px-5 border-b border-gray-100 shrink-0">
-          <span style={{
-            fontFamily: "'Figtree', system-ui, sans-serif",
-            fontSize: 22, fontWeight: 800, letterSpacing: -0.5, color: '#111827',
-          }}>
-            Afa<span style={{ color: '#f97316' }}>v</span>ers
-          </span>
+        {/* Brand header */}
+        <div className="h-14 flex items-center justify-between px-5 border-b border-gray-100 dark:border-gray-700 shrink-0">
+          <Logo />
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-1 text-gray-400 hover:text-gray-600 rounded transition"
+            className="lg:hidden p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
@@ -137,8 +160,8 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-150 active:scale-95 ${
                   isActive
-                    ? 'bg-green-50 text-green-700 font-semibold shadow-sm ring-1 ring-green-100'
-                    : 'font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-0.5'
+                    ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-semibold shadow-sm ring-1 ring-green-100 dark:ring-green-800'
+                    : 'font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:translate-x-0.5'
                 }`
               }
             >
@@ -147,18 +170,17 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             </NavLink>
           ))}
 
-          {/* Admin link — only visible to admins */}
           {isAdmin && (
             <>
-              <div className="my-2 border-t border-gray-100" />
+              <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
               <NavLink
                 to="/admin"
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-150 active:scale-95 ${
                     isActive
-                      ? 'bg-red-50 text-red-700 font-semibold shadow-sm ring-1 ring-red-100'
-                      : 'font-medium text-red-400 hover:bg-red-50 hover:text-red-700 hover:translate-x-0.5'
+                      ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-semibold shadow-sm ring-1 ring-red-100 dark:ring-red-800'
+                      : 'font-medium text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-400 hover:translate-x-0.5'
                   }`
                 }
               >
@@ -171,8 +193,9 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
           )}
         </nav>
 
-        {/* Bottom: language + user */}
-        <div className="border-t border-gray-100 p-4 space-y-3 shrink-0"
+        {/* Bottom: language + theme + user */}
+        <div
+          className="border-t border-gray-100 dark:border-gray-700 p-4 space-y-3 shrink-0"
           style={{ paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}
         >
           <LanguageToggle />
@@ -180,11 +203,18 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
               {initials}
             </div>
-            <span className="text-xs text-gray-500 truncate flex-1 min-w-0">{user?.email}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 truncate flex-1 min-w-0">{user?.email}</span>
+            <button
+              onClick={toggleTheme}
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            >
+              {isDark ? <IconSun /> : <IconMoon />}
+            </button>
             <button
               onClick={handleLogout}
               title={t('logout')}
-              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
             >
               <IconLogout />
             </button>
@@ -203,29 +233,32 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       {/* ── Main content ── */}
       <div className="flex-1 lg:ml-60 flex flex-col min-h-screen w-full overflow-x-hidden">
         {/* Mobile topbar */}
-        <div className="lg:hidden bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+        <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30 shadow-sm">
           <div className="h-14 flex items-center px-4">
-            {/* Hamburger */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 -ml-1 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition shrink-0"
+              className="p-2 -ml-1 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition shrink-0"
               aria-label="Menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/>
               </svg>
             </button>
-            {/* Brand name centred */}
+
+            {/* Brand centred */}
             <Link to="/dashboard" className="absolute left-1/2 -translate-x-1/2">
-              <span style={{
-                fontFamily: "'Figtree', system-ui, sans-serif",
-                fontSize: 22, fontWeight: 800, letterSpacing: -0.5, color: '#111827',
-              }}>
-                Afa<span style={{ color: '#f97316' }}>v</span>ers
-              </span>
+              <Logo />
             </Link>
-            {/* User avatar */}
-            <div className="ml-auto shrink-0">
+
+            {/* Right: theme toggle + avatar */}
+            <div className="ml-auto flex items-center gap-2 shrink-0">
+              <button
+                onClick={toggleTheme}
+                title={isDark ? 'Light mode' : 'Dark mode'}
+                className="p-1.5 text-gray-400 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+              >
+                {isDark ? <IconSun /> : <IconMoon />}
+              </button>
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold">
                 {initials}
               </div>
@@ -237,13 +270,15 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
         <main className="flex-1">
           {children}
-          {/* Spacer: clears bottom nav (64px) + home indicator safe area, mobile only */}
           <div className="lg:hidden" style={{ height: 'calc(64px + env(safe-area-inset-bottom))' }} />
         </main>
       </div>
 
       {/* ── Mobile bottom navigation ── */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 flex items-stretch" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <nav
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-stretch"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         {[
           { to: '/dashboard',  icon: <IconDashboard />, label: t('home') },
           { to: '/jobs',       icon: <IconJobs />,      label: t('browse') },
@@ -256,7 +291,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             to={item.to}
             className={({ isActive }) =>
               `flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition-colors ${
-                isActive ? 'text-green-600' : 'text-gray-400'
+                isActive ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
               }`
             }
           >
@@ -266,29 +301,26 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         ))}
       </nav>
 
-      {/* ── Toast notifications ── */}
       <ToastContainer />
 
-      {/* ── Idle timeout warning modal ── */}
+      {/* ── Idle timeout modal ── */}
       {showWarning && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
-            <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
+            <div className="w-14 h-14 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-gray-900 mb-1">{t('stillThere')}</h2>
-            <p className="text-sm text-gray-500 mb-2">
-              {t('idleWarningMsg')}
-            </p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{t('stillThere')}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t('idleWarningMsg')}</p>
             <p className="text-4xl font-bold text-amber-500 mb-6 tabular-nums">
               {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={handleLogout}
-                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium rounded-xl transition"
+                className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium rounded-xl transition"
               >
                 {t('signOut')}
               </button>
