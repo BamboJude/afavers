@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { useLanguage } from '../store/languageStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
 
@@ -95,11 +94,9 @@ const JobCard = ({ job, index }: { job: WerkstudentJob; index: number }) => {
 
 export const WerkstudentPage = () => {
   const { token } = useAuthStore();
-  const { t } = useLanguage();
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [keyword, setKeyword] = useState('');
   const [location, setLocation] = useState('');
   const [searchInput, setSearchInput] = useState('');
 
@@ -126,7 +123,6 @@ export const WerkstudentPage = () => {
   useEffect(() => { search('', ''); }, [search]);
 
   const handleSearch = () => {
-    setKeyword(searchInput);
     search(searchInput, location);
   };
 
