@@ -128,14 +128,17 @@ export async function findAll(filters?: JobFilters, userId?: number): Promise<Jo
   }
 
   if (filters?.search) {
-    conditions.push(`(
-      j.title ILIKE $${p} OR
-      j.company ILIKE $${p} OR
-      j.location ILIKE $${p} OR
-      j.description ILIKE $${p}
-    )`);
-    values.push(`%${filters.search}%`);
-    p++;
+    const words = filters.search.trim().split(/\s+/).filter(Boolean);
+    for (const word of words) {
+      conditions.push(`(
+        j.title ILIKE $${p} OR
+        j.company ILIKE $${p} OR
+        j.location ILIKE $${p} OR
+        j.description ILIKE $${p}
+      )`);
+      values.push(`%${word}%`);
+      p++;
+    }
   }
 
   if (filters?.status) {
@@ -249,14 +252,17 @@ export async function count(
   }
 
   if (filters?.search) {
-    conditions.push(`(
-      j.title ILIKE $${p} OR
-      j.company ILIKE $${p} OR
-      j.location ILIKE $${p} OR
-      j.description ILIKE $${p}
-    )`);
-    values.push(`%${filters.search}%`);
-    p++;
+    const words = filters.search.trim().split(/\s+/).filter(Boolean);
+    for (const word of words) {
+      conditions.push(`(
+        j.title ILIKE $${p} OR
+        j.company ILIKE $${p} OR
+        j.location ILIKE $${p} OR
+        j.description ILIKE $${p}
+      )`);
+      values.push(`%${word}%`);
+      p++;
+    }
   }
 
   if (filters?.status) {
