@@ -58,6 +58,16 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Er
   static getDerivedStateFromError(error: Error) {
     return { error };
   }
+  componentDidCatch(error: Error) {
+    console.error('[ErrorBoundary]', error);
+    // ChunkLoadError = stale PWA cache after a new deploy — auto-nuke
+    if (
+      error.name === 'ChunkLoadError' ||
+      /loading chunk|failed to fetch dynamically imported module/i.test(error.message)
+    ) {
+      nukeCache();
+    }
+  }
   render() {
     if (this.state.error) {
       return (
