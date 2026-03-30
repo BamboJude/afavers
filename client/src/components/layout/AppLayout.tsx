@@ -108,7 +108,13 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     navigate('/login');
   };
 
-  const { showWarning, secondsLeft, stayLoggedIn } = useIdleTimer(handleLogout);
+  // Auto-logout (idle timeout) → landing page; user sees they were logged out
+  const handleAutoLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const { showWarning, secondsLeft, stayLoggedIn } = useIdleTimer(handleAutoLogout);
 
   const isAdmin = user?.isAdmin ?? false;
   const isDark = theme === 'dark';

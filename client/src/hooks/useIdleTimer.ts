@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-const IDLE_MS   = 30 * 60 * 1000; // 30 minutes idle → logout
-const WARN_MS   =  2 * 60 * 1000; // warn 2 minutes before
+const IDLE_MS = 30 * 60 * 1000; // 30 minutes idle → logout
+const WARN_MS =  2 * 60 * 1000; // warn 2 minutes before
 
 export const useIdleTimer = (onLogout: () => void) => {
   const [showWarning, setShowWarning] = useState(false);
@@ -11,19 +11,44 @@ export const useIdleTimer = (onLogout: () => void) => {
   const warnTimer    = useRef<ReturnType<typeof setTimeout>  | null>(null);
   const countdownInt = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Track last activity with a ref so visibility handler always has fresh value
+  const lastActiveRef = useRef<number>(Date.now());
+
+  // Keep onLogout stable in a ref so we don't need it as a dependency
+  const onLogoutRef = useRef(onLogout);
+  onLogoutRef.current = onLogout;
+
   const clearAll = () => {
     if (logoutTimer.current)  clearTimeout(logoutTimer.current);
     if (warnTimer.current)    clearTimeout(warnTimer.current);
     if (countdownInt.current) clearInterval(countdownInt.current);
   };
 
-  const reset = useCallback(() => {
+  /**
+   * Schedule warn + logout timers based on `remainingMs` until logout.
+   * If already in the warning window, shows countdown immediately.
+   */
+  const scheduleTimers = useCallback((remainingMs: number) => {
     clearAll();
-    setShowWarning(false);
 
-    warnTimer.current = setTimeout(() => {
+    if (remainingMs <= 0) {
+      onLogoutRef.current();
+      return;
+    }
+
+    // Logout timer
+    logoutTimer.current = setTimeout(() => {
+      clearAll();
+      onLogoutRef.current();
+    }, remainingMs);
+
+    const warnIn = remainingMs - WARN_MS;
+
+    if (warnIn <= 0) {
+      // Already inside warning window — start countdown immediately
+      const secs = Math.max(1, Math.ceil(remainingMs / 1000));
       setShowWarning(true);
-      setSecondsLeft(WARN_MS / 1000);
+      setSecondsLeft(secs);
       countdownInt.current = setInterval(() => {
         setSecondsLeft(s => {
           if (s <= 1) {
@@ -33,19 +58,61 @@ export const useIdleTimer = (onLogout: () => void) => {
           return s - 1;
         });
       }, 1000);
-    }, IDLE_MS - WARN_MS);
+    } else {
+      // Not yet in warning window — hide dialog and schedule it
+      setShowWarning(false);
+      warnTimer.current = setTimeout(() => {
+        setShowWarning(true);
+        setSecondsLeft(WARN_MS / 1000);
+        countdownInt.current = setInterval(() => {
+          setSecondsLeft(s => {
+            if (s <= 1) {
+              if (countdownInt.current) clearInterval(countdownInt.current);
+              return 0;
+            }
+            return s - 1;
+          });
+        }, 1000);
+      }, warnIn);
+    }
+  }, []);
 
-    logoutTimer.current = setTimeout(() => {
-      clearAll();
-      onLogout();
-    }, IDLE_MS);
-  }, [onLogout]);
+  /** Called on any user interaction — resets the full idle window */
+  const reset = useCallback(() => {
+    lastActiveRef.current = Date.now();
+    setShowWarning(false);
+    scheduleTimers(IDLE_MS);
+  }, [scheduleTimers]);
 
+  // ── Page Visibility: handle returning from background / switching tabs ──────
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+
+      const idleMs    = Date.now() - lastActiveRef.current;
+      const remaining = IDLE_MS - idleMs;
+
+      if (remaining <= 0) {
+        // Session expired while the page was hidden
+        clearAll();
+        setShowWarning(false);
+        onLogoutRef.current();
+      } else {
+        // Restart timers with accurate remaining time
+        scheduleTimers(remaining);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [scheduleTimers]);
+
+  // ── Activity listeners ────────────────────────────────────────────────────
   useEffect(() => {
     const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
     const handler = () => reset();
     events.forEach(e => window.addEventListener(e, handler, { passive: true }));
-    reset();
+    reset(); // kick off timers on mount
     return () => {
       events.forEach(e => window.removeEventListener(e, handler));
       clearAll();
