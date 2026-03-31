@@ -153,14 +153,33 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
         {/* Brand header */}
         <div className="h-14 flex items-center justify-between px-5 border-b border-gray-100 dark:border-gray-700 shrink-0">
           <Logo />
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {showWarning && (
+              <button
+                onClick={stayLoggedIn}
+                title="Session expiring — click to continue"
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold tabular-nums transition-all
+                  ${secondsLeft <= 5
+                    ? 'bg-red-500 text-white animate-pulse'
+                    : 'bg-amber-400 text-amber-900'
+                  }`}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                  <path strokeLinecap="round" strokeWidth="2" d="M12 7v5l3 3"/>
+                </svg>
+                {secondsLeft}s
+              </button>
+            )}
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Nav items */}
@@ -263,8 +282,25 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
               <Logo />
             </Link>
 
-            {/* Right: theme toggle + avatar */}
+            {/* Right: session timer + theme toggle + avatar */}
             <div className="ml-auto flex items-center gap-2 shrink-0">
+              {showWarning && (
+                <button
+                  onClick={stayLoggedIn}
+                  title="Session expiring — click to continue"
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold tabular-nums transition-all
+                    ${secondsLeft <= 5
+                      ? 'bg-red-500 text-white animate-pulse'
+                      : 'bg-amber-400 text-amber-900'
+                    }`}
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                    <path strokeLinecap="round" strokeWidth="2" d="M12 7v5l3 3"/>
+                  </svg>
+                  {secondsLeft}s
+                </button>
+              )}
               <button
                 onClick={toggleTheme}
                 title={isDark ? 'Light mode' : 'Dark mode'}
@@ -325,11 +361,14 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{t('stillThere')}</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{t('idleWarningMsg')}</p>
-            <p className="text-4xl font-bold text-amber-500 mb-6 tabular-nums">
-              {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">Session Expiring</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              Your session will end in
             </p>
+            <p className={`text-5xl font-bold mb-1 tabular-nums transition-colors ${secondsLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-amber-500'}`}>
+              {secondsLeft}
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">seconds</p>
             <div className="flex gap-3">
               <button
                 onClick={handleLogout}
