@@ -3,6 +3,26 @@ import { pool } from '../config/database.js';
 // Inline SQL so it survives TypeScript compilation (no file copying needed)
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    name: '010_werkstudent_saved',
+    sql: `
+      CREATE TABLE IF NOT EXISTS werkstudent_saved (
+        id          SERIAL PRIMARY KEY,
+        user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        refnr       VARCHAR(50) NOT NULL,
+        title       TEXT NOT NULL,
+        company     TEXT NOT NULL,
+        location    TEXT NOT NULL,
+        url         TEXT NOT NULL,
+        posted_date TEXT,
+        status      VARCHAR(20) NOT NULL DEFAULT 'saved',
+        created_at  TIMESTAMPTZ DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, refnr)
+      );
+      CREATE INDEX IF NOT EXISTS idx_werkstudent_saved_user ON werkstudent_saved(user_id);
+    `,
+  },
+  {
     name: '009_gamification',
     sql: `
       CREATE TABLE IF NOT EXISTS xp_events (
