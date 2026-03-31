@@ -112,4 +112,72 @@ router.get('/', searchLimiter, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// GET /api/werkstudent/saved — list user's saved/applied werkstudent jobs (refnr → status map)
+router.get('/saved', async (req: AuthRequest, res: Response) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT refnr, status FROM werkstudent_saved WHERE user_id = $1',
+      [req.userId]
+    );
+    const map: Record<string, string> = {};
+    rows.forEach((r: { refnr: string; status: string }) => { map[r.refnr] = r.status; });
+    res.json(map);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/werkstudent/save — save a job (status = 'saved')
+router.post('/save', async (req: AuthRequest, res: Response) => {
+  const { refnr, title, company, location, url, posted_date } = req.body;
+  if (!refnr || !title || !company || !url) {
+    res.status(400).json({ error: 'Missing required fields' });
+    return;
+  }
+  try {
+    await pool.query(
+      `INSERT INTO werkstudent_saved (user_id, refnr, title, company, location, url, posted_date, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'saved')
+       ON CONFLICT (user_id, refnr) DO UPDATE SET status='saved', updated_at=NOW()`,
+      [req.userId, refnr, title, company, location || '', url, posted_date || null]
+    );
+    res.json({ status: 'saved' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/werkstudent/apply — mark a job as applied (upserts)
+router.post('/apply', async (req: AuthRequest, res: Response) => {
+  const { refnr, title, company, location, url, posted_date } = req.body;
+  if (!refnr || !title || !company || !url) {
+    res.status(400).json({ error: 'Missing required fields' });
+    return;
+  }
+  try {
+    await pool.query(
+      `INSERT INTO werkstudent_saved (user_id, refnr, title, company, location, url, posted_date, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'applied')
+       ON CONFLICT (user_id, refnr) DO UPDATE SET status='applied', updated_at=NOW()`,
+      [req.userId, refnr, title, company, location || '', url, posted_date || null]
+    );
+    res.json({ status: 'applied' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/werkstudent/save/:refnr — unsave a job
+router.delete('/save/:refnr', async (req: AuthRequest, res: Response) => {
+  try {
+    await pool.query(
+      'DELETE FROM werkstudent_saved WHERE user_id = $1 AND refnr = $2',
+      [req.userId, req.params['refnr']]
+    );
+    res.json({ status: 'removed' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

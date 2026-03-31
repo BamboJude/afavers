@@ -20,6 +20,8 @@ interface SearchResult {
   userKeywords: string[];
 }
 
+type JobStatus = 'saved' | 'applied' | null;
+
 const CARD_GRADIENTS = [
   'from-emerald-500 to-teal-600',
   'from-blue-500 to-indigo-600',
@@ -42,31 +44,47 @@ function formatDate(d?: string) {
   } catch { return null; }
 }
 
-const JobCard = ({ job, index }: { job: WerkstudentJob; index: number }) => {
+const JobCard = ({
+  job,
+  index,
+  status,
+  onSave,
+  onApply,
+  onUnsave,
+}: {
+  job: WerkstudentJob;
+  index: number;
+  status: JobStatus;
+  onSave: () => void;
+  onApply: () => void;
+  onUnsave: () => void;
+}) => {
   const gradient = CARD_GRADIENTS[index % CARD_GRADIENTS.length];
   const initials = getInitials(job.company);
   const date = formatDate(job.postedDate);
 
   return (
-    <a
-      href={job.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 hover:shadow-lg hover:border-green-300 dark:hover:border-green-600 transition-all active:scale-[0.98] flex flex-col gap-3"
-    >
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 hover:shadow-lg hover:border-green-300 dark:hover:border-green-600 transition-all flex flex-col gap-3">
+
+      {/* Top: avatar + title + company */}
       <div className="flex items-start gap-3">
-        {/* Company avatar */}
         <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-black text-sm shrink-0`}>
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-black text-[#0a1a25] dark:text-gray-100 leading-snug line-clamp-2 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">
+          <a
+            href={job.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[13px] font-black text-[#0a1a25] dark:text-gray-100 leading-snug line-clamp-2 hover:text-green-700 dark:hover:text-green-400 transition-colors"
+          >
             {job.title}
-          </p>
+          </a>
           <p className="text-[12px] text-[#6f839c] dark:text-gray-400 mt-0.5 truncate">{job.company}</p>
         </div>
       </div>
 
+      {/* Location + date */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-[11px] text-[#6f839c] dark:text-gray-400">
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,15 +98,51 @@ const JobCard = ({ job, index }: { job: WerkstudentJob; index: number }) => {
         )}
       </div>
 
-      <div className="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-700">
-        <span className="text-[11px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
-          Werkstudent
-        </span>
-        <span className="text-[11px] font-black text-[#6f839c] dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors flex items-center gap-1">
-          Bewerben →
-        </span>
+      {/* Actions */}
+      <div className="flex items-center gap-2 pt-1 border-t border-gray-100 dark:border-gray-700">
+        {/* Save button */}
+        <button
+          onClick={status === 'saved' ? onUnsave : onSave}
+          title={status === 'saved' ? 'Remove from saved' : 'Save job'}
+          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all active:scale-95
+            ${status === 'saved'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700'
+              : 'bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200'
+            }`}
+        >
+          <svg className="w-3.5 h-3.5" fill={status === 'saved' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+          </svg>
+          {status === 'saved' ? 'Saved' : 'Save'}
+        </button>
+
+        {/* Apply button */}
+        <button
+          onClick={status === 'applied' ? onUnsave : onApply}
+          title={status === 'applied' ? 'Mark as not applied' : 'Mark as applied'}
+          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all active:scale-95
+            ${status === 'applied'
+              ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700'
+              : 'bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-600 dark:hover:text-green-400 hover:border-green-200'
+            }`}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          {status === 'applied' ? 'Applied' : 'Apply'}
+        </button>
+
+        {/* Open link */}
+        <a
+          href={job.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto text-[11px] font-black text-[#6f839c] dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors flex items-center gap-1"
+        >
+          Open →
+        </a>
       </div>
-    </a>
+    </div>
   );
 };
 
@@ -99,6 +153,9 @@ export const WerkstudentPage = () => {
   const [error, setError] = useState('');
   const [location, setLocation] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [statusMap, setStatusMap] = useState<Record<string, JobStatus>>({});
+
+  const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   const search = useCallback(async (kw: string, loc: string) => {
     setLoading(true);
@@ -120,11 +177,57 @@ export const WerkstudentPage = () => {
     }
   }, [token]);
 
+  // Load saved statuses on mount
+  useEffect(() => {
+    fetch(`${API_URL}/api/werkstudent/saved`, { headers: authHeaders })
+      .then(r => r.json())
+      .then(map => setStatusMap(map))
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
   useEffect(() => { search('', ''); }, [search]);
 
-  const handleSearch = () => {
-    search(searchInput, location);
+  const handleSave = async (job: WerkstudentJob) => {
+    setStatusMap(m => ({ ...m, [job.refnr]: 'saved' }));
+    try {
+      await fetch(`${API_URL}/api/werkstudent/save`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ refnr: job.refnr, title: job.title, company: job.company, location: job.location, url: job.url, posted_date: job.postedDate }),
+      });
+    } catch {
+      setStatusMap(m => ({ ...m, [job.refnr]: null }));
+    }
   };
+
+  const handleApply = async (job: WerkstudentJob) => {
+    setStatusMap(m => ({ ...m, [job.refnr]: 'applied' }));
+    try {
+      await fetch(`${API_URL}/api/werkstudent/apply`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ refnr: job.refnr, title: job.title, company: job.company, location: job.location, url: job.url, posted_date: job.postedDate }),
+      });
+    } catch {
+      setStatusMap(m => ({ ...m, [job.refnr]: null }));
+    }
+  };
+
+  const handleUnsave = async (job: WerkstudentJob) => {
+    const prev = statusMap[job.refnr] ?? null;
+    setStatusMap(m => ({ ...m, [job.refnr]: null }));
+    try {
+      await fetch(`${API_URL}/api/werkstudent/save/${encodeURIComponent(job.refnr)}`, {
+        method: 'DELETE',
+        headers: authHeaders,
+      });
+    } catch {
+      setStatusMap(m => ({ ...m, [job.refnr]: prev }));
+    }
+  };
+
+  const handleSearch = () => search(searchInput, location);
 
   const filtered = result?.jobs.filter(j =>
     !searchInput.trim() ||
@@ -248,7 +351,15 @@ export const WerkstudentPage = () => {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map((job, i) => (
-                <JobCard key={job.refnr} job={job} index={i} />
+                <JobCard
+                  key={job.refnr}
+                  job={job}
+                  index={i}
+                  status={statusMap[job.refnr] ?? null}
+                  onSave={() => handleSave(job)}
+                  onApply={() => handleApply(job)}
+                  onUnsave={() => handleUnsave(job)}
+                />
               ))}
             </div>
           </>
