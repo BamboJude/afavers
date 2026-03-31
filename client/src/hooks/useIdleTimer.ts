@@ -22,11 +22,12 @@ export const useIdleTimer = (onLogout: () => void) => {
 
   /**
    * Show the warning dialog and count down from `fromSecs`.
-   * Logout fires automatically when it reaches 0.
+   * When it reaches 0 the dialog stays open — user must click Continue or Sign Out.
+   * A hard-logout fires after an extra 5 minutes of no response as a last resort.
    */
   const showDialog = useCallback((fromSecs: number) => {
     clearAll();
-    const secs = Math.max(1, fromSecs);
+    const secs = Math.max(0, fromSecs);
     warningRef.current = true;
     setShowWarning(true);
     setSecondsLeft(secs);
@@ -41,10 +42,11 @@ export const useIdleTimer = (onLogout: () => void) => {
       });
     }, 1000);
 
+    // Hard logout only after an extra 5 minutes of zero response
     logoutTimer.current = setTimeout(() => {
       clearAll();
       onLogoutRef.current();
-    }, secs * 1000);
+    }, (secs + 5 * 60) * 1000);
   }, []);
 
   /**
