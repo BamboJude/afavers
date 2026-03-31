@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-const IDLE_MS = 30 * 60 * 1000; // 30 minutes idle → logout
-const WARN_MS =  2 * 60 * 1000; // warn 2 minutes before
+const IDLE_MS = 30 * 1000; // 30 seconds idle → logout
+const WARN_MS = 30 * 1000; // warn immediately (full 30s countdown on idle)
 
 export const useIdleTimer = (onLogout: () => void) => {
   const [showWarning, setShowWarning] = useState(false);
