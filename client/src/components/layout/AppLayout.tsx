@@ -361,14 +361,23 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">Session Expiring</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
+              {secondsLeft === 0 ? 'Session Expired' : 'Session Expiring'}
+            </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-              Your session will end in
+              {secondsLeft === 0
+                ? 'Would you like to extend your session?'
+                : 'Your session will end in'}
             </p>
-            <p className={`text-5xl font-bold mb-1 tabular-nums transition-colors ${secondsLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-amber-500'}`}>
-              {secondsLeft}
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">seconds</p>
+            {secondsLeft > 0 && (
+              <>
+                <p className={`text-5xl font-bold mb-1 tabular-nums transition-colors ${secondsLeft <= 5 ? 'text-red-500 animate-pulse' : 'text-amber-500'}`}>
+                  {secondsLeft}
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">seconds</p>
+              </>
+            )}
+            {secondsLeft === 0 && <div className="mb-6" />}
             <div className="flex gap-3">
               <button
                 onClick={handleLogout}
