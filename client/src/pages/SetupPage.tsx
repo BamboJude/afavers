@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { settingsService } from '../services/settings.service';
+import { markSetupSeen } from '../routes/OnboardingRedirect';
+import { useAuthStore } from '../store/authStore';
 
 const FIELD_PRESETS = [
   { label: 'Tech / IT',     keywords: 'developer,software engineer,data analyst,DevOps,IT',            emoji: '💻' },
@@ -38,6 +40,7 @@ const ProgressDots = ({ current }: { current: number }) => (
 
 export const SetupPage = () => {
   const navigate = useNavigate();
+  const userId = useAuthStore((state) => state.user?.id);
   const [step, setStep] = useState(0);
   const [keywords, setKeywords] = useState('');
   const [locations, setLocations] = useState('');
@@ -67,6 +70,7 @@ export const SetupPage = () => {
         keywords: keywords.trim() || 'developer,analyst,engineer',
         locations: locations.trim() || 'Berlin,München,Hamburg',
       });
+      markSetupSeen(userId);
       navigate('/dashboard');
     } catch {
       navigate('/dashboard');
@@ -120,7 +124,7 @@ export const SetupPage = () => {
                 Set up my feed →
               </button>
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => { markSetupSeen(userId); navigate('/dashboard'); }}
                 className="w-full text-[13px] text-[#c1cbd5] hover:text-[#6f839c] transition mt-3 py-1.5 font-bold"
               >
                 Skip — I'll set up later
