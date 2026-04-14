@@ -32,6 +32,27 @@ const SourceBadge = ({ source }: { source: string }) => {
   );
 };
 
+const MatchBadge = ({ score, reasons = [] }: { score?: number; reasons?: string[] }) => {
+  if (!score) return null;
+  const strong = score >= 70;
+  const good = score >= 50;
+  const label = strong ? 'Strong match' : good ? 'Good match' : 'Possible match';
+  const cls = strong
+    ? 'bg-green-50 text-green-700 border-green-200'
+    : good
+      ? 'bg-blue-50 text-blue-700 border-blue-200'
+      : 'bg-gray-50 text-gray-500 border-gray-200';
+
+  return (
+    <span
+      className={`px-2 py-0.5 rounded-md text-xs font-bold border ${cls}`}
+      title={reasons.join(' • ')}
+    >
+      {score}% {label}
+    </span>
+  );
+};
+
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
 function timeAgo(dateStr: string, locale = 'en'): string {
@@ -184,6 +205,8 @@ export const JobsPage = () => {
   const [dateFilter, setDateFilter] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [studentOnly, setStudentOnly] = useState(searchParams.get('type') === 'werkstudent' || searchParams.get('student') === '1');
+  const [englishOnly, setEnglishOnly] = useState(searchParams.get('language') === 'en');
+  const [highMatchOnly, setHighMatchOnly] = useState(searchParams.get('type') === 'hot' || searchParams.get('match') === 'high');
   const [locationFilter, setLocationFilter] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -193,6 +216,13 @@ export const JobsPage = () => {
   useEffect(() => {
     loadStats();
   }, []);
+
+  useEffect(() => {
+    const type = searchParams.get('type');
+    if (type === 'werkstudent') setStudentOnly(true);
+    if (type === 'hot') setHighMatchOnly(true);
+    if (searchParams.get('language') === 'en') setEnglishOnly(true);
+  }, [searchParams]);
 
   // Debounce search
   useEffect(() => {
@@ -207,7 +237,7 @@ export const JobsPage = () => {
   useEffect(() => {
     fetchJobs();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeTab, search, sortBy, sourceFilter, dateFilter, remoteOnly, studentOnly, locationFilter, page]);
+  }, [activeTab, search, sortBy, sourceFilter, dateFilter, remoteOnly, studentOnly, englishOnly, highMatchOnly, locationFilter, page]);
 
   const loadStats = async () => {
     try {
@@ -231,6 +261,8 @@ export const JobsPage = () => {
         dateFrom: dateFilter || undefined,
         remoteOnly: remoteOnly || undefined,
         studentOnly: studentOnly || undefined,
+        englishOnly: englishOnly || undefined,
+        highMatchOnly: highMatchOnly || undefined,
         location: locationFilter || undefined,
       };
       const response = await jobsService.getJobs(filters);
@@ -320,6 +352,8 @@ export const JobsPage = () => {
     setDateFilter('');
     setRemoteOnly(false);
     setStudentOnly(false);
+    setEnglishOnly(false);
+    setHighMatchOnly(false);
     setLocationFilter('');
     setPage(1);
   };
@@ -331,11 +365,22 @@ export const JobsPage = () => {
     setDateFilter('');
     setRemoteOnly(false);
     setStudentOnly(false);
+    setEnglishOnly(false);
+    setHighMatchOnly(false);
     setLocationFilter('');
     setPage(1);
   };
 
-  const filterCount = [search, sourceFilter, dateFilter, remoteOnly ? 'r' : '', studentOnly ? 's' : '', locationFilter].filter(Boolean).length;
+  const filterCount = [
+    search,
+    sourceFilter,
+    dateFilter,
+    remoteOnly ? 'r' : '',
+    studentOnly ? 's' : '',
+    englishOnly ? 'e' : '',
+    highMatchOnly ? 'h' : '',
+    locationFilter,
+  ].filter(Boolean).length;
 
   const totalPages = Math.ceil(total / LIMIT);
 
@@ -418,6 +463,7 @@ export const JobsPage = () => {
             className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
           >
             <option value="posted_date">{t('newestFirst')}</option>
+            <option value="match_score">Best match</option>
             <option value="created_at">{t('recentlyAdded')}</option>
             <option value="deadline">{t('expiringSoon')}</option>
             <option value="title">{t('titleAZ')}</option>
@@ -486,8 +532,18 @@ export const JobsPage = () => {
             </button>
           ))}
         </div>
-        {/* Remote filter pill */}
+        {/* Smart filter pills */}
         <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <button
+            onClick={() => { setHighMatchOnly(value => !value); setPage(1); }}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
+              highMatchOnly
+                ? 'bg-green-700 text-white border-green-700'
+                : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
+            }`}
+          >
+            Strong match
+          </button>
           <button
             onClick={() => { setRemoteOnly(r => !r); setPage(1); }}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
@@ -497,6 +553,16 @@ export const JobsPage = () => {
             }`}
           >
             {t('remote')}
+          </button>
+          <button
+            onClick={() => { setEnglishOnly(value => !value); setPage(1); }}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
+              englishOnly
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
+            }`}
+          >
+            English
           </button>
           <button
             onClick={() => { setStudentOnly(value => !value); setPage(1); }}
@@ -536,6 +602,17 @@ export const JobsPage = () => {
           <div className="bg-white rounded-2xl border border-gray-200 p-16 text-center">
             <div className="text-4xl mb-4">🔍</div>
             <p className="text-gray-500 text-base font-medium">{t('noJobsFound')}</p>
+            <p className="text-gray-400 text-sm mt-2 max-w-md mx-auto">
+              Try clearing one filter, widening your cities in Settings, or using broader keywords like analyst, project, GIS, energy, consulting.
+            </p>
+            {filterCount > 0 && (
+              <button
+                onClick={clearAllFilters}
+                className="mt-5 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 transition"
+              >
+                Clear filters
+              </button>
+            )}
             {activeTab === 'new' && (
               <p className="text-gray-400 text-sm mt-1">{t('allCaughtUp')} 🎉</p>
             )}
@@ -587,6 +664,7 @@ export const JobsPage = () => {
                         )}
 
                         <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
+                          <MatchBadge score={job.match_score} reasons={job.match_reasons} />
                           <SourceBadge source={job.source} />
                           {job.posted_date && (
                             <span>{timeAgo(job.posted_date, lang)}</span>

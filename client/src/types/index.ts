@@ -25,6 +25,8 @@ export interface Job {
   language: 'en' | 'de' | null;
   created_at: string;
   updated_at: string;
+  match_score?: number;
+  match_reasons?: string[];
 }
 
 export interface DashboardStats {
@@ -75,4 +77,6 @@ export interface JobFilters {
   remoteOnly?: boolean;
   location?: string;
   studentOnly?: boolean;
+  englishOnly?: boolean;
+  highMatchOnly?: boolean;
 }
