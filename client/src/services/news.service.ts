@@ -1,6 +1,4 @@
-import { apiUrl } from '../config/api';
-
-const BASE = apiUrl('/api/news');
+import { supabase } from '../lib/supabase';
 
 export interface NewsItem {
   sophoraId: string;
@@ -49,17 +47,19 @@ export function timeAgo(dateStr: string): string {
 
 export const newsService = {
   async getWirtschaft(): Promise<NewsItem[]> {
-    const res = await fetch(`${BASE}?ressort=wirtschaft`);
-    if (!res.ok) throw new Error('Failed to fetch news');
-    const data: NewsResponse = await res.json();
-    return data.news ?? [];
+    const { data, error } = await supabase.functions.invoke<NewsResponse>('news', {
+      body: { ressort: 'wirtschaft' },
+    });
+    if (error) throw new Error(error.message);
+    return data?.news ?? [];
   },
 
   async getAll(): Promise<NewsItem[]> {
-    const res = await fetch(`${BASE}`);
-    if (!res.ok) throw new Error('Failed to fetch news');
-    const data: NewsResponse = await res.json();
-    return data.news ?? [];
+    const { data, error } = await supabase.functions.invoke<NewsResponse>('news', {
+      body: {},
+    });
+    if (error) throw new Error(error.message);
+    return data?.news ?? [];
   },
 
   async getEnergy(): Promise<NewsItem[]> {

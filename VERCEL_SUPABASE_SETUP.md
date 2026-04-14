@@ -49,7 +49,35 @@ Set these only for local admin scripts or Supabase Edge Functions. Never expose 
 ```bash
 SUPABASE_URL=https://mcaletfngisgofppfugr.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+BUNDESAGENTUR_API_KEY=jobboerse-jobsuche
+ADZUNA_APP_ID=your-adzuna-app-id
+ADZUNA_APP_KEY=your-adzuna-app-key
+CRON_SECRET=your-random-cron-secret
 ```
+
+## Supabase Edge Functions
+
+Install the Supabase CLI, then link and deploy:
+
+```bash
+supabase login
+supabase link --project-ref mcaletfngisgofppfugr
+supabase secrets set \
+  SUPABASE_URL=https://mcaletfngisgofppfugr.supabase.co \
+  SUPABASE_ANON_KEY=your-supabase-anon-key \
+  SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key \
+  BUNDESAGENTUR_API_KEY=jobboerse-jobsuche \
+  ADZUNA_APP_ID=your-adzuna-app-id \
+  ADZUNA_APP_KEY=your-adzuna-app-key \
+  CRON_SECRET=your-random-cron-secret
+supabase functions deploy fetch-jobs --no-verify-jwt
+supabase functions deploy werkstudent-search
+supabase functions deploy news --no-verify-jwt
+```
+
+`fetch-jobs` is protected by `CRON_SECRET` for scheduled calls. `news` is public so the news page can load without a user session.
+
+To schedule automatic fetching, open `supabase/migrations/20260414_schedule_fetch_jobs.sql`, replace `YOUR_CRON_SECRET`, and run it in the Supabase SQL editor.
 
 ## Backend migration status
 
@@ -60,11 +88,14 @@ Already moved to Supabase from the browser:
 - settings/setup
 - public jobs
 - Werkstudent saved/applied state
+- gamification widget
+
+Moved to Supabase Edge Functions:
+
+- automatic scheduled job fetching
+- Werkstudent live search
+- news proxy
 
 Still needs Supabase Edge Functions or another replacement:
 
-- Werkstudent live search
-- news proxy
-- gamification widget
 - admin/contact inbox
-- automatic scheduled job fetching
