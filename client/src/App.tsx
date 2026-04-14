@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { AdminRoute } from './routes/AdminRoute';
+import { OnboardingRedirect } from './routes/OnboardingRedirect';
 import { AppLayout } from './components/layout/AppLayout';
 
 const LoginPage         = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
@@ -31,7 +32,9 @@ const AdminLoginPage    = lazy(() => import('./pages/AdminLoginPage').then(m => 
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute>
-    <AppLayout>{children}</AppLayout>
+    <OnboardingRedirect>
+      <AppLayout>{children}</AppLayout>
+    </OnboardingRedirect>
   </ProtectedRoute>
 );
 
