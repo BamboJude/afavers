@@ -21,6 +21,13 @@ const LOCATION_PRESETS = [
   'Hannover', 'Nürnberg', 'Bremen', 'Dresden', 'Remote',
 ];
 
+const JOB_TYPE_PRESETS = [
+  { label: 'Full-time', keywords: 'full-time,vollzeit' },
+  { label: 'Werkstudent', keywords: 'werkstudent,working student,studentische hilfskraft' },
+  { label: 'Internship', keywords: 'praktikum,internship,trainee' },
+  { label: 'Remote', keywords: 'remote,homeoffice,hybrid' },
+];
+
 const TOTAL_STEPS = 3;
 
 const ProgressDots = ({ current }: { current: number }) => (
@@ -46,6 +53,7 @@ export const SetupPage = () => {
   const [locations, setLocations] = useState('');
   const [englishOnly, setEnglishOnly] = useState(false);
   const [selectedField, setSelectedField] = useState<string | null>(null);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const selectedCities = locations.split(',').map(l => l.trim()).filter(Boolean);
@@ -63,11 +71,25 @@ export const SetupPage = () => {
     }
   };
 
+  const toggleType = (label: string) => {
+    setSelectedTypes(prev => prev.includes(label)
+      ? prev.filter(item => item !== label)
+      : [...prev, label]);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
+      const typeKeywords = JOB_TYPE_PRESETS
+        .filter(type => selectedTypes.includes(type.label))
+        .map(type => type.keywords)
+        .join(',');
+      const languageKeywords = englishOnly ? 'english,english speaking,international' : '';
+      const resolvedKeywords = [keywords.trim(), typeKeywords, languageKeywords]
+        .filter(Boolean)
+        .join(',');
       await settingsService.save({
-        keywords: keywords.trim() || 'developer,analyst,engineer',
+        keywords: resolvedKeywords || 'developer,analyst,engineer',
         locations: locations.trim() || 'Berlin,München,Hamburg',
       });
       markSetupSeen(userId);
@@ -170,6 +192,28 @@ export const SetupPage = () => {
                   className="w-full px-3 py-2.5 border border-[#dfe3eb] rounded-xl focus:ring-2 focus:ring-[#16a34a] focus:border-transparent outline-none text-[13px] resize-none text-[#0a1a25] bg-[#f4f6fa]"
                   placeholder="e.g. project manager, analyst, Ingenieur"
                 />
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-[12px] font-black text-[#6f839c] uppercase tracking-wide mb-2">
+                  Job types
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {JOB_TYPE_PRESETS.map(type => (
+                    <button
+                      key={type.label}
+                      type="button"
+                      onClick={() => toggleType(type.label)}
+                      className={`px-3 py-1.5 rounded-full text-[12px] font-bold border-2 transition-all ${
+                        selectedTypes.includes(type.label)
+                          ? 'bg-[#0a1a25] text-white border-[#0a1a25]'
+                          : 'bg-white text-[#223a5a] border-[#dfe3eb] hover:border-[#0a1a25]'
+                      }`}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="flex justify-between items-center mt-6">

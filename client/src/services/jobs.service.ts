@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import type { Job, JobsResponse, JobFilters, DashboardStats, FollowUpAlert, AnalyticsData } from '../types';
+import { settingsService } from './settings.service';
 
 type UserJobOverlay = Partial<Pick<Job,
   'status' | 'notes' | 'cover_letter' | 'applied_date' | 'follow_up_date' | 'interview_date' | 'is_hidden'
@@ -10,6 +11,8 @@ type UserJobOverlay = Partial<Pick<Job,
 };
 
 const TRACKED_STATUSES = ['saved', 'applied', 'interviewing', 'offered', 'rejected'];
+const STUDENT_TERMS = ['werkstudent', 'working student', 'studentische', 'student assistant', 'praktikum', 'internship'];
+const REMOTE_TERMS = ['remote', 'homeoffice', 'home office', 'hybrid', 'mobiles arbeiten'];
 
 function getUserId(): number {
   const userId = useAuthStore.getState().user?.id;
@@ -46,6 +49,66 @@ function mergeJob(job: any, overlay?: UserJobOverlay): Job {
   };
 }
 
+function splitTerms(value: string): string[] {
+  return value
+    .split(',')
+    .map((term) => term.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function containsAny(text: string, terms: string[]): boolean {
+  return terms.some((term) => text.includes(term));
+}
+
+function scoreJob(job: Job, keywords: string[], locations: string[]): Job {
+  const text = `${job.title} ${job.company} ${job.location} ${job.description}`.toLowerCase();
+  const reasons: string[] = [];
+  let score = 20;
+
+  const keywordHits = keywords.filter((term) => text.includes(term));
+  if (keywordHits.length > 0) {
+    score += Math.min(35, keywordHits.length * 12);
+    reasons.push(`${keywordHits.slice(0, 2).join(', ')} match`);
+  }
+
+  const locationHits = locations.filter((term) => job.location?.toLowerCase().includes(term));
+  if (locationHits.length > 0) {
+    score += 20;
+    reasons.push(`${locationHits[0]} location`);
+  }
+
+  if (job.language === 'en') {
+    score += 10;
+    reasons.push('English');
+  }
+
+  if (containsAny(text, REMOTE_TERMS)) {
+    score += 10;
+    reasons.push('Remote-friendly');
+  }
+
+  if (containsAny(text, STUDENT_TERMS)) {
+    score += 8;
+    reasons.push('Werkstudent');
+  }
+
+  if (job.posted_date) {
+    const ageDays = Math.floor((Date.now() - new Date(job.posted_date).getTime()) / 86400000);
+    if (ageDays <= 7) {
+      score += 10;
+      reasons.push('Fresh');
+    } else if (ageDays <= 30) {
+      score += 5;
+    }
+  }
+
+  return {
+    ...job,
+    match_score: Math.min(100, score),
+    match_reasons: reasons.slice(0, 3),
+  };
+}
+
 async function getUserOverlays(userId: number): Promise<Map<number, UserJobOverlay>> {
   const { data, error } = await supabase
     .from('user_jobs')
@@ -68,19 +131,20 @@ function applyFilters(jobs: Job[], filters?: JobFilters): Job[] {
   if (filters?.language) {
     rows = rows.filter((job) => job.language === filters.language);
   }
+  if (filters?.englishOnly) {
+    rows = rows.filter((job) => job.language === 'en');
+  }
   if (filters?.remoteOnly) {
-    rows = rows.filter((job) => `${job.location} ${job.title} ${job.description}`.toLowerCase().includes('remote'));
+    rows = rows.filter((job) => containsAny(`${job.location} ${job.title} ${job.description}`.toLowerCase(), REMOTE_TERMS));
   }
   if (filters?.studentOnly) {
     rows = rows.filter((job) => {
       const text = `${job.title} ${job.company} ${job.description}`.toLowerCase();
-      return text.includes('werkstudent') ||
-        text.includes('working student') ||
-        text.includes('studentische') ||
-        text.includes('student assistant') ||
-        text.includes('praktikum') ||
-        text.includes('internship');
+      return containsAny(text, STUDENT_TERMS);
     });
+  }
+  if (filters?.highMatchOnly) {
+    rows = rows.filter((job) => (job.match_score ?? 0) >= 70);
   }
   if (filters?.location) {
     const locations = filters.location.split('|').map((value) => value.trim().toLowerCase()).filter(Boolean);
@@ -103,6 +167,10 @@ function applyFilters(jobs: Job[], filters?: JobFilters): Job[] {
   rows.sort((a, b) => {
     const av = (a as any)[sortBy] ?? '';
     const bv = (b as any)[sortBy] ?? '';
+    if (typeof av === 'number' || typeof bv === 'number') {
+      const result = Number(av) - Number(bv);
+      return sortOrder === 'ASC' ? result : -result;
+    }
     const result = String(av).localeCompare(String(bv));
     return sortOrder === 'ASC' ? result : -result;
   });
@@ -112,13 +180,16 @@ function applyFilters(jobs: Job[], filters?: JobFilters): Job[] {
 
 async function getMergedJobs(): Promise<Job[]> {
   const userId = getUserId();
-  const [{ data: jobs, error }, overlays] = await Promise.all([
+  const [{ data: jobs, error }, overlays, settings] = await Promise.all([
     supabase.from('jobs').select('*').order('created_at', { ascending: false }).limit(1000),
     getUserOverlays(userId),
+    settingsService.get().catch(() => ({ keywords: '', locations: '' })),
   ]);
 
   if (error) throw new Error(error.message);
-  return (jobs ?? []).map((job) => mergeJob(job, overlays.get(job.id)));
+  const keywords = splitTerms(settings.keywords);
+  const locations = splitTerms(settings.locations);
+  return (jobs ?? []).map((job) => scoreJob(mergeJob(job, overlays.get(job.id)), keywords, locations));
 }
 
 async function upsertOverlay(id: number, values: Partial<UserJobOverlay>): Promise<Job> {
