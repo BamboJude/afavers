@@ -1,26 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuthStore } from '../store/authStore';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
-
-interface WerkstudentJob {
-  refnr: string;
-  title: string;
-  company: string;
-  location: string;
-  postedDate?: string;
-  url: string;
-}
-
-interface SearchResult {
-  jobs: WerkstudentJob[];
-  total: number;
-  searchTerm: string;
-  locations: string[];
-  userKeywords: string[];
-}
-
-type JobStatus = 'saved' | 'applied' | null;
+import {
+  werkstudentService,
+  type SearchResult,
+  type WerkstudentJob,
+  type WerkstudentStatus,
+} from '../services/werkstudent.service';
 
 const CARD_GRADIENTS = [
   'from-emerald-500 to-teal-600',
@@ -54,7 +38,7 @@ const JobCard = ({
 }: {
   job: WerkstudentJob;
   index: number;
-  status: JobStatus;
+  status: WerkstudentStatus;
   onSave: () => void;
   onApply: () => void;
   onUnsave: () => void;
@@ -147,55 +131,38 @@ const JobCard = ({
 };
 
 export const WerkstudentPage = () => {
-  const { token } = useAuthStore();
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [location, setLocation] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [statusMap, setStatusMap] = useState<Record<string, JobStatus>>({});
-
-  const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const [statusMap, setStatusMap] = useState<Record<string, WerkstudentStatus>>({});
 
   const search = useCallback(async (kw: string, loc: string) => {
     setLoading(true);
     setError('');
     try {
-      const params = new URLSearchParams();
-      if (kw)  params.set('keyword',  kw);
-      if (loc) params.set('location', loc);
-      const res = await fetch(`${API_URL}/api/werkstudent?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Search failed');
-      setResult(data);
+      setResult(await werkstudentService.search(kw, loc));
     } catch (e: any) {
       setError(e.message || 'Search failed');
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   // Load saved statuses on mount
   useEffect(() => {
-    fetch(`${API_URL}/api/werkstudent/saved`, { headers: authHeaders })
-      .then(r => r.json())
+    werkstudentService.getSavedMap()
       .then(map => setStatusMap(map))
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, []);
 
   useEffect(() => { search('', ''); }, [search]);
 
   const handleSave = async (job: WerkstudentJob) => {
     setStatusMap(m => ({ ...m, [job.refnr]: 'saved' }));
     try {
-      await fetch(`${API_URL}/api/werkstudent/save`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify({ refnr: job.refnr, title: job.title, company: job.company, location: job.location, url: job.url, posted_date: job.postedDate }),
-      });
+      await werkstudentService.save(job, 'saved');
     } catch {
       setStatusMap(m => ({ ...m, [job.refnr]: null }));
     }
@@ -204,11 +171,7 @@ export const WerkstudentPage = () => {
   const handleApply = async (job: WerkstudentJob) => {
     setStatusMap(m => ({ ...m, [job.refnr]: 'applied' }));
     try {
-      await fetch(`${API_URL}/api/werkstudent/apply`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify({ refnr: job.refnr, title: job.title, company: job.company, location: job.location, url: job.url, posted_date: job.postedDate }),
-      });
+      await werkstudentService.save(job, 'applied');
     } catch {
       setStatusMap(m => ({ ...m, [job.refnr]: null }));
     }
@@ -218,10 +181,7 @@ export const WerkstudentPage = () => {
     const prev = statusMap[job.refnr] ?? null;
     setStatusMap(m => ({ ...m, [job.refnr]: null }));
     try {
-      await fetch(`${API_URL}/api/werkstudent/save/${encodeURIComponent(job.refnr)}`, {
-        method: 'DELETE',
-        headers: authHeaders,
-      });
+      await werkstudentService.remove(job.refnr);
     } catch {
       setStatusMap(m => ({ ...m, [job.refnr]: prev }));
     }

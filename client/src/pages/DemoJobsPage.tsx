@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
+import { getPublicJobs } from '../services/publicJobs.service';
 
 const CARD_COLORS = [
   'bg-emerald-600', 'bg-blue-600', 'bg-teal-600', 'bg-orange-500',
@@ -39,8 +38,7 @@ export const DemoJobsPage = () => {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    fetch(`${API_URL}/api/jobs/public`)
-      .then(r => r.json())
+    getPublicJobs()
       .then((data: PublicJob[]) => {
         const source = data.length > 0 ? data : SAMPLE_JOBS;
         setJobs(source.map((j, i) => ({ ...j, color: CARD_COLORS[i % CARD_COLORS.length] })));

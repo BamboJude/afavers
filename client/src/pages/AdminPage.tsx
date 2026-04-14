@@ -613,7 +613,7 @@ export const AdminPage = () => {
             </div>
           </div>
 
-          {inboxError && <p className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-3">{inboxError} — make sure SMTP_HOST, SMTP_USER, SMTP_PASS are set in Railway.</p>}
+          {inboxError && <p className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-3">{inboxError} — make sure SMTP_HOST, SMTP_USER, SMTP_PASS are set in your backend environment.</p>}
 
           {loading ? <SkeletonTable /> : inbox.length === 0 && !inboxError ? (
             <p className="text-sm text-gray-400 text-center py-12">Inbox is empty.</p>

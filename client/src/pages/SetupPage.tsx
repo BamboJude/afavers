@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import { settingsService } from '../services/settings.service';
 
 const FIELD_PRESETS = [
   { label: 'Tech / IT',     keywords: 'developer,software engineer,data analyst,DevOps,IT',            emoji: '💻' },
@@ -63,12 +63,10 @@ export const SetupPage = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/settings', {
+      await settingsService.save({
         keywords: keywords.trim() || 'developer,analyst,engineer',
         locations: locations.trim() || 'Berlin,München,Hamburg',
       });
-      // Kick off fetch in background — don't wait
-      api.post('/jobs/fetch', {}).catch(() => {});
       navigate('/dashboard');
     } catch {
       navigate('/dashboard');

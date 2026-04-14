@@ -30,7 +30,8 @@ export const RegisterPage = () => {
     setLoading(true);
     try {
       await register(email, password);
-      navigate('/setup');
+      const isAuthenticated = useAuthStore.getState().isAuthenticated;
+      navigate(isAuthenticated ? '/setup' : '/login');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {

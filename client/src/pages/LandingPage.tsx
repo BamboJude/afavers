@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { getPublicJobs } from '../services/publicJobs.service';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
 const CARD_COLORS = ['bg-emerald-500','bg-blue-500','bg-violet-500','bg-orange-500','bg-cyan-500','bg-green-600','bg-pink-500','bg-amber-500','bg-teal-500','bg-indigo-500'];
 
 const SAMPLE_JOBS = [
@@ -282,8 +282,7 @@ export const LandingPage = () => {
   const ctaRef = useInView(0.3);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/jobs/public`)
-      .then(r => r.json())
+    getPublicJobs()
       .then((data: PublicJob[]) => {
         const src = data.length > 0 ? data : SAMPLE_JOBS;
         setJobs(src.map((j, i) => ({ ...j, color: CARD_COLORS[i % CARD_COLORS.length] })));

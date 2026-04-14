@@ -17,7 +17,7 @@ export async function sendMail({
   replyTo?: string;
 }): Promise<void> {
   if (!env.RESEND_API_KEY) {
-    throw new Error('RESEND_API_KEY not set — add it in Railway environment variables');
+    throw new Error('RESEND_API_KEY not set — add it in your backend environment variables');
   }
 
   const resend = new Resend(env.RESEND_API_KEY);

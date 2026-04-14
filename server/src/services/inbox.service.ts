@@ -104,7 +104,7 @@ function extractBody(raw: string): string {
 
 export async function fetchInbox(limit = 20): Promise<InboxEmail[]> {
   const client = getImapClient();
-  if (!client) throw new Error('IMAP not configured — set SMTP_HOST, SMTP_USER, SMTP_PASS on Railway');
+  if (!client) throw new Error('IMAP not configured — set SMTP_HOST, SMTP_USER, SMTP_PASS in your backend environment');
 
   const emails: InboxEmail[] = [];
 
