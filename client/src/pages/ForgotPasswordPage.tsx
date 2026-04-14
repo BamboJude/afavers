@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../services/api';
+import { supabase } from '../lib/supabase';
 
 export const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
@@ -13,10 +13,13 @@ export const ForgotPasswordPage = () => {
     setError('');
     setLoading(true);
     try {
-      await api.post('/auth/forgot-password', { email });
+      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
       setSubmitted(true);
-    } catch {
-      setError('Something went wrong. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }

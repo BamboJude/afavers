@@ -1,13 +1,9 @@
 import { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { settingsService, type Settings } from '../services/settings.service';
+import { supabase } from '../lib/supabase';
 import { useLanguage } from '../store/languageStore';
 import { useAuthStore } from '../store/authStore';
 import { usePreferencesStore, ALL_NEWS_TOPICS, type NewsTopic } from '../store/preferencesStore';
-
-interface Settings {
-  keywords: string;
-  locations: string;
-}
 
 const FEED_PRESETS = [
   { label: 'Tech / IT',    kw: ['developer', 'software engineer', 'data analyst', 'DevOps', 'IT'] },
@@ -49,19 +45,24 @@ export const SettingsPage = () => {
     }
     setPwSaving(true);
     try {
-      await api.patch('/auth/password', { currentPassword: pwForm.current, newPassword: pwForm.next });
+      const email = useAuthStore.getState().user?.email;
+      if (!email) throw new Error('You need to sign in again.');
+      const current = await supabase.auth.signInWithPassword({ email, password: pwForm.current });
+      if (current.error) throw current.error;
+      const { error } = await supabase.auth.updateUser({ password: pwForm.next });
+      if (error) throw error;
       setPwMsg({ text: t('pwChanged'), ok: true });
       setPwForm({ current: '', next: '', confirm: '' });
-    } catch (err: any) {
-      setPwMsg({ text: err?.response?.data?.error || t('pwChangeFailed'), ok: false });
+    } catch (err) {
+      setPwMsg({ text: err instanceof Error ? err.message : t('pwChangeFailed'), ok: false });
     } finally {
       setPwSaving(false);
     }
   };
 
   useEffect(() => {
-    api.get<Settings>('/settings').then(r => {
-      setSettings(r.data);
+    settingsService.get().then(data => {
+      setSettings(data);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -70,7 +71,7 @@ export const SettingsPage = () => {
     setSaving(true);
     setError('');
     try {
-      await api.put('/settings', settings);
+      await settingsService.save(settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch {

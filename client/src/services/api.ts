@@ -1,10 +1,9 @@
 import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
+import { API_BASE_URL } from '../config/api';
 
 // Create axios instance with default config
 export const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

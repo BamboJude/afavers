@@ -47,11 +47,11 @@ afavers fixes this by pulling everything into one dashboard automatically, letti
 |---|---|
 | Frontend | React 18 + TypeScript + Vite + Tailwind CSS |
 | State | Zustand (auth + language preference) |
-| Backend | Node.js + Express + TypeScript |
+| Backend | Supabase PostgreSQL + Supabase APIs |
 | Database | PostgreSQL (Supabase) |
-| Auth | JWT (7-day tokens) |
-| Automation | node-cron (every 2 hours) |
-| Hosting | Railway (API) + cPanel (frontend) |
+| Auth | Supabase Auth |
+| Automation | Supabase Cron / Edge Functions |
+| Hosting | Vercel (frontend) |
 
 ---
 
@@ -127,7 +127,7 @@ psql "$DATABASE_URL" < src/db/migrations/004_add_language.sql
 cd client
 npm install
 cp .env.example .env
-# Set VITE_API_URL=http://localhost:3000
+# Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
 npm run dev
 # Opens at http://localhost:5173
 ```
@@ -155,31 +155,33 @@ Visit `http://localhost:5173/register` and sign up.
 
 | Variable | Required | Description |
 |---|---|---|
-| `VITE_API_URL` | Yes | Backend API URL |
+| `VITE_SUPABASE_URL` | Yes | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anon key for browser access |
 
 ---
 
 ## Deploying to production
 
-### Backend (Railway)
+### Frontend (Vercel) + backend services (Supabase)
 
-1. Push to GitHub
-2. Create a project at [railway.app](https://railway.app) and connect your repo
-3. Add environment variables in the Railway dashboard
-4. Railway auto-deploys on every push to `main`
+1. Connect this GitHub repo to Vercel
+2. Add Supabase frontend env variables in Vercel
+3. Run `npm run build --workspace=client`
+4. Deploy from Vercel
+
+See `VERCEL_SUPABASE_SETUP.md` for the full Vercel + Supabase setup.
 
 ### Database (Supabase)
 
 1. Create a free project at [supabase.com](https://supabase.com)
 2. Run all four migration files via the SQL Editor
 
-### Frontend (cPanel / any static host)
+### Frontend (Vercel / any static host)
 
 ```bash
 cd client
-echo "VITE_API_URL=https://your-app.railway.app" > .env.production
 npm run build
-# Upload dist/ to your host's public_html
+# Vercel serves client/dist with SPA rewrites from vercel.json
 ```
 
 The `public/.htaccess` file in this repo handles SPA routing on Apache automatically.
@@ -196,8 +198,8 @@ Edit `server/src/services/fetchers/bundesagentur.fetcher.ts` to change your keyw
 
 - Designing a relational schema where jobs are shared globally but status/notes are per-user (via a `user_jobs` join table)
 - Building a language detection heuristic using stop-word frequency — no external library needed
-- Setting up automated background tasks with node-cron and keeping a free-tier backend alive with health-check pings
-- Deploying a full-stack app across three separate platforms (cPanel, Railway, Supabase) and wiring them together
+- Moving a full-stack app toward Supabase-backed frontend data access
+- Deploying a frontend on Vercel while keeping PostgreSQL data in Supabase
 - The value of building something you actually use every day — every bug hurts, which means every fix actually matters
 
 ---

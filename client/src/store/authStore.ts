@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '../lib/supabase';
 
 interface User {
   id: number;
@@ -16,30 +17,42 @@ interface AuthState {
   login: (email: string, password: string, adminKey?: string) => Promise<void>;
   loginDemo: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateActivity: () => void;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
-
-async function safeJson(response: Response) {
-  const text = await response.text();
-  return text ? JSON.parse(text) : {};
-}
-
-async function authRequest(path: string, email: string, password: string, adminKey?: string) {
-  const response = await fetch(`${API_URL}/api/auth/${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, ...(adminKey ? { adminKey } : {}) }),
-  });
-
-  if (!response.ok) {
-    const err = await safeJson(response);
-    throw new Error(err.error || `${path} failed`);
+async function getCurrentAppUser(isAdmin = false): Promise<User> {
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user?.email) {
+    throw new Error(authError?.message || 'No active Supabase session');
   }
 
-  return safeJson(response);
+  let { data, error } = await supabase
+    .from('users')
+    .select('id,email,is_admin')
+    .eq('auth_user_id', authData.user.id)
+    .maybeSingle();
+
+  if (error && !/auth_user_id/i.test(error.message)) throw new Error(error.message);
+  if (!data) {
+    const fallback = await supabase
+      .from('users')
+      .select('id,email,is_admin')
+      .ilike('email', authData.user.email)
+      .maybeSingle();
+    if (fallback.error) throw new Error(fallback.error.message);
+    data = fallback.data;
+  }
+
+  if (!data) {
+    throw new Error('Your Supabase account is not linked to an app profile yet. Run the Supabase Auth/RLS migration, then try again.');
+  }
+
+  return {
+    id: data.id,
+    email: data.email,
+    isAdmin: isAdmin && Boolean(data.is_admin),
+  };
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -52,30 +65,47 @@ export const useAuthStore = create<AuthState>()(
       lastActivity: null,
 
       login: async (email, password, adminKey?) => {
-        const data = await authRequest('login', email, password, adminKey);
-        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: false, lastActivity: Date.now() });
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.toLowerCase().trim(),
+          password,
+        });
+        if (error) throw new Error(error.message);
+        if (!data.session) throw new Error('Please confirm your email before signing in.');
+
+        const user = await getCurrentAppUser(Boolean(adminKey));
+        set({
+          user,
+          token: data.session.access_token,
+          isAuthenticated: true,
+          isDemo: false,
+          lastActivity: Date.now(),
+        });
       },
 
       loginDemo: async () => {
-        const response = await fetch(`${API_URL}/api/auth/demo`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        if (!response.ok) {
-          const err = await safeJson(response);
-          throw new Error(err.error || 'Demo login failed');
-        }
-        const data = await safeJson(response);
-        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: true, lastActivity: Date.now() });
+        throw new Error('Demo mode is temporarily unavailable while the backend moves to Supabase.');
       },
 
       register: async (email, password) => {
-        await authRequest('register', email, password);
-        const data = await authRequest('login', email, password);
-        set({ user: data.user, token: data.token, isAuthenticated: true, isDemo: false, lastActivity: Date.now() });
+        const { data, error } = await supabase.auth.signUp({
+          email: email.toLowerCase().trim(),
+          password,
+        });
+        if (error) throw new Error(error.message);
+        if (!data.session) return;
+
+        const user = await getCurrentAppUser();
+        set({
+          user,
+          token: data.session.access_token,
+          isAuthenticated: true,
+          isDemo: false,
+          lastActivity: Date.now(),
+        });
       },
 
-      logout: () => {
+      logout: async () => {
+        await supabase.auth.signOut();
         set({ user: null, token: null, isAuthenticated: false, isDemo: false, lastActivity: null });
       },
 
@@ -86,3 +116,40 @@ export const useAuthStore = create<AuthState>()(
     { name: 'auth-storage' }
   )
 );
+
+supabase.auth.getSession().then(async ({ data }) => {
+  if (!data.session) return;
+  try {
+    const user = await getCurrentAppUser();
+    useAuthStore.setState({
+      user,
+      token: data.session.access_token,
+      isAuthenticated: true,
+      isDemo: false,
+      lastActivity: Date.now(),
+    });
+  } catch {
+    await supabase.auth.signOut();
+    useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isDemo: false, lastActivity: null });
+  }
+});
+
+supabase.auth.onAuthStateChange(async (_event, session) => {
+  if (!session) {
+    useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isDemo: false, lastActivity: null });
+    return;
+  }
+
+  try {
+    const user = await getCurrentAppUser();
+    useAuthStore.setState({
+      user,
+      token: session.access_token,
+      isAuthenticated: true,
+      isDemo: false,
+      lastActivity: Date.now(),
+    });
+  } catch {
+    useAuthStore.setState({ token: session.access_token, isAuthenticated: false });
+  }
+});

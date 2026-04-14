@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { api } from '../services/api';
+import { useNavigate, Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export const ResetPasswordPage = () => {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('token') || '';
   const navigate = useNavigate();
 
   const [password, setPassword] = useState('');
@@ -12,21 +10,6 @@ export const ResetPasswordPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-
-  if (!token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-blue-50 to-indigo-100">
-        <div className="max-w-md w-full mx-4 bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="text-4xl mb-4">⚠️</div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Invalid Link</h1>
-          <p className="text-gray-500 text-sm mb-6">This reset link is missing a token. Please request a new one.</p>
-          <Link to="/forgot-password" className="text-green-600 hover:text-green-700 font-medium text-sm">
-            Request new link
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,12 +24,12 @@ export const ResetPasswordPage = () => {
     }
     setLoading(true);
     try {
-      await api.post('/auth/reset-password', { token, newPassword: password });
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
       setSuccess(true);
       setTimeout(() => navigate('/login'), 3000);
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      setError(msg || 'Reset link is invalid or has expired.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Reset link is invalid or has expired.');
     } finally {
       setLoading(false);
     }

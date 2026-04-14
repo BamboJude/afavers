@@ -1,5 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
-const BASE = `${API_URL}/api/news`;
+import { apiUrl } from '../config/api';
+
+const BASE = apiUrl('/api/news');
 
 export interface NewsItem {
   sophoraId: string;

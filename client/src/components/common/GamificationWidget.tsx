@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://server-production-ebd2b.up.railway.app';
+import { apiUrl } from '../../config/api';
 
 interface Mission {
   id: number;
@@ -74,7 +73,7 @@ export const GamificationWidget = () => {
 
   useEffect(() => {
     if (isDemo || !token) { setLoading(false); return; }
-    fetch(`${API_URL}/api/gamification`, {
+    fetch(apiUrl('/api/gamification'), {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.ok ? r.json() : r.json().then((e: any) => Promise.reject(e?.error || 'Failed')))
