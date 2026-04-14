@@ -1,6 +1,5 @@
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
-import { apiUrl } from '../config/api';
 
 export interface WerkstudentJob {
   refnr: string;
@@ -29,16 +28,11 @@ function getUserId(): number {
 
 export const werkstudentService = {
   async search(keyword: string, location: string): Promise<SearchResult> {
-    const token = useAuthStore.getState().token;
-    const params = new URLSearchParams();
-    if (keyword) params.set('keyword', keyword);
-    if (location) params.set('location', location);
-
-    const response = await fetch(apiUrl(`/api/werkstudent?${params}`), {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    const { data, error } = await supabase.functions.invoke<SearchResult>('werkstudent-search', {
+      body: { keyword, location },
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Search failed');
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('Search failed');
     return data;
   },
 

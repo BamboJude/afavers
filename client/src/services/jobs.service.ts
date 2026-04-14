@@ -280,10 +280,20 @@ export const jobsService = {
   },
 
   async fetchJobs(): Promise<{ success: boolean; message: string; inserted: number }> {
+    const { data, error } = await supabase.functions.invoke<{
+      success: boolean;
+      inserted: number;
+      updated?: number;
+      total?: number;
+      error?: string;
+    }>('fetch-jobs', { body: {} });
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('Fetch failed');
+    if (!data.success) throw new Error(data.error || 'Fetch failed');
     return {
-      success: false,
-      message: 'Manual job fetching will move to a Supabase Edge Function.',
-      inserted: 0,
+      success: true,
+      message: 'Job fetch completed',
+      inserted: data.inserted ?? 0,
     };
   },
 
