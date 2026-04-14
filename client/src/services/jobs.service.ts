@@ -71,6 +71,17 @@ function applyFilters(jobs: Job[], filters?: JobFilters): Job[] {
   if (filters?.remoteOnly) {
     rows = rows.filter((job) => `${job.location} ${job.title} ${job.description}`.toLowerCase().includes('remote'));
   }
+  if (filters?.studentOnly) {
+    rows = rows.filter((job) => {
+      const text = `${job.title} ${job.company} ${job.description}`.toLowerCase();
+      return text.includes('werkstudent') ||
+        text.includes('working student') ||
+        text.includes('studentische') ||
+        text.includes('student assistant') ||
+        text.includes('praktikum') ||
+        text.includes('internship');
+    });
+  }
   if (filters?.location) {
     const locations = filters.location.split('|').map((value) => value.trim().toLowerCase()).filter(Boolean);
     rows = rows.filter((job) => locations.some((location) => job.location?.toLowerCase().includes(location)));
