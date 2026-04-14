@@ -74,4 +74,5 @@ export interface JobFilters {
   dateFrom?: string;
   remoteOnly?: boolean;
   location?: string;
+  studentOnly?: boolean;
 }

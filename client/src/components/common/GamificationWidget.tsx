@@ -1,51 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
-import { apiUrl } from '../../config/api';
-
-interface Mission {
-  id: number;
-  type: string;
-  title: string;
-  description: string;
-  target: number;
-  progress: number;
-  xp_reward: number;
-  status: 'active' | 'completed' | 'expired';
-  expires_at: string;
-}
-
-interface Achievement {
-  type: string;
-  title: string;
-  description: string;
-  xp_bonus: number;
-  unlocked_at: string;
-}
-
-interface GamificationProfile {
-  xp: {
-    level: number;
-    title: string;
-    totalXp: number;
-    xpToNext: number;
-    progressPct: number;
-    maxLevel: boolean;
-  };
-  streak: {
-    current: number;
-    best: number;
-    lastDate: string | null;
-  };
-  stats: {
-    totalApplications: number;
-    totalInterviews: number;
-    totalOffers: number;
-    totalFollowUps: number;
-    responseRate: number;
-  };
-  missions: Mission[];
-  achievements: Achievement[];
-}
+import { gamificationService, type GamificationProfile } from '../../services/gamification.service';
 
 const LEVEL_COLORS: Record<number, string> = {
   1: 'from-gray-400 to-gray-500',
@@ -65,22 +20,19 @@ const ACHIEVEMENT_ICONS: Record<string, string> = {
 };
 
 export const GamificationWidget = () => {
-  const { token, isDemo } = useAuthStore();
+  const { isAuthenticated, isDemo } = useAuthStore();
   const [profile, setProfile] = useState<GamificationProfile | null>(null);
   const [tab, setTab] = useState<'missions' | 'achievements'>('missions');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isDemo || !token) { setLoading(false); return; }
-    fetch(apiUrl('/api/gamification'), {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.ok ? r.json() : r.json().then((e: any) => Promise.reject(e?.error || 'Failed')))
-      .then(data => { if (data?.xp) setProfile(data); else setError('Unexpected response'); })
+    if (isDemo || !isAuthenticated) { setLoading(false); return; }
+    gamificationService.getProfile()
+      .then(data => { setProfile(data); setError(null); })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
-  }, [token, isDemo]);
+  }, [isAuthenticated, isDemo]);
 
   if (isDemo) return null;
 

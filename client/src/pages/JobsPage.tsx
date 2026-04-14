@@ -183,6 +183,7 @@ export const JobsPage = () => {
   const [sourceFilter, setSourceFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
+  const [studentOnly, setStudentOnly] = useState(searchParams.get('type') === 'werkstudent' || searchParams.get('student') === '1');
   const [locationFilter, setLocationFilter] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -206,7 +207,7 @@ export const JobsPage = () => {
   useEffect(() => {
     fetchJobs();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeTab, search, sortBy, sourceFilter, dateFilter, remoteOnly, locationFilter, page]);
+  }, [activeTab, search, sortBy, sourceFilter, dateFilter, remoteOnly, studentOnly, locationFilter, page]);
 
   const loadStats = async () => {
     try {
@@ -229,6 +230,7 @@ export const JobsPage = () => {
         source: sourceFilter || undefined,
         dateFrom: dateFilter || undefined,
         remoteOnly: remoteOnly || undefined,
+        studentOnly: studentOnly || undefined,
         location: locationFilter || undefined,
       };
       const response = await jobsService.getJobs(filters);
@@ -317,6 +319,7 @@ export const JobsPage = () => {
     setSourceFilter('');
     setDateFilter('');
     setRemoteOnly(false);
+    setStudentOnly(false);
     setLocationFilter('');
     setPage(1);
   };
@@ -327,11 +330,12 @@ export const JobsPage = () => {
     setSourceFilter('');
     setDateFilter('');
     setRemoteOnly(false);
+    setStudentOnly(false);
     setLocationFilter('');
     setPage(1);
   };
 
-  const filterCount = [search, sourceFilter, dateFilter, remoteOnly ? 'r' : '', locationFilter].filter(Boolean).length;
+  const filterCount = [search, sourceFilter, dateFilter, remoteOnly ? 'r' : '', studentOnly ? 's' : '', locationFilter].filter(Boolean).length;
 
   const totalPages = Math.ceil(total / LIMIT);
 
@@ -483,7 +487,7 @@ export const JobsPage = () => {
           ))}
         </div>
         {/* Remote filter pill */}
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
           <button
             onClick={() => { setRemoteOnly(r => !r); setPage(1); }}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
@@ -493,6 +497,16 @@ export const JobsPage = () => {
             }`}
           >
             {t('remote')}
+          </button>
+          <button
+            onClick={() => { setStudentOnly(value => !value); setPage(1); }}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
+              studentOnly
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
+            }`}
+          >
+            Werkstudent
           </button>
         </div>
         {/* Active filter indicator */}
