@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../services/api';
+import { supabase } from '../lib/supabase';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface PlatformStats {
@@ -111,39 +111,42 @@ export const AdminPage = () => {
 
   const loadStats = async () => {
     setLoading(true); setError('');
-    try { setStats((await api.get<PlatformStats>('/admin/stats')).data); }
-    catch { setError('Failed to load stats'); }
+    try {
+      const { data, error } = await supabase.rpc('admin_get_stats');
+      if (error) throw error;
+      setStats(data as PlatformStats);
+    } catch { setError('Failed to load stats. Run the admin SQL migration, then try again.'); }
     finally { setLoading(false); }
   };
 
   const loadUsers = async (page = 1, search = '') => {
     setLoading(true); setError('');
     try {
-      const res = await api.get<{ users: AdminUser[]; total: number; page: number; totalPages: number }>(
-        `/admin/users?page=${page}&search=${encodeURIComponent(search)}`
-      );
-      setUsers(res.data.users);
-      setUserTotal(res.data.total);
-      setUserTotalPages(res.data.totalPages);
-    } catch { setError('Failed to load users'); }
+      const { data, error } = await supabase.rpc('admin_list_users', { p_page: page, p_search: search });
+      if (error) throw error;
+      const payload = data as { users: AdminUser[]; total: number; page: number; totalPages: number };
+      setUsers(payload.users);
+      setUserTotal(payload.total);
+      setUserTotalPages(payload.totalPages);
+    } catch { setError('Failed to load users. Run the admin SQL migration, then try again.'); }
     finally { setLoading(false); }
   };
 
   const loadJobStats = async () => {
     setLoading(true); setError('');
-    try { setJobStats((await api.get<JobStats>('/admin/jobs/stats')).data); }
-    catch { setError('Failed to load job stats'); }
+    try {
+      const { data, error } = await supabase.rpc('admin_get_job_stats');
+      if (error) throw error;
+      setJobStats(data as JobStats);
+    } catch { setError('Failed to load job stats. Run the admin SQL migration, then try again.'); }
     finally { setLoading(false); }
   };
 
   const loadInbox = async () => {
     setLoading(true); setInboxError('');
-    try {
-      const res = await api.get<{ emails: InboxEmail[] }>('/admin/inbox');
-      setInbox(res.data.emails);
-    } catch (e: any) {
-      setInboxError(e?.response?.data?.error || 'Failed to load inbox');
-    } finally { setLoading(false); }
+    setInbox([]);
+    setInboxError('Inbox is unavailable after the backend migration. Use the contact messages tab for form submissions.');
+    setLoading(false);
   };
 
   const handleInboxReply = async (email: InboxEmail) => {
@@ -151,51 +154,48 @@ export const AdminPage = () => {
     if (!body) return;
     setSendingReply(email.uid);
     try {
-      await api.post('/admin/inbox/send', {
-        to: `${email.fromName} <${email.from}>`,
-        subject: `Re: ${email.subject}`,
-        body,
-      });
-      await api.patch(`/admin/inbox/${email.uid}/seen`, {});
-      setInbox(prev => prev.map(e => e.uid === email.uid ? { ...e, seen: true } : e));
+      window.location.href = `mailto:${email.from}?subject=${encodeURIComponent(`Re: ${email.subject}`)}&body=${encodeURIComponent(body)}`;
       setInboxReply(prev => ({ ...prev, [email.uid]: '' }));
-      flash('Reply sent ✓');
-    } catch (e: any) { flash(e?.response?.data?.error || 'Failed to send', true); }
-    finally { setSendingReply(null); }
+      flash('Opened your email app');
+    } finally {
+      setSendingReply(null);
+    }
   };
 
   const handleDeleteInbox = async (uid: number) => {
-    try {
-      await api.delete(`/admin/inbox/${uid}`);
-      setInbox(prev => prev.filter(e => e.uid !== uid));
-    } catch { flash('Delete failed', true); }
+    setInbox(prev => prev.filter(e => e.uid !== uid));
+    flash('Removed from this view');
   };
 
   const handleComposeSend = async () => {
     if (!compose.to || !compose.subject || !compose.body) return;
     setSending(true);
     try {
-      await api.post('/admin/inbox/send', compose);
+      window.location.href = `mailto:${compose.to}?subject=${encodeURIComponent(compose.subject)}&body=${encodeURIComponent(compose.body)}`;
       setCompose({ to: '', subject: '', body: '' });
       setComposing(false);
-      flash('Email sent ✓');
-    } catch (e: any) { flash(e?.response?.data?.error || 'Send failed', true); }
-    finally { setSending(false); }
+      flash('Opened your email app');
+    } finally {
+      setSending(false);
+    }
   };
 
   const loadMessages = async () => {
     setLoading(true); setError('');
     try {
-      const res = await api.get<{ messages: ContactMessage[]; unreadCount: number }>('/admin/messages');
-      setMessages(res.data.messages);
-      setUnreadCount(res.data.unreadCount);
-    } catch { setError('Failed to load messages'); }
+      const { data, error } = await supabase.rpc('admin_list_messages');
+      if (error) throw error;
+      const payload = data as { messages: ContactMessage[]; unreadCount: number };
+      setMessages(payload.messages);
+      setUnreadCount(payload.unreadCount);
+    } catch { setError('Failed to load messages. Run the admin SQL migration, then try again.'); }
     finally { setLoading(false); }
   };
 
   const handleMarkRead = async (id: number) => {
     try {
-      await api.patch(`/admin/messages/${id}/read`, {});
+      const { error } = await supabase.rpc('admin_mark_message_read', { p_id: id });
+      if (error) throw error;
       setMessages(prev => prev.map(m => m.id === id ? { ...m, is_read: true } : m));
       setUnreadCount(c => Math.max(0, c - 1));
     } catch { flash('Failed to mark as read', true); }
@@ -206,18 +206,22 @@ export const AdminPage = () => {
     if (!body) return;
     setReplying(id);
     try {
-      await api.post(`/admin/messages/${id}/reply`, { body });
+      const message = messages.find(m => m.id === id);
+      if (!message) return;
+      window.location.href = `mailto:${message.email}?subject=${encodeURIComponent(`Re: ${message.subject}`)}&body=${encodeURIComponent(body)}`;
+      await supabase.rpc('admin_mark_message_read', { p_id: id });
       setReplyText(prev => ({ ...prev, [id]: '' }));
       setMessages(prev => prev.map(m => m.id === id ? { ...m, is_read: true } : m));
       setUnreadCount(c => Math.max(0, c - 1));
-      flash('Reply sent ✓');
-    } catch (e: any) { flash(e?.response?.data?.error || 'Failed to send reply', true); }
+      flash('Opened your email app');
+    } catch { flash('Failed to prepare reply', true); }
     finally { setReplying(null); }
   };
 
   const handleDeleteMessage = async (id: number) => {
     try {
-      await api.delete(`/admin/messages/${id}`);
+      const { error } = await supabase.rpc('admin_delete_message', { p_id: id });
+      if (error) throw error;
       const msg = messages.find(m => m.id === id);
       if (msg && !msg.is_read) setUnreadCount(c => Math.max(0, c - 1));
       setMessages(prev => prev.filter(m => m.id !== id));
@@ -226,7 +230,8 @@ export const AdminPage = () => {
 
   const handleToggleAdmin = async (user: AdminUser) => {
     try {
-      await api.patch(`/admin/users/${user.id}/toggle-admin`, {});
+      const { error } = await supabase.rpc('admin_toggle_user_admin', { p_user_id: user.id });
+      if (error) throw error;
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, isAdmin: !u.isAdmin } : u));
       flash(user.isAdmin ? `${user.email} demoted` : `${user.email} promoted to admin`);
     } catch { flash('Action failed', true); }
@@ -234,7 +239,8 @@ export const AdminPage = () => {
 
   const handleDelete = async (user: AdminUser) => {
     try {
-      await api.delete(`/admin/users/${user.id}`);
+      const { error } = await supabase.rpc('admin_delete_user', { p_user_id: user.id });
+      if (error) throw error;
       setUsers(prev => prev.filter(u => u.id !== user.id));
       setUserTotal(t => t - 1);
       flash(`${user.email} deleted`);
