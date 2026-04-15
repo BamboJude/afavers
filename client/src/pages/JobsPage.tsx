@@ -32,7 +32,7 @@ const SourceBadge = ({ source }: { source: string }) => {
   );
 };
 
-const MatchBadge = ({ score, reasons = [] }: { score?: number; reasons?: string[] }) => {
+const MatchBadge = ({ score, reasons = [], gaps = [] }: { score?: number; reasons?: string[]; gaps?: string[] }) => {
   if (!score) return null;
   const strong = score >= 70;
   const good = score >= 50;
@@ -46,10 +46,36 @@ const MatchBadge = ({ score, reasons = [] }: { score?: number; reasons?: string[
   return (
     <span
       className={`px-2 py-0.5 rounded-md text-xs font-bold border ${cls}`}
-      title={reasons.join(' • ')}
+      title={[...reasons, ...gaps.map(gap => `Missing: ${gap}`)].join(' • ')}
     >
       {score}% {label}
     </span>
+  );
+};
+
+const MatchInsights = ({ score, reasons = [], gaps = [] }: { score?: number; reasons?: string[]; gaps?: string[] }) => {
+  if (!score || (!reasons.length && !gaps.length)) return null;
+  return (
+    <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <span className="text-xs font-bold text-gray-700">Why this job</span>
+        <span className={`text-xs font-black ${score >= 70 ? 'text-green-700' : score >= 50 ? 'text-blue-700' : 'text-gray-500'}`}>
+          {score}% match
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {reasons.slice(0, 3).map(reason => (
+          <span key={reason} className="px-2 py-0.5 rounded-full bg-white border border-green-100 text-[11px] font-semibold text-green-700">
+            {reason}
+          </span>
+        ))}
+        {gaps.slice(0, 2).map(gap => (
+          <span key={gap} className="px-2 py-0.5 rounded-full bg-white border border-amber-100 text-[11px] font-semibold text-amber-700">
+            Missing: {gap}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 };
 
@@ -664,7 +690,7 @@ export const JobsPage = () => {
                         )}
 
                         <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
-                          <MatchBadge score={job.match_score} reasons={job.match_reasons} />
+                          <MatchBadge score={job.match_score} reasons={job.match_reasons} gaps={job.match_gaps} />
                           <SourceBadge source={job.source} />
                           {job.posted_date && (
                             <span>{timeAgo(job.posted_date, lang)}</span>
@@ -678,6 +704,8 @@ export const JobsPage = () => {
                             <span className="text-green-600 font-medium">{job.salary}</span>
                           )}
                         </div>
+
+                        <MatchInsights score={job.match_score} reasons={job.match_reasons} gaps={job.match_gaps} />
 
                         {/* Actions — icon buttons on mobile (language-agnostic) */}
                         <div

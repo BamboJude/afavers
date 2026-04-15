@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
+import { useReminderStore, type ReminderType } from '../store/reminderStore';
 import type { Job, JobsResponse, JobFilters, DashboardStats, FollowUpAlert, AnalyticsData } from '../types';
+import { scheduleReminder } from './notification.service';
 import { settingsService } from './settings.service';
 
 type UserJobOverlay = Partial<Pick<Job,
@@ -13,6 +15,7 @@ type UserJobOverlay = Partial<Pick<Job,
 const TRACKED_STATUSES = ['saved', 'applied', 'interviewing', 'offered', 'rejected'];
 const STUDENT_TERMS = ['werkstudent', 'working student', 'studentische', 'student assistant', 'praktikum', 'internship'];
 const REMOTE_TERMS = ['remote', 'homeoffice', 'home office', 'hybrid', 'mobiles arbeiten'];
+const SENIOR_TERMS = ['senior', 'lead', 'leiter', 'leitung', 'principal', 'head of'];
 
 function getUserId(): number {
   const userId = useAuthStore.getState().user?.id;
@@ -63,23 +66,30 @@ function containsAny(text: string, terms: string[]): boolean {
 function scoreJob(job: Job, keywords: string[], locations: string[]): Job {
   const text = `${job.title} ${job.company} ${job.location} ${job.description}`.toLowerCase();
   const reasons: string[] = [];
+  const gaps: string[] = [];
   let score = 20;
 
   const keywordHits = keywords.filter((term) => text.includes(term));
   if (keywordHits.length > 0) {
     score += Math.min(35, keywordHits.length * 12);
-    reasons.push(`${keywordHits.slice(0, 2).join(', ')} match`);
+    reasons.push(`Keyword: ${keywordHits.slice(0, 2).join(', ')}`);
+  } else if (keywords.length > 0) {
+    gaps.push('No saved keyword hit');
   }
 
   const locationHits = locations.filter((term) => job.location?.toLowerCase().includes(term));
   if (locationHits.length > 0) {
     score += 20;
-    reasons.push(`${locationHits[0]} location`);
+    reasons.push(`Location: ${locationHits[0]}`);
+  } else if (locations.length > 0 && !containsAny(text, REMOTE_TERMS)) {
+    gaps.push('Outside your saved cities');
   }
 
   if (job.language === 'en') {
     score += 10;
-    reasons.push('English');
+    reasons.push('Working language: English');
+  } else if (keywords.some((term) => term.includes('english')) && job.language === 'de') {
+    gaps.push('Likely German-language role');
   }
 
   if (containsAny(text, REMOTE_TERMS)) {
@@ -90,6 +100,11 @@ function scoreJob(job: Job, keywords: string[], locations: string[]): Job {
   if (containsAny(text, STUDENT_TERMS)) {
     score += 8;
     reasons.push('Werkstudent');
+  }
+
+  if (containsAny(text, SENIOR_TERMS) && keywords.some((term) => ['junior', 'entry', 'werkstudent', 'praktikum', 'internship'].includes(term))) {
+    score -= 8;
+    gaps.push('May be senior-level');
   }
 
   if (job.posted_date) {
@@ -104,9 +119,45 @@ function scoreJob(job: Job, keywords: string[], locations: string[]): Job {
 
   return {
     ...job,
-    match_score: Math.min(100, score),
-    match_reasons: reasons.slice(0, 3),
+    match_score: Math.max(0, Math.min(100, score)),
+    match_reasons: reasons.slice(0, 5),
+    match_gaps: gaps.slice(0, 3),
   };
+}
+
+function dateInDays(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function addJobReminder(job: Pick<Job, 'id' | 'title' | 'company'>, type: ReminderType, title: string, date: string, notes?: string): void {
+  const store = useReminderStore.getState();
+  const existing = store.reminders.find((reminder) =>
+    reminder.linkedJobId === job.id &&
+    reminder.type === type &&
+    reminder.title === title &&
+    !reminder.completed
+  );
+  if (existing) return;
+
+  const id = store.addReminder({
+    title,
+    date,
+    time: type === 'interview' ? '09:00' : '10:00',
+    type,
+    linkedJobId: job.id,
+    notes: notes || `${job.company} · ${job.title}`,
+  });
+  scheduleReminder({ id, title, date, time: type === 'interview' ? '09:00' : '10:00', type, completed: false, linkedJobId: job.id, notes }).catch(() => {});
+}
+
+function scheduleApplicationReminders(job: Job, appliedDate: string): void {
+  addJobReminder(job, 'followup', `Follow up: ${job.company}`, dateInDays(7), '7 days after applying');
+  addJobReminder(job, 'followup', `Review response: ${job.company}`, dateInDays(14), 'If there is no answer, follow up or move it on the board.');
+  if (job.deadline && job.deadline > appliedDate) {
+    addJobReminder(job, 'deadline', `Deadline: ${job.company}`, job.deadline, job.title);
+  }
 }
 
 async function getUserOverlays(userId: number): Promise<Map<number, UserJobOverlay>> {
@@ -239,13 +290,14 @@ export const jobsService = {
 
   async getJob(id: number): Promise<Job> {
     const userId = getUserId();
-    const [{ data: job, error }, overlays] = await Promise.all([
+    const [{ data: job, error }, overlays, settings] = await Promise.all([
       supabase.from('jobs').select('*').eq('id', id).single(),
       getUserOverlays(userId),
+      settingsService.get().catch(() => ({ keywords: '', locations: '' })),
     ]);
 
     if (error) throw new Error(error.message);
-    return mergeJob(job, overlays.get(id));
+    return scoreJob(mergeJob(job, overlays.get(id)), splitTerms(settings.keywords), splitTerms(settings.locations));
   },
 
   async updateStatus(
@@ -254,11 +306,24 @@ export const jobsService = {
     appliedDate?: string,
     followUpDate?: string
   ): Promise<Job> {
-    return upsertOverlay(id, {
+    const existing = await jobsService.getJob(id);
+    const resolvedAppliedDate = status === 'applied' ? (appliedDate ?? existing.applied_date ?? new Date().toISOString().slice(0, 10)) : appliedDate;
+    const resolvedFollowUpDate = status === 'applied'
+      ? (followUpDate ?? existing.follow_up_date ?? dateInDays(7))
+      : followUpDate;
+    const updated = await upsertOverlay(id, {
       status,
-      applied_date: status === 'applied' ? (appliedDate ?? new Date().toISOString().slice(0, 10)) : appliedDate,
-      follow_up_date: followUpDate,
+      applied_date: resolvedAppliedDate,
+      follow_up_date: resolvedFollowUpDate,
     });
+    if (status === 'applied' && resolvedAppliedDate) scheduleApplicationReminders(updated, resolvedAppliedDate);
+    return updated;
+  },
+
+  async markApplySoon(id: number): Promise<Job> {
+    const updated = await jobsService.updateStatus(id, 'saved');
+    addJobReminder(updated, 'custom', `Apply soon: ${updated.company}`, dateInDays(1), updated.title);
+    return updated;
   },
 
   async updateNotes(id: number, notes: string): Promise<Job> {
@@ -302,7 +367,13 @@ export const jobsService = {
   },
 
   async updateInterviewDate(id: number, interviewDate: string | null): Promise<Job> {
-    return upsertOverlay(id, { interview_date: interviewDate ?? undefined });
+    const updated = await upsertOverlay(id, { interview_date: interviewDate ?? undefined });
+    if (interviewDate) {
+      const reminderDate = new Date(`${interviewDate}T00:00:00`);
+      reminderDate.setDate(reminderDate.getDate() - 1);
+      addJobReminder(updated, 'interview', `Prepare interview: ${updated.company}`, reminderDate.toISOString().slice(0, 10), updated.title);
+    }
+    return updated;
   },
 
   async getFollowUps(): Promise<FollowUpAlert[]> {

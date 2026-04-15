@@ -27,6 +27,7 @@ export interface Job {
   updated_at: string;
   match_score?: number;
   match_reasons?: string[];
+  match_gaps?: string[];
 }
 
 export interface DashboardStats {
