@@ -5,7 +5,6 @@ import { useAuthStore } from '../store/authStore';
 export const AdminLoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [adminKey, setAdminKey] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +16,7 @@ export const AdminLoginPage = () => {
     setError('');
     setLoading(true);
     try {
-      await login(email, password, adminKey);
+      await login(email, password);
       const user = useAuthStore.getState().user;
       if (!user?.isAdmin) {
         setError('Invalid admin credentials.');
@@ -42,7 +41,7 @@ export const AdminLoginPage = () => {
             </svg>
           </div>
           <h1 className="text-xl font-bold text-white">Admin Access</h1>
-          <p className="text-sm text-gray-500 mt-1">Restricted area</p>
+          <p className="text-sm text-gray-500 mt-1">Admin accounts only</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -64,21 +63,11 @@ export const AdminLoginPage = () => {
             autoComplete="off"
             className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
           />
-          <input
-            type="password"
-            value={adminKey}
-            onChange={e => setAdminKey(e.target.value)}
-            placeholder="Admin key"
-            required
-            autoComplete="off"
-            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
-          />
-
           {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
           <button
             type="submit"
-            disabled={loading || !email || !password || !adminKey}
+            disabled={loading || !email || !password}
             className="w-full py-3 bg-red-700 hover:bg-red-600 disabled:opacity-40 text-white font-semibold rounded-xl text-sm transition"
           >
             {loading ? 'Verifying…' : 'Enter'}

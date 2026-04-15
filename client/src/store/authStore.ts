@@ -26,7 +26,7 @@ interface AuthState {
   updateActivity: () => void;
 }
 
-async function getCurrentAppUser(isAdmin = false, authUser?: SupabaseAuthUser): Promise<User> {
+async function getCurrentAppUser(authUser?: SupabaseAuthUser): Promise<User> {
   let currentAuthUser = authUser;
   if (!currentAuthUser) {
     const { data: authData, error: authError } = await supabase.auth.getUser();
@@ -60,7 +60,7 @@ async function getCurrentAppUser(isAdmin = false, authUser?: SupabaseAuthUser): 
   return {
     id: data.id,
     email: data.email,
-    isAdmin: isAdmin && Boolean(data.is_admin),
+    isAdmin: Boolean(data.is_admin),
   };
 }
 
@@ -73,7 +73,7 @@ export const useAuthStore = create<AuthState>()(
       isDemo: false,
       lastActivity: null,
 
-      login: async (email, password, adminKey?) => {
+      login: async (email, password, _adminKey?) => {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email.toLowerCase().trim(),
           password,
@@ -81,7 +81,7 @@ export const useAuthStore = create<AuthState>()(
         if (error) throw new Error(error.message);
         if (!data.session) throw new Error('Please confirm your email before signing in.');
 
-        const user = await getCurrentAppUser(Boolean(adminKey), data.user ?? undefined);
+        const user = await getCurrentAppUser(data.user ?? undefined);
         set({
           user,
           token: data.session.access_token,
@@ -103,7 +103,7 @@ export const useAuthStore = create<AuthState>()(
         if (error) throw new Error(error.message);
         if (!data.session) return;
 
-        const user = await getCurrentAppUser(false, data.user ?? undefined);
+        const user = await getCurrentAppUser(data.user ?? undefined);
         set({
           user,
           token: data.session.access_token,
@@ -129,7 +129,7 @@ export const useAuthStore = create<AuthState>()(
 supabase.auth.getSession().then(async ({ data }) => {
   if (!data.session) return;
   try {
-    const user = await getCurrentAppUser(false, data.session.user);
+    const user = await getCurrentAppUser(data.session.user);
     useAuthStore.setState({
       user,
       token: data.session.access_token,
@@ -152,7 +152,7 @@ supabase.auth.onAuthStateChange((_event, session) => {
   useAuthStore.setState({ token: session.access_token });
   setTimeout(async () => {
     try {
-      const user = await getCurrentAppUser(false, session.user);
+      const user = await getCurrentAppUser(session.user);
       useAuthStore.setState({
         user,
         token: session.access_token,
