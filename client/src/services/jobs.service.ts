@@ -1,18 +1,26 @@
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { useReminderStore, type ReminderType } from '../store/reminderStore';
-import type { Job, JobsResponse, JobFilters, DashboardStats, FollowUpAlert, AnalyticsData } from '../types';
+import type { Job, JobsResponse, JobFilters, DashboardStats, FollowUpAlert, AnalyticsData, JobHistoryEvent } from '../types';
 import { scheduleReminder } from './notification.service';
 import { settingsService } from './settings.service';
 
 type UserJobOverlay = Partial<Pick<Job,
-  'status' | 'notes' | 'cover_letter' | 'applied_date' | 'follow_up_date' | 'interview_date' | 'is_hidden'
+  'status' | 'notes' | 'cover_letter' | 'applied_date' | 'follow_up_date' | 'interview_date' | 'is_hidden' | 'checklist' | 'history'
 >> & {
   job_id: number;
   updated_at?: string;
 };
 
-const TRACKED_STATUSES = ['saved', 'applied', 'interviewing', 'offered', 'rejected'];
+const TRACKED_STATUSES = ['saved', 'preparing', 'applied', 'followup', 'interviewing', 'offered', 'rejected', 'archived'];
+export const APPLICATION_CHECKLIST = [
+  'CV tailored',
+  'Cover letter ready',
+  'Portfolio attached',
+  'Certificates attached',
+  'Application submitted',
+  'Follow-up sent',
+];
 const STUDENT_TERMS = ['werkstudent', 'working student', 'studentische', 'student assistant', 'praktikum', 'internship'];
 const REMOTE_TERMS = ['remote', 'homeoffice', 'home office', 'hybrid', 'mobiles arbeiten'];
 const SENIOR_TERMS = ['senior', 'lead', 'leiter', 'leitung', 'principal', 'head of'];
@@ -33,6 +41,8 @@ function defaultJob(job: any): Job {
     follow_up_date: job.follow_up_date ?? null,
     interview_date: job.interview_date ?? null,
     is_hidden: job.is_hidden ?? false,
+    checklist: job.checklist ?? {},
+    history: job.history ?? [],
   };
 }
 
@@ -48,6 +58,8 @@ function mergeJob(job: any, overlay?: UserJobOverlay): Job {
     follow_up_date: overlay.follow_up_date ?? base.follow_up_date,
     interview_date: overlay.interview_date ?? base.interview_date,
     is_hidden: overlay.is_hidden ?? base.is_hidden,
+    checklist: overlay.checklist ?? base.checklist ?? {},
+    history: overlay.history ?? base.history ?? [],
     updated_at: overlay.updated_at ?? base.updated_at,
   };
 }
@@ -163,11 +175,23 @@ function scheduleApplicationReminders(job: Job, appliedDate: string): void {
 async function getUserOverlays(userId: number): Promise<Map<number, UserJobOverlay>> {
   const { data, error } = await supabase
     .from('user_jobs')
-    .select('job_id,status,notes,cover_letter,applied_date,follow_up_date,interview_date,is_hidden,updated_at')
+    .select('job_id,status,notes,cover_letter,applied_date,follow_up_date,interview_date,is_hidden,checklist,history,updated_at')
     .eq('user_id', userId);
 
   if (error) throw new Error(error.message);
   return new Map((data ?? []).map((row) => [row.job_id, row as UserJobOverlay]));
+}
+
+function appendHistory(job: Job, label: string, type: JobHistoryEvent['type'] = 'status'): JobHistoryEvent[] {
+  const history = Array.isArray(job.history) ? job.history : [];
+  return [
+    ...history,
+    {
+      type,
+      label,
+      at: new Date().toISOString(),
+    },
+  ].slice(-80);
 }
 
 function applyFilters(jobs: Job[], filters?: JobFilters): Job[] {
@@ -266,10 +290,13 @@ export const jobsService = {
       total: jobs.filter((job) => !job.is_hidden).length,
       new: jobs.filter((job) => job.status === 'new').length,
       saved: jobs.filter((job) => job.status === 'saved').length,
+      preparing: jobs.filter((job) => job.status === 'preparing').length,
       applied: jobs.filter((job) => job.status === 'applied').length,
+      followup: jobs.filter((job) => job.status === 'followup').length,
       interviewing: jobs.filter((job) => job.status === 'interviewing').length,
       offered: jobs.filter((job) => job.status === 'offered').length,
       rejected: jobs.filter((job) => job.status === 'rejected').length,
+      archived: jobs.filter((job) => job.status === 'archived').length,
       new_today: jobs.filter((job) => job.created_at?.slice(0, 10) === today).length,
       applied_today: jobs.filter((job) => job.applied_date?.slice(0, 10) === today).length,
     };
@@ -308,16 +335,66 @@ export const jobsService = {
   ): Promise<Job> {
     const existing = await jobsService.getJob(id);
     const resolvedAppliedDate = status === 'applied' ? (appliedDate ?? existing.applied_date ?? new Date().toISOString().slice(0, 10)) : appliedDate;
-    const resolvedFollowUpDate = status === 'applied'
+    const resolvedFollowUpDate = (status === 'applied' || status === 'followup')
       ? (followUpDate ?? existing.follow_up_date ?? dateInDays(7))
       : followUpDate;
+    const label = `Moved to ${status}`;
     const updated = await upsertOverlay(id, {
       status,
       applied_date: resolvedAppliedDate,
       follow_up_date: resolvedFollowUpDate,
+      history: appendHistory(existing, label, 'status'),
     });
     if (status === 'applied' && resolvedAppliedDate) scheduleApplicationReminders(updated, resolvedAppliedDate);
     return updated;
+  },
+
+  async updateChecklist(id: number, checklist: Record<string, boolean>): Promise<Job> {
+    const existing = await jobsService.getJob(id);
+    return upsertOverlay(id, {
+      checklist,
+      history: appendHistory(existing, 'Updated application checklist', 'checklist'),
+    });
+  },
+
+  async createManualJob(input: {
+    title: string;
+    company: string;
+    location?: string;
+    url?: string;
+    description?: string;
+    salary?: string;
+  }): Promise<Job> {
+    const userId = getUserId();
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('jobs')
+      .insert({
+        external_id: `manual_${userId}_${Date.now()}`,
+        title: input.title.trim(),
+        company: input.company.trim(),
+        location: input.location?.trim() || 'Not specified',
+        description: input.description?.trim() || '',
+        url: input.url?.trim() || '',
+        source: 'manual',
+        posted_date: now.slice(0, 10),
+        salary: input.salary?.trim() || null,
+        owner_user_id: userId,
+        is_manual: true,
+      })
+      .select('*')
+      .single();
+
+    if (error) throw new Error(error.message);
+    const { error: overlayError } = await supabase.from('user_jobs').upsert({
+      user_id: userId,
+      job_id: data.id,
+      status: 'saved',
+      history: [{ type: 'manual', label: 'Added manually', at: now }],
+      updated_at: now,
+    }, { onConflict: 'user_id,job_id' });
+    if (overlayError) throw new Error(overlayError.message);
+    return jobsService.getJob(data.id);
   },
 
   async markApplySoon(id: number): Promise<Job> {
@@ -327,7 +404,8 @@ export const jobsService = {
   },
 
   async updateNotes(id: number, notes: string): Promise<Job> {
-    return upsertOverlay(id, { notes });
+    const existing = await jobsService.getJob(id);
+    return upsertOverlay(id, { notes, history: appendHistory(existing, 'Updated notes', 'note') });
   },
 
   async toggleHidden(id: number, isHidden: boolean): Promise<Job> {

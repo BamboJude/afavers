@@ -15,7 +15,7 @@ export interface Job {
   posted_date: string | null;
   deadline: string | null;
   salary: string | null;
-  status: 'new' | 'saved' | 'applied' | 'interviewing' | 'offered' | 'rejected';
+  status: 'new' | 'saved' | 'preparing' | 'applied' | 'followup' | 'interviewing' | 'offered' | 'rejected' | 'archived';
   notes: string | null;
   cover_letter: string | null;
   applied_date: string | null;
@@ -23,6 +23,10 @@ export interface Job {
   interview_date: string | null;
   is_hidden: boolean;
   language: 'en' | 'de' | null;
+  owner_user_id?: number | null;
+  is_manual?: boolean;
+  checklist?: Record<string, boolean>;
+  history?: JobHistoryEvent[];
   created_at: string;
   updated_at: string;
   match_score?: number;
@@ -30,14 +34,23 @@ export interface Job {
   match_gaps?: string[];
 }
 
+export interface JobHistoryEvent {
+  type: 'created' | 'status' | 'note' | 'checklist' | 'interview' | 'manual';
+  label: string;
+  at: string;
+}
+
 export interface DashboardStats {
   total: number;
   new: number;
   saved: number;
+  preparing: number;
   applied: number;
+  followup: number;
   interviewing: number;
   offered: number;
   rejected: number;
+  archived: number;
   new_today: number;
   applied_today: number;
 }

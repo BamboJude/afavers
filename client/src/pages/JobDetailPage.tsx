@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { jobsService } from '../services/jobs.service';
+import { APPLICATION_CHECKLIST, jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
 import { useLanguage } from '../store/languageStore';
 import DOMPurify from 'dompurify';
@@ -8,10 +8,13 @@ import DOMPurify from 'dompurify';
 const STATUS_OPTIONS: { value: Job['status']; labelKey: string; color: string; dot: string }[] = [
   { value: 'new',          labelKey: 'statusNew',          color: 'bg-blue-50 text-blue-700 border-blue-200',      dot: 'bg-blue-400' },
   { value: 'saved',        labelKey: 'statusSaved',        color: 'bg-yellow-50 text-yellow-700 border-yellow-200', dot: 'bg-yellow-400' },
+  { value: 'preparing',    labelKey: 'statusPreparing',    color: 'bg-blue-50 text-blue-700 border-blue-200',      dot: 'bg-blue-500' },
   { value: 'applied',      labelKey: 'statusApplied',      color: 'bg-green-50 text-green-700 border-green-200',   dot: 'bg-green-500' },
+  { value: 'followup',     labelKey: 'statusFollowup',     color: 'bg-orange-50 text-orange-700 border-orange-200', dot: 'bg-orange-500' },
   { value: 'interviewing', labelKey: 'statusInterviewing', color: 'bg-purple-50 text-purple-700 border-purple-200', dot: 'bg-purple-500' },
   { value: 'offered',      labelKey: 'statusOffered',      color: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
   { value: 'rejected',     labelKey: 'statusRejected',     color: 'bg-red-50 text-red-600 border-red-200',         dot: 'bg-red-400' },
+  { value: 'archived',     labelKey: 'statusArchived',     color: 'bg-gray-50 text-gray-600 border-gray-200',      dot: 'bg-gray-400' },
 ];
 
 const isHtml = (str: string) => /<[a-z][\s\S]*>/i.test(str);
@@ -30,6 +33,7 @@ export const JobDetailPage = () => {
   const [interviewDate, setInterviewDate] = useState('');
   const [savingInterviewDate, setSavingInterviewDate] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [updatingChecklist, setUpdatingChecklist] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
 
   useEffect(() => {
@@ -108,6 +112,22 @@ export const JobDetailPage = () => {
     }
   };
 
+  const handleChecklistToggle = async (item: string) => {
+    if (!job) return;
+    const checklist = { ...(job.checklist ?? {}), [item]: !(job.checklist ?? {})[item] };
+    setJob({ ...job, checklist });
+    setUpdatingChecklist(true);
+    try {
+      const updated = await jobsService.updateChecklist(job.id, checklist);
+      setJob(updated);
+    } catch (error) {
+      console.error('Failed to update checklist:', error);
+      fetchJob();
+    } finally {
+      setUpdatingChecklist(false);
+    }
+  };
+
   const handleHide = async () => {
     if (!job) return;
     await jobsService.toggleHidden(job.id, !job.is_hidden);
@@ -153,14 +173,16 @@ export const JobDetailPage = () => {
             {t('backToJobs')}
           </button>
           <div className="flex items-center gap-2">
-            <a
-              href={job.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition"
-            >
-              {t('applyNow')}
-            </a>
+            {job.url && (
+              <a
+                href={job.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition"
+              >
+                {t('applyNow')}
+              </a>
+            )}
             {job.status === 'saved' && (
               <button
                 onClick={() => handleStatusChange('new')}
@@ -264,6 +286,7 @@ export const JobDetailPage = () => {
             </div>
 
             {/* Apply CTA */}
+            {job.url && (
             <div className="flex justify-center">
               <a
                 href={job.url}
@@ -277,6 +300,7 @@ export const JobDetailPage = () => {
                 </svg>
               </a>
             </div>
+            )}
           </div>
 
           {/* RIGHT: Status + Notes + Cover Letter */}
@@ -300,6 +324,37 @@ export const JobDetailPage = () => {
                     {t(option.labelKey)}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Checklist */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-5">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('applicationChecklist')}</h2>
+                {updatingChecklist && <span className="text-xs text-gray-400">{t('saving')}</span>}
+              </div>
+              <div className="space-y-2">
+                {APPLICATION_CHECKLIST.map(item => {
+                  const checked = Boolean(job.checklist?.[item]);
+                  return (
+                    <button
+                      key={item}
+                      onClick={() => handleChecklistToggle(item)}
+                      className={`w-full flex items-center gap-3 text-left px-3 py-2 rounded-lg border transition ${
+                        checked
+                          ? 'bg-green-50 border-green-200 text-green-800'
+                          : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className={`w-5 h-5 rounded-md border flex items-center justify-center text-xs font-black ${
+                        checked ? 'bg-green-600 border-green-600 text-white' : 'border-gray-300 text-transparent'
+                      }`}>
+                        ✓
+                      </span>
+                      <span className="text-sm font-medium">{item}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -400,6 +455,26 @@ export const JobDetailPage = () => {
                   {savingCoverLetter ? t('saving') : t('saveDraft')}
                 </button>
               </div>
+            </div>
+
+            {/* Timeline */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-5">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('applicationTimeline')}</h2>
+              {job.history?.length ? (
+                <div className="space-y-3">
+                  {[...job.history].reverse().slice(0, 10).map((event, index) => (
+                    <div key={`${event.at}-${index}`} className="flex gap-3">
+                      <span className="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-gray-700">{event.label}</p>
+                        <p className="text-xs text-gray-400">{new Date(event.at).toLocaleString('de-DE')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400">{t('noTimelineYet')}</p>
+              )}
             </div>
           </div>
         </div>

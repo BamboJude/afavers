@@ -736,7 +736,7 @@ const JobStories = ({ jobs, onJobClick }: { jobs: Job[]; onJobClick: (id: number
 
 // ── Application board ─────────────────────────────────────────────────────────
 
-type BoardStatus = 'saved' | 'applied' | 'interviewing' | 'offered';
+type BoardStatus = 'saved' | 'preparing' | 'applied' | 'followup' | 'interviewing' | 'offered';
 
 const STATUS_CONFIG: Record<BoardStatus, {
   label: string;
@@ -746,7 +746,9 @@ const STATUS_CONFIG: Record<BoardStatus, {
   leftBorder: string;
 }> = {
   saved:        { label: 'Saved',        bg: 'bg-amber-50',   text: 'text-amber-700',  dot: 'bg-amber-400',  leftBorder: '#d97706' },
+  preparing:    { label: 'Preparing',    bg: 'bg-blue-50',    text: 'text-blue-700',   dot: 'bg-blue-500',   leftBorder: '#2563eb' },
   applied:      { label: 'Applied',      bg: 'bg-green-50',   text: 'text-green-700',  dot: 'bg-green-500',  leftBorder: '#16a34a' },
+  followup:     { label: 'Follow-up',    bg: 'bg-orange-50',  text: 'text-orange-700', dot: 'bg-orange-500', leftBorder: '#ea580c' },
   interviewing: { label: 'Interviewing', bg: 'bg-purple-50',  text: 'text-purple-700', dot: 'bg-purple-500', leftBorder: '#7c3aed' },
   offered:      { label: 'Offered',      bg: 'bg-emerald-50', text: 'text-emerald-700',dot: 'bg-emerald-500',leftBorder: '#059669' },
 };
@@ -784,10 +786,12 @@ const ApplicationBoard = ({
   boardJobs: Record<BoardStatus, Job[]>;
   onJobClick: (id: number) => void;
 }) => {
-  const statuses: BoardStatus[] = ['saved', 'applied', 'interviewing', 'offered'];
+  const statuses: BoardStatus[] = ['saved', 'preparing', 'applied', 'followup', 'interviewing', 'offered'];
   const counts: Record<BoardStatus, number> = {
     saved:        stats.saved || 0,
+    preparing:    stats.preparing || 0,
     applied:      stats.applied || 0,
+    followup:     stats.followup || 0,
     interviewing: stats.interviewing || 0,
     offered:      stats.offered || 0,
   };
@@ -800,14 +804,14 @@ const ApplicationBoard = ({
   return (
     <div>
       {/* Pipeline strip */}
-      <div className="grid grid-cols-4 border-b border-gray-100">
+      <div className="grid grid-cols-3 sm:grid-cols-6 border-b border-gray-100">
         {statuses.map((status, i) => {
           const count = counts[status];
           const active = count > 0;
           return (
             <div
               key={status}
-              className={`flex flex-col items-center py-4 ${i < 3 ? 'border-r border-gray-100' : ''}`}
+              className={`flex flex-col items-center py-4 ${i < statuses.length - 1 ? 'border-r border-gray-100' : ''}`}
             >
               <span className={`text-[28px] font-black tabular-nums leading-none ${active ? 'text-[#0a1a25]' : 'text-[#c1cbd5]'}`}>
                 {count}
@@ -842,7 +846,9 @@ const ApplicationBoard = ({
 const PipelineFunnel = ({ stats }: { stats: DashboardStats }) => {
   const stages = [
     { label: 'Saved',       value: stats.saved || 0,        color: 'bg-amber-400',  text: 'text-amber-700',  light: 'bg-amber-50' },
+    { label: 'Preparing',   value: stats.preparing || 0,    color: 'bg-blue-500',   text: 'text-blue-700',   light: 'bg-blue-50' },
     { label: 'Applied',     value: stats.applied || 0,      color: 'bg-green-500',  text: 'text-green-700',  light: 'bg-green-50' },
+    { label: 'Follow-up',   value: stats.followup || 0,     color: 'bg-orange-500', text: 'text-orange-700', light: 'bg-orange-50' },
     { label: 'Interviewing',value: stats.interviewing || 0, color: 'bg-purple-500', text: 'text-purple-700', light: 'bg-purple-50' },
     { label: 'Offered',     value: stats.offered || 0,      color: 'bg-emerald-500',text: 'text-emerald-700',light: 'bg-emerald-50' },
   ];
@@ -1002,7 +1008,7 @@ export const DashboardPage = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [followUps, setFollowUps] = useState<FollowUpAlert[]>([]);
   const [upcomingInterviews, setUpcomingInterviews] = useState<Job[]>([]);
-  const [boardJobs, setBoardJobs] = useState<Record<BoardStatus, Job[]>>({ saved: [], applied: [], interviewing: [], offered: [] });
+  const [boardJobs, setBoardJobs] = useState<Record<BoardStatus, Job[]>>({ saved: [], preparing: [], applied: [], followup: [], interviewing: [], offered: [] });
   const [storyJobs, setStoryJobs] = useState<Job[]>([]);
   const { filterKeywords, filterEnabled, newsOnDashboard } = usePreferencesStore();
   const filteredStoryJobs = storyJobs.filter(j => jobMatchesFilter(j, filterKeywords, filterEnabled));
@@ -1033,7 +1039,7 @@ export const DashboardPage = () => {
       .then(r => setStoryJobs(r?.jobs ?? []))
       .catch(() => {});
 
-    const statuses: BoardStatus[] = ['saved', 'applied', 'interviewing', 'offered'];
+    const statuses: BoardStatus[] = ['saved', 'preparing', 'applied', 'followup', 'interviewing', 'offered'];
     Promise.all(
       statuses.map(status => jobsService.getJobs({ status, limit: 4 }).then(r => ({ status, jobs: r.jobs })))
     ).then(results => {
@@ -1071,7 +1077,7 @@ export const DashboardPage = () => {
 
   if (loading) return <DashboardSkeleton />;
 
-  const totalTracked = (stats?.saved || 0) + (stats?.applied || 0) + (stats?.interviewing || 0) + (stats?.offered || 0);
+  const totalTracked = (stats?.saved || 0) + (stats?.preparing || 0) + (stats?.applied || 0) + (stats?.followup || 0) + (stats?.interviewing || 0) + (stats?.offered || 0);
 
   return (
     <div className="bg-[#f4f6fa] min-h-screen" style={{ fontFamily: "'Figtree', system-ui, sans-serif" }}>
@@ -1383,4 +1389,3 @@ export const DashboardPage = () => {
     </div>
   );
 };
-
