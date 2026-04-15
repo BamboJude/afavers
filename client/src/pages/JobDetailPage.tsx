@@ -303,6 +303,32 @@ export const JobDetailPage = () => {
               </div>
             </div>
 
+            {/* Match explanation */}
+            {job.match_score && (
+              <div className="bg-white rounded-2xl border border-gray-200 p-5">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Why this job</h2>
+                  <span className={`text-sm font-black ${job.match_score >= 70 ? 'text-green-700' : job.match_score >= 50 ? 'text-blue-700' : 'text-gray-500'}`}>
+                    {job.match_score}% match
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {(job.match_reasons ?? []).map(reason => (
+                    <div key={reason} className="flex items-center gap-2 text-sm text-green-700">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                      {reason}
+                    </div>
+                  ))}
+                  {(job.match_gaps ?? []).map(gap => (
+                    <div key={gap} className="flex items-center gap-2 text-sm text-amber-700">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      Missing: {gap}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Interview date */}
             <div className="bg-white rounded-2xl border border-gray-200 p-5">
               <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('interviewDate')}</h2>

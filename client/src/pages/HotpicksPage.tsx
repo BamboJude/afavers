@@ -6,6 +6,7 @@ import { usePreferencesStore, jobMatchesFilter } from '../store/preferencesStore
 
 const BATCH_SIZE = 20;
 const SWIPE_THRESHOLD = 80;
+type SwipeDirection = 'left' | 'right' | 'up';
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
@@ -39,16 +40,19 @@ export const HotpicksPage = () => {
   const [queue, setQueue] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [exhausted, setExhausted] = useState(false);
-  const [lastAction, setLastAction] = useState<'saved' | 'passed' | null>(null);
+  const [lastAction, setLastAction] = useState<'saved' | 'passed' | 'soon' | null>(null);
+  const [lastSwiped, setLastSwiped] = useState<{ job: Job; direction: SwipeDirection } | null>(null);
+  const [sessionStats, setSessionStats] = useState({ saved: 0, passed: 0, soon: 0 });
 
   // Swipe state
   const [dragOffset, setDragOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
-  const [flying, setFlying] = useState<'left' | 'right' | null>(null);
+  const [flying, setFlying] = useState<SwipeDirection | null>(null);
   const startX = useRef(0);
   const startY = useRef(0);
   const lockedDir = useRef<'h' | 'v' | null>(null);
   const dragOffsetRef = useRef(0);
+  const dragYRef = useRef(0);
   const fetchingRef = useRef(false);
   const fetchOffsetRef = useRef(0);
 
@@ -69,6 +73,8 @@ export const HotpicksPage = () => {
       if (flying || queue.length === 0) return;
       if (e.key === 'ArrowRight' || e.key === 'd') triggerAction('right');
       if (e.key === 'ArrowLeft'  || e.key === 'a') triggerAction('left');
+      if (e.key === 'ArrowUp' || e.key === 'w') triggerAction('up');
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') handleUndo();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -82,7 +88,7 @@ export const HotpicksPage = () => {
         status: 'new',
         limit: BATCH_SIZE,
         offset: fetchOffsetRef.current,
-        sortBy: 'posted_date',
+        sortBy: 'match_score',
         sortOrder: 'DESC',
       });
       if (response.jobs.length === 0) {
@@ -106,10 +112,12 @@ export const HotpicksPage = () => {
     setLoading(true);
     fetchOffsetRef.current = 0;
     fetchingRef.current = false;
+    setLastSwiped(null);
+    setSessionStats({ saved: 0, passed: 0, soon: 0 });
     fetchMore();
   };
 
-  const triggerAction = (direction: 'left' | 'right') => {
+  const triggerAction = (direction: SwipeDirection) => {
     if (flying || queue.length === 0) return;
     setFlying(direction);
     const job = queue[0];
@@ -117,19 +125,47 @@ export const HotpicksPage = () => {
       setQueue(prev => prev.slice(1));
       setDragOffset(0);
       dragOffsetRef.current = 0;
+      dragYRef.current = 0;
       setFlying(null);
       setIsSwiping(false);
       lockedDir.current = null;
-      setLastAction(direction === 'right' ? 'saved' : 'passed');
+      setLastSwiped({ job, direction });
+      setSessionStats(prev => ({
+        saved: prev.saved + (direction === 'right' ? 1 : 0),
+        passed: prev.passed + (direction === 'left' ? 1 : 0),
+        soon: prev.soon + (direction === 'up' ? 1 : 0),
+      }));
+      setLastAction(direction === 'right' ? 'saved' : direction === 'up' ? 'soon' : 'passed');
       setTimeout(() => setLastAction(null), 1500);
       try {
         if (direction === 'right') {
           await jobsService.updateStatus(job.id, 'saved');
+        } else if (direction === 'up') {
+          await jobsService.markApplySoon(job.id);
         } else {
           await jobsService.toggleHidden(job.id, true);
         }
       } catch {}
     }, 320);
+  };
+
+  const handleUndo = async () => {
+    if (!lastSwiped || flying) return;
+    const { job, direction } = lastSwiped;
+    setQueue(prev => [job, ...prev.filter(item => item.id !== job.id)]);
+    setLastSwiped(null);
+    setSessionStats(prev => ({
+      saved: Math.max(0, prev.saved - (direction === 'right' ? 1 : 0)),
+      passed: Math.max(0, prev.passed - (direction === 'left' ? 1 : 0)),
+      soon: Math.max(0, prev.soon - (direction === 'up' ? 1 : 0)),
+    }));
+    try {
+      if (direction === 'left') {
+        await jobsService.toggleHidden(job.id, false);
+      } else {
+        await jobsService.updateStatus(job.id, 'new');
+      }
+    } catch {}
   };
 
   // Touch handlers
@@ -138,6 +174,7 @@ export const HotpicksPage = () => {
     startX.current = e.touches[0].clientX;
     startY.current = e.touches[0].clientY;
     lockedDir.current = null;
+    dragYRef.current = 0;
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
@@ -149,7 +186,10 @@ export const HotpicksPage = () => {
       if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
       lockedDir.current = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
     }
-    if (lockedDir.current === 'v') return;
+    if (lockedDir.current === 'v') {
+      dragYRef.current = dy;
+      return;
+    }
 
     setIsSwiping(true);
     dragOffsetRef.current = dx;
@@ -167,8 +207,13 @@ export const HotpicksPage = () => {
         return;
       }
     }
+    if (lockedDir.current === 'v' && dragYRef.current < -SWIPE_THRESHOLD) {
+      triggerAction('up');
+      return;
+    }
     setDragOffset(0);
     dragOffsetRef.current = 0;
+    dragYRef.current = 0;
     setIsSwiping(false);
     lockedDir.current = null;
   };
@@ -179,7 +224,9 @@ export const HotpicksPage = () => {
 
   const cardStyle = flying
     ? {
-        transform: `translateX(${flying === 'right' ? 700 : -700}px) rotate(${flying === 'right' ? 30 : -30}deg)`,
+        transform: flying === 'up'
+          ? 'translateY(-760px) scale(0.96)'
+          : `translateX(${flying === 'right' ? 700 : -700}px) rotate(${flying === 'right' ? 30 : -30}deg)`,
         transition: 'transform 0.32s ease',
         zIndex: 10,
       }
@@ -246,19 +293,30 @@ export const HotpicksPage = () => {
       <div className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
         <div>
           <h1 className="text-lg font-bold text-gray-900 flex items-center gap-1.5"><span className="text-rose-500"><IconFire size={20} /></span> Hot Picks</h1>
-          <p className="text-xs text-gray-400">{queue.length} fresh jobs</p>
+          <p className="text-xs text-gray-400">{queue.length} in today's deck</p>
         </div>
+        <button
+          onClick={handleUndo}
+          disabled={!lastSwiped || !!flying}
+          className="text-xs font-bold px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-500 disabled:opacity-30 hover:text-gray-900 transition"
+        >
+          Undo
+        </button>
         {lastAction && (
           <span className={`text-base font-bold px-4 py-1.5 rounded-full animate-pulse ${
-            lastAction === 'saved' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'
+            lastAction === 'saved' ? 'bg-yellow-100 text-yellow-700' : lastAction === 'soon' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
           }`}>
-            {lastAction === 'saved' ? <span className="flex items-center gap-1"><IconStar size={14} /> Saved!</span> : '✕ Passed'}
+            {lastAction === 'saved'
+              ? <span className="flex items-center gap-1"><IconStar size={14} /> Saved!</span>
+              : lastAction === 'soon'
+                ? 'Apply soon'
+                : '✕ Passed'}
           </span>
         )}
       </div>
 
       {/* Swipe hint (shows briefly at first) */}
-      <p className="text-center text-xs text-gray-400 mb-1 shrink-0">← Pass &nbsp;·&nbsp; Save ⭐ →</p>
+      <p className="text-center text-xs text-gray-400 mb-1 shrink-0">← Pass · Save ⭐ → · ↑ Apply soon</p>
 
       {/* Card stack */}
       <div className="flex-1 flex items-center justify-center px-5 relative min-h-0">
@@ -320,11 +378,7 @@ export const HotpicksPage = () => {
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${src.cls}`}>
                   {src.label}
                 </span>
-                {currentJob.posted_date && (
-                  <span className="text-xs text-gray-400">
-                    {new Date(currentJob.posted_date).toLocaleDateString('de-DE')}
-                  </span>
-                )}
+                <span className="text-xs font-black text-green-700">{currentJob.match_score ?? 0}% match</span>
               </div>
 
               {/* Title */}
@@ -339,6 +393,22 @@ export const HotpicksPage = () => {
               {currentJob.salary && (
                 <p className="text-sm font-bold text-green-600 mb-4">{currentJob.salary}</p>
               )}
+
+              <div className="mb-4 rounded-xl bg-green-50 border border-green-100 px-3 py-2">
+                <p className="text-xs font-black text-green-800 mb-1">Why this pick</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(currentJob.match_reasons ?? []).slice(0, 3).map(reason => (
+                    <span key={reason} className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white text-green-700 border border-green-100">
+                      {reason}
+                    </span>
+                  ))}
+                  {(currentJob.match_gaps ?? []).slice(0, 1).map(gap => (
+                    <span key={gap} className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white text-amber-700 border border-amber-100">
+                      Missing: {gap}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
               <div className="h-px bg-gray-100 mb-4" />
 
@@ -376,7 +446,7 @@ export const HotpicksPage = () => {
 
         <div className="text-center">
           <p className="text-xl font-bold text-gray-500 tabular-nums">{queue.length}</p>
-          <p className="text-sm text-gray-300 font-medium">left</p>
+          <p className="text-sm text-gray-300 font-medium">{sessionStats.saved} saved · {sessionStats.soon} soon</p>
         </div>
 
         {/* Save */}
@@ -386,6 +456,16 @@ export const HotpicksPage = () => {
           className="w-16 h-16 bg-yellow-400 rounded-full border-2 border-yellow-400 shadow-md flex items-center justify-center text-2xl hover:bg-yellow-500 active:scale-90 transition disabled:opacity-50"
         >
           ⭐
+        </button>
+      </div>
+
+      <div className="shrink-0 px-6 pb-3 -mt-3 flex justify-center">
+        <button
+          onClick={() => triggerAction('up')}
+          disabled={!!flying}
+          className="px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-black hover:bg-blue-100 active:scale-95 transition disabled:opacity-50"
+        >
+          Apply soon tomorrow
         </button>
       </div>
     </div>

@@ -22,13 +22,28 @@ const LOCATION_PRESETS = [
 ];
 
 const JOB_TYPE_PRESETS = [
+  { label: 'Junior', keywords: 'junior,entry level,berufseinsteiger' },
   { label: 'Full-time', keywords: 'full-time,vollzeit' },
   { label: 'Werkstudent', keywords: 'werkstudent,working student,studentische hilfskraft' },
   { label: 'Internship', keywords: 'praktikum,internship,trainee' },
+  { label: 'Thesis', keywords: 'abschlussarbeit,bachelorarbeit,masterarbeit,thesis' },
   { label: 'Remote', keywords: 'remote,homeoffice,hybrid' },
 ];
 
-const TOTAL_STEPS = 3;
+const LANGUAGE_PRESETS = [
+  { value: 'both', label: 'English + German', keywords: 'english,deutsch,german,bilingual,international' },
+  { value: 'en', label: 'English-friendly', keywords: 'english,english speaking,international' },
+  { value: 'de', label: 'German roles', keywords: 'deutsch,german,deutschsprachig' },
+];
+
+const WORK_STATUS_PRESETS = [
+  'EU / no sponsorship needed',
+  'Visa sponsorship helpful',
+  'Student visa',
+  'Blue Card path',
+];
+
+const TOTAL_STEPS = 4;
 
 const ProgressDots = ({ current }: { current: number }) => (
   <div className="flex items-center justify-center gap-2 mb-8">
@@ -51,7 +66,10 @@ export const SetupPage = () => {
   const [step, setStep] = useState(0);
   const [keywords, setKeywords] = useState('');
   const [locations, setLocations] = useState('');
-  const [englishOnly, setEnglishOnly] = useState(false);
+  const [languagePreference, setLanguagePreference] = useState('both');
+  const [radius, setRadius] = useState('25');
+  const [weeklyGoal, setWeeklyGoal] = useState('5');
+  const [workStatus, setWorkStatus] = useState('');
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -84,16 +102,28 @@ export const SetupPage = () => {
         .filter(type => selectedTypes.includes(type.label))
         .map(type => type.keywords)
         .join(',');
-      const languageKeywords = englishOnly ? 'english,english speaking,international' : '';
+      const languageKeywords = LANGUAGE_PRESETS.find(item => item.value === languagePreference)?.keywords ?? '';
+      const workKeywords = workStatus.includes('Visa') ? 'visa sponsorship,relocation' : '';
       const resolvedKeywords = [keywords.trim(), typeKeywords, languageKeywords]
+        .concat(workKeywords ? [workKeywords] : [])
         .filter(Boolean)
         .join(',');
       await settingsService.save({
         keywords: resolvedKeywords || 'developer,analyst,engineer',
         locations: locations.trim() || 'Berlin,München,Hamburg',
       });
+      localStorage.setItem('afavers-weekly-goal', weeklyGoal);
+      localStorage.setItem('afavers-search-profile', JSON.stringify({
+        field: selectedField,
+        types: selectedTypes,
+        language: languagePreference,
+        radius,
+        weeklyGoal,
+        workStatus,
+        savedAt: new Date().toISOString(),
+      }));
       markSetupSeen(userId);
-      navigate('/dashboard');
+      navigate('/jobs?match=high');
     } catch {
       navigate('/dashboard');
     } finally {
@@ -127,7 +157,7 @@ export const SetupPage = () => {
                 {[
                   { icon: '⏱️', title: 'Auto-fetched every 2 hours', desc: 'Jobs from Bundesagentur für Arbeit, refreshed automatically' },
                   { icon: '📋', title: 'Track every application', desc: 'Kanban board, follow-ups, interview dates — all in one place' },
-                  { icon: '🎯', title: 'Personalised for you', desc: 'Only jobs matching your field and preferred cities' },
+                  { icon: '🎯', title: 'Personalised for you', desc: 'Match score, cities, job types, language, and weekly goals' },
                 ].map(({ icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-3 p-3 rounded-xl bg-[#f4f6fa]">
                     <span className="text-xl shrink-0 mt-0.5">{icon}</span>
@@ -269,33 +299,133 @@ export const SetupPage = () => {
                 />
               </div>
 
-              {/* English jobs toggle */}
-              <button
-                type="button"
-                onClick={() => setEnglishOnly(v => !v)}
-                className={`w-full flex items-center justify-between p-3.5 rounded-xl border-2 transition-all ${
-                  englishOnly ? 'border-[#16a34a] bg-[#f0fdf4]' : 'border-[#dfe3eb] bg-[#f4f6fa] hover:border-[#c1cbd5]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">🌍</span>
-                  <div className="text-left">
-                    <p className="text-[13px] font-black text-[#0a1a25]">Show English-language jobs only</p>
-                    <p className="text-[11px] text-[#6f839c]">Filter for positions where English is the working language</p>
-                  </div>
+              <div className="mb-5">
+                <label className="block text-[12px] font-black text-[#6f839c] uppercase tracking-wide mb-2">
+                  Search radius
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {['10', '25', '50', '100'].map(value => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setRadius(value)}
+                      className={`px-2 py-2 rounded-xl text-[12px] font-black border-2 transition-all ${
+                        radius === value
+                          ? 'bg-[#0a1a25] text-white border-[#0a1a25]'
+                          : 'bg-white text-[#223a5a] border-[#dfe3eb] hover:border-[#0a1a25]'
+                      }`}
+                    >
+                      {value} km
+                    </button>
+                  ))}
                 </div>
-                <div className={`w-10 h-5 rounded-full transition-colors shrink-0 ${englishOnly ? 'bg-[#16a34a]' : 'bg-[#dfe3eb]'}`}>
-                  <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${englishOnly ? 'translate-x-5' : 'translate-x-0'}`} />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-black text-[#6f839c] uppercase tracking-wide mb-2">
+                  Working language
+                </label>
+                <div className="space-y-2">
+                  {LANGUAGE_PRESETS.map(option => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setLanguagePreference(option.value)}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                        languagePreference === option.value
+                          ? 'border-[#16a34a] bg-[#f0fdf4]'
+                          : 'border-[#dfe3eb] bg-[#f4f6fa] hover:border-[#c1cbd5]'
+                      }`}
+                    >
+                      <span className="text-[13px] font-black text-[#0a1a25]">{option.label}</span>
+                      {languagePreference === option.value && <span className="text-[#16a34a] text-sm font-black">✓</span>}
+                    </button>
+                  ))}
                 </div>
-              </button>
+              </div>
 
               <div className="flex justify-between items-center mt-6">
                 <button onClick={() => setStep(1)} className="text-[13px] font-bold text-[#c1cbd5] hover:text-[#6f839c] transition">
                   ← Back
                 </button>
                 <button
-                  onClick={handleSave}
+                  onClick={() => setStep(3)}
                   disabled={saving || (!locations.trim() && selectedCities.length === 0)}
+                  className="px-6 py-2.5 bg-[#16a34a] hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed text-white font-black rounded-xl transition text-[13px] shadow-[0_2px_8px_0_rgba(22,163,74,0.3)] active:scale-[0.98] flex items-center gap-2"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── STEP 3: Goal ── */}
+          {step === 3 && (
+            <div className="p-8">
+              <div className="text-center mb-7">
+                <div className="text-4xl mb-3">📆</div>
+                <h2 className="text-[22px] font-black text-[#0a1a25]">Keep momentum</h2>
+                <p className="text-[#6f839c] text-[13px] mt-1.5">Set a goal and tell afavers how to prioritize jobs.</p>
+              </div>
+
+              <div className="mb-5">
+                <label className="block text-[12px] font-black text-[#6f839c] uppercase tracking-wide mb-2">
+                  Weekly application goal
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {['3', '5', '8', '12'].map(value => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setWeeklyGoal(value)}
+                      className={`px-2 py-3 rounded-xl text-[13px] font-black border-2 transition-all ${
+                        weeklyGoal === value
+                          ? 'bg-[#16a34a] text-white border-[#16a34a]'
+                          : 'bg-white text-[#223a5a] border-[#dfe3eb] hover:border-[#16a34a]'
+                      }`}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-black text-[#6f839c] uppercase tracking-wide mb-2">
+                  Work status <span className="normal-case font-normal">(optional)</span>
+                </label>
+                <div className="space-y-2">
+                  {WORK_STATUS_PRESETS.map(option => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setWorkStatus(prev => prev === option ? '' : option)}
+                      className={`w-full text-left p-3 rounded-xl border-2 text-[13px] font-bold transition-all ${
+                        workStatus === option
+                          ? 'border-[#0a1a25] bg-[#eef2f6] text-[#0a1a25]'
+                          : 'border-[#dfe3eb] bg-[#f4f6fa] text-[#223a5a] hover:border-[#0a1a25]'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-xl bg-[#f4f6fa] border border-[#dfe3eb] p-3">
+                <p className="text-[13px] font-black text-[#0a1a25]">After setup</p>
+                <p className="text-[12px] text-[#6f839c] leading-snug mt-1">
+                  You will land on your strongest matches first. Hot Picks will use this profile for swipe decisions.
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center mt-6">
+                <button onClick={() => setStep(2)} className="text-[13px] font-bold text-[#c1cbd5] hover:text-[#6f839c] transition">
+                  ← Back
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
                   className="px-6 py-2.5 bg-[#16a34a] hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed text-white font-black rounded-xl transition text-[13px] shadow-[0_2px_8px_0_rgba(22,163,74,0.3)] active:scale-[0.98] flex items-center gap-2"
                 >
                   {saving ? (
