@@ -8,6 +8,11 @@ interface User {
   isAdmin?: boolean;
 }
 
+interface SupabaseAuthUser {
+  id: string;
+  email?: string;
+}
+
 interface AuthState {
   user: User | null;
   token: string | null;
@@ -21,16 +26,20 @@ interface AuthState {
   updateActivity: () => void;
 }
 
-async function getCurrentAppUser(isAdmin = false): Promise<User> {
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData.user?.email) {
-    throw new Error(authError?.message || 'No active Supabase session');
+async function getCurrentAppUser(isAdmin = false, authUser?: SupabaseAuthUser): Promise<User> {
+  let currentAuthUser = authUser;
+  if (!currentAuthUser) {
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError) throw new Error(authError.message);
+    currentAuthUser = authData.user ?? undefined;
   }
+
+  if (!currentAuthUser?.email) throw new Error('No active Supabase session');
 
   let { data, error } = await supabase
     .from('users')
     .select('id,email,is_admin')
-    .eq('auth_user_id', authData.user.id)
+    .eq('auth_user_id', currentAuthUser.id)
     .maybeSingle();
 
   if (error && !/auth_user_id/i.test(error.message)) throw new Error(error.message);
@@ -38,7 +47,7 @@ async function getCurrentAppUser(isAdmin = false): Promise<User> {
     const fallback = await supabase
       .from('users')
       .select('id,email,is_admin')
-      .ilike('email', authData.user.email)
+      .ilike('email', currentAuthUser.email)
       .maybeSingle();
     if (fallback.error) throw new Error(fallback.error.message);
     data = fallback.data;
@@ -72,7 +81,7 @@ export const useAuthStore = create<AuthState>()(
         if (error) throw new Error(error.message);
         if (!data.session) throw new Error('Please confirm your email before signing in.');
 
-        const user = await getCurrentAppUser(Boolean(adminKey));
+        const user = await getCurrentAppUser(Boolean(adminKey), data.user ?? undefined);
         set({
           user,
           token: data.session.access_token,
@@ -94,7 +103,7 @@ export const useAuthStore = create<AuthState>()(
         if (error) throw new Error(error.message);
         if (!data.session) return;
 
-        const user = await getCurrentAppUser();
+        const user = await getCurrentAppUser(false, data.user ?? undefined);
         set({
           user,
           token: data.session.access_token,
@@ -120,7 +129,7 @@ export const useAuthStore = create<AuthState>()(
 supabase.auth.getSession().then(async ({ data }) => {
   if (!data.session) return;
   try {
-    const user = await getCurrentAppUser();
+    const user = await getCurrentAppUser(false, data.session.user);
     useAuthStore.setState({
       user,
       token: data.session.access_token,
@@ -134,22 +143,25 @@ supabase.auth.getSession().then(async ({ data }) => {
   }
 });
 
-supabase.auth.onAuthStateChange(async (_event, session) => {
+supabase.auth.onAuthStateChange((_event, session) => {
   if (!session) {
     useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isDemo: false, lastActivity: null });
     return;
   }
 
-  try {
-    const user = await getCurrentAppUser();
-    useAuthStore.setState({
-      user,
-      token: session.access_token,
-      isAuthenticated: true,
-      isDemo: false,
-      lastActivity: Date.now(),
-    });
-  } catch {
-    useAuthStore.setState({ token: session.access_token, isAuthenticated: false });
-  }
+  useAuthStore.setState({ token: session.access_token });
+  setTimeout(async () => {
+    try {
+      const user = await getCurrentAppUser(false, session.user);
+      useAuthStore.setState({
+        user,
+        token: session.access_token,
+        isAuthenticated: true,
+        isDemo: false,
+        lastActivity: Date.now(),
+      });
+    } catch {
+      useAuthStore.setState({ token: session.access_token, isAuthenticated: false });
+    }
+  }, 0);
 });
