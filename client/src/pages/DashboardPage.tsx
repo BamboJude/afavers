@@ -596,6 +596,139 @@ const StatCard = ({ label, value, sub, color, onClick, icon, accent }: {
   </button>
 );
 
+// ── Today focus ───────────────────────────────────────────────────────────────
+
+const TodayAction = ({
+  label,
+  value,
+  detail,
+  tone,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  detail: string;
+  tone: 'green' | 'amber' | 'purple' | 'blue';
+  onClick: () => void;
+}) => {
+  const toneClasses = {
+    green: 'bg-green-50 text-green-700 border-green-200',
+    amber: 'bg-amber-50 text-amber-700 border-amber-200',
+    purple: 'bg-purple-50 text-purple-700 border-purple-200',
+    blue: 'bg-blue-50 text-blue-700 border-blue-200',
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className="bg-white border border-gray-200 rounded-2xl p-4 text-left hover:border-gray-300 hover:shadow-md transition active:scale-[0.99]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[13px] font-black text-[#0a1a25]">{label}</p>
+          <p className="text-[12px] text-gray-400 mt-1 leading-snug">{detail}</p>
+        </div>
+        <span className={`min-w-9 h-9 px-2 rounded-xl border flex items-center justify-center text-[18px] font-black tabular-nums ${toneClasses[tone]}`}>
+          {value}
+        </span>
+      </div>
+    </button>
+  );
+};
+
+const TodayFocus = ({
+  stats,
+  followUps,
+  upcomingInterviews,
+  onReviewJobs,
+  onFollowUps,
+  onInterviews,
+  onTracker,
+  onHotPicks,
+}: {
+  stats: DashboardStats;
+  followUps: FollowUpAlert[];
+  upcomingInterviews: Job[];
+  onReviewJobs: () => void;
+  onFollowUps: () => void;
+  onInterviews: () => void;
+  onTracker: () => void;
+  onHotPicks: () => void;
+}) => {
+  const trackerCount = (stats.saved || 0) + (stats.preparing || 0);
+  const hasFocus = (stats.new || 0) > 0 || followUps.length > 0 || upcomingInterviews.length > 0 || trackerCount > 0;
+
+  return (
+    <section className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-5">
+      <div className="px-5 py-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Today</p>
+          <h2 className="text-[24px] font-black text-[#0a1a25] leading-tight mt-1">What needs your attention?</h2>
+          <p className="text-[13px] text-[#6f839c] mt-1">Start with the next useful action, then move on.</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={onHotPicks}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-[13px] font-black text-[#0a1a25] hover:border-green-300 hover:text-[#16a34a] transition"
+          >
+            Hot Picks
+          </button>
+          <button
+            onClick={onTracker}
+            className="px-4 py-2 rounded-lg bg-[#0a1a25] text-white text-[13px] font-black hover:bg-[#223a5a] transition"
+          >
+            Open tracker
+          </button>
+        </div>
+      </div>
+
+      {hasFocus ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4">
+          <TodayAction
+            label="Review jobs"
+            value={stats.new || 0}
+            detail={stats.new_today ? `${stats.new_today} new today` : 'Clear unreviewed roles'}
+            tone="green"
+            onClick={onReviewJobs}
+          />
+          <TodayAction
+            label="Send follow-ups"
+            value={followUps.length}
+            detail={followUps.length ? 'Applications waiting for a nudge' : 'No follow-ups due'}
+            tone="amber"
+            onClick={onFollowUps}
+          />
+          <TodayAction
+            label="Prepare interviews"
+            value={upcomingInterviews.length}
+            detail={upcomingInterviews.length ? 'Upcoming interviews to prepare' : 'No interviews scheduled'}
+            tone="purple"
+            onClick={onInterviews}
+          />
+          <TodayAction
+            label="Continue applications"
+            value={trackerCount}
+            detail="Saved or preparing jobs"
+            tone="blue"
+            onClick={onTracker}
+          />
+        </div>
+      ) : (
+        <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-[15px] font-black text-[#0a1a25]">You are clear for now.</p>
+            <p className="text-[13px] text-[#6f839c] mt-1">Review new roles or swipe through Hot Picks when you want fresh options.</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={onReviewJobs} className="px-4 py-2 bg-[#16a34a] hover:bg-green-700 text-white text-[13px] font-black rounded-lg transition">Browse jobs</button>
+            <button onClick={onHotPicks} className="px-4 py-2 border border-gray-200 hover:border-gray-300 text-[#0a1a25] text-[13px] font-black rounded-lg transition">Hot Picks</button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+};
+
 // ── Widget visibility ─────────────────────────────────────────────────────────
 
 const WIDGET_KEYS = ['news', 'stories', 'newJobs', 'followUps', 'interviews', 'applications', 'quickActions', 'goal', 'calendar', 'pipeline', 'weeklyActivity'] as const;
@@ -1086,7 +1219,7 @@ export const DashboardPage = () => {
       {/* Page header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
         <div>
-          <h1 className="text-[22px] font-black leading-tight text-[#0a1a25]">{greeting}, {displayName} 👋</h1>
+          <h1 className="text-[22px] font-black leading-tight text-[#0a1a25]">{greeting}, {displayName}</h1>
           <p className="text-[12px] text-gray-400 mt-0.5">
             {todayFormatted}
             {(followUps.length > 0 || upcomingInterviews.length > 0 || (stats?.new_today ?? 0) > 0) && (
@@ -1103,7 +1236,7 @@ export const DashboardPage = () => {
         <div className="flex items-center gap-3">
           {streak > 1 && (
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-full text-amber-700 text-[12px] font-black">
-              🔥 {streak}-day streak
+              {streak}-day streak
             </div>
           )}
           <button
@@ -1114,7 +1247,7 @@ export const DashboardPage = () => {
                 : 'bg-white text-[#0a1a25] border-gray-200 hover:bg-gray-50 hover:border-gray-300'
             }`}
           >
-            {editMode ? '✓ Done' : '✏ Edit Dashboard'}
+            {editMode ? 'Done' : 'Edit dashboard'}
           </button>
         </div>
       </div>
@@ -1135,6 +1268,19 @@ export const DashboardPage = () => {
               </button>
             ))}
           </div>
+        )}
+
+        {stats && (
+          <TodayFocus
+            stats={stats}
+            followUps={followUps}
+            upcomingInterviews={upcomingInterviews}
+            onReviewJobs={() => navigate('/jobs')}
+            onFollowUps={() => navigate(followUps[0] ? `/jobs/${followUps[0].id}` : '/jobs?tab=followup')}
+            onInterviews={() => navigate(upcomingInterviews[0] ? `/jobs/${upcomingInterviews[0].id}` : '/kanban')}
+            onTracker={() => navigate('/kanban')}
+            onHotPicks={() => navigate('/hotpicks')}
+          />
         )}
 
         {/* Stats strip */}
