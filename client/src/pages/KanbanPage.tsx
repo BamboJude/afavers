@@ -7,10 +7,13 @@ import { useToastStore } from '../store/toastStore';
 
 const COLUMNS: { status: Job['status']; labelKey: string; color: string; bg: string; headerBg: string }[] = [
   { status: 'saved',        labelKey: 'saved',        color: 'text-yellow-700', bg: 'bg-yellow-50/70',  headerBg: 'bg-yellow-50  border-yellow-200' },
+  { status: 'preparing',    labelKey: 'preparing',    color: 'text-blue-700',   bg: 'bg-blue-50/70',    headerBg: 'bg-blue-50    border-blue-200' },
   { status: 'applied',      labelKey: 'applied',      color: 'text-green-700',  bg: 'bg-green-50/70',   headerBg: 'bg-green-50   border-green-200' },
+  { status: 'followup',     labelKey: 'followup',     color: 'text-orange-700', bg: 'bg-orange-50/70',  headerBg: 'bg-orange-50  border-orange-200' },
   { status: 'interviewing', labelKey: 'interviewing', color: 'text-purple-700', bg: 'bg-purple-50/70',  headerBg: 'bg-purple-50  border-purple-200' },
   { status: 'offered',      labelKey: 'offered',      color: 'text-emerald-700',bg: 'bg-emerald-50/70', headerBg: 'bg-emerald-50 border-emerald-200' },
   { status: 'rejected',     labelKey: 'rejected',     color: 'text-red-700',    bg: 'bg-red-50/70',     headerBg: 'bg-red-50     border-red-200' },
+  { status: 'archived',     labelKey: 'archived',     color: 'text-gray-700',   bg: 'bg-gray-50/70',    headerBg: 'bg-gray-50    border-gray-200' },
 ];
 
 /** Swipe-left to reveal action buttons (mobile only) */
@@ -131,7 +134,7 @@ const KanbanCard = ({ job, onClick, draggable, onDragStart, onDragEnd, faded, t 
         <p className="text-xs text-green-600 font-medium">
           ✓ {new Date(job.applied_date).toLocaleDateString('de-DE')}
         </p>
-        {(job.status === 'applied' || job.status === 'interviewing') && (() => {
+        {(['applied', 'followup', 'interviewing'] as Job['status'][]).includes(job.status) && (() => {
           const days = Math.floor((Date.now() - new Date(job.applied_date!).getTime()) / 86400000);
           return days > 0 ? (
             <span className="text-xs bg-green-100 text-green-700 rounded-full px-2 py-0.5">
@@ -166,7 +169,7 @@ export const KanbanPage = () => {
   const fetchTrackedJobs = async () => {
     try {
       setLoading(true);
-      const statuses = ['saved', 'applied', 'interviewing', 'offered', 'rejected'];
+      const statuses = COLUMNS.map(col => col.status);
       const results = await Promise.all(
         statuses.map(status => jobsService.getJobs({ status, limit: 100 }))
       );

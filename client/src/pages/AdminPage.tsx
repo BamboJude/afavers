@@ -53,10 +53,13 @@ type Tab = 'overview' | 'users' | 'jobs' | 'messages' | 'inbox';
 const STATUS_COLORS: Record<string, string> = {
   new:          'bg-gray-100 text-gray-600',
   saved:        'bg-blue-100 text-blue-700',
+  preparing:    'bg-cyan-100 text-cyan-700',
   applied:      'bg-indigo-100 text-indigo-700',
+  followup:     'bg-orange-100 text-orange-700',
   interviewing: 'bg-yellow-100 text-yellow-700',
   offered:      'bg-green-100 text-green-700',
   rejected:     'bg-red-100 text-red-700',
+  archived:     'bg-gray-100 text-gray-700',
 };
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {

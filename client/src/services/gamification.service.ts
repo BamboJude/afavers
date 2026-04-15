@@ -133,7 +133,7 @@ function xpProfile(totalXp: number): GamificationProfile['xp'] {
 
 function makeAchievements(rows: UserJobRow[], streakBest: number): Achievement[] {
   const now = new Date().toISOString();
-  const applications = rows.filter((row) => ['applied', 'interviewing', 'offered'].includes(row.status)).length;
+  const applications = rows.filter((row) => ['applied', 'followup', 'interviewing', 'offered'].includes(row.status)).length;
   const interviews = rows.filter((row) => row.status === 'interviewing' || row.interview_date).length;
   const offers = rows.filter((row) => row.status === 'offered').length;
   const saved = rows.filter((row) => row.status === 'saved').length;
@@ -173,7 +173,7 @@ export const gamificationService = {
     if (error) throw new Error(error.message);
 
     const rows = (data ?? []) as UserJobRow[];
-    const totalApplications = rows.filter((row) => ['applied', 'interviewing', 'offered'].includes(row.status)).length;
+    const totalApplications = rows.filter((row) => ['applied', 'followup', 'interviewing', 'offered'].includes(row.status)).length;
     const totalInterviews = rows.filter((row) => row.status === 'interviewing' || row.interview_date).length;
     const totalOffers = rows.filter((row) => row.status === 'offered').length;
     const totalFollowUps = rows.filter((row) => row.follow_up_date).length;

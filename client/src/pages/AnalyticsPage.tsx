@@ -14,10 +14,13 @@ const SOURCE_LABELS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   new: 'bg-blue-400',
   saved: 'bg-yellow-400',
+  preparing: 'bg-blue-500',
   applied: 'bg-green-400',
+  followup: 'bg-orange-400',
   interviewing: 'bg-purple-400',
   offered: 'bg-emerald-400',
   rejected: 'bg-red-400',
+  archived: 'bg-gray-400',
 };
 
 const Bar = ({ value, max, color }: { value: number; max: number; color: string }) => (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { jobsService } from '../services/jobs.service';
 import type { Job, JobFilters, DashboardStats } from '../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -6,15 +6,18 @@ import { useLanguage } from '../store/languageStore';
 import { useSwipeAction } from '../hooks/useSwipeAction';
 import { useToastStore } from '../store/toastStore';
 
-type Tab = 'new' | 'saved' | 'applied' | 'interviewing' | 'all';
+type Tab = 'new' | 'saved' | 'preparing' | 'applied' | 'followup' | 'interviewing' | 'all';
 
 const STATUS_COLORS: Record<string, string> = {
   new:          'bg-blue-100 text-blue-700',
   saved:        'bg-yellow-100 text-yellow-700',
+  preparing:    'bg-blue-100 text-blue-700',
   applied:      'bg-green-100 text-green-700',
+  followup:     'bg-orange-100 text-orange-700',
   interviewing: 'bg-purple-100 text-purple-700',
   offered:      'bg-emerald-100 text-emerald-700',
   rejected:     'bg-red-100 text-red-600',
+  archived:     'bg-gray-100 text-gray-600',
 };
 
 const SOURCE_BADGES: Record<string, { label: string; cls: string }> = {
@@ -163,6 +166,22 @@ const CompanyAvatar = ({ company }: { company: string }) => {
   );
 };
 
+type ManualJobForm = {
+  title: string;
+  company: string;
+  location: string;
+  url: string;
+  description: string;
+};
+
+const EMPTY_MANUAL_JOB: ManualJobForm = {
+  title: '',
+  company: '',
+  location: '',
+  url: '',
+  description: '',
+};
+
 /** Wraps a job card with swipe-to-save (right) and swipe-to-hide (left) gestures. */
 const SwipeableCard = ({
   onSave,
@@ -235,6 +254,9 @@ export const JobsPage = () => {
   const [highMatchOnly, setHighMatchOnly] = useState(searchParams.get('type') === 'hot' || searchParams.get('match') === 'high');
   const [locationFilter, setLocationFilter] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualSaving, setManualSaving] = useState(false);
+  const [manualForm, setManualForm] = useState<ManualJobForm>(EMPTY_MANUAL_JOB);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const LIMIT = 50;
@@ -330,8 +352,41 @@ export const JobsPage = () => {
         applied: prev.applied + 1,
       } : prev);
       showToast(t('toastJobApplied'));
+      loadStats();
     } catch {}
     setActionLoading(null);
+  };
+
+  const handlePrepare = async (job: Job) => {
+    setActionLoading(job.id);
+    try {
+      await jobsService.updateStatus(job.id, 'preparing');
+      setJobs(prev => activeTab === 'new' || activeTab === 'saved'
+        ? prev.filter(j => j.id !== job.id)
+        : prev.map(j => j.id === job.id ? { ...j, status: 'preparing' } : j)
+      );
+      setTotal(prev => activeTab === 'new' || activeTab === 'saved' ? Math.max(0, prev - 1) : prev);
+      loadStats();
+    } catch {}
+    setActionLoading(null);
+  };
+
+  const handleCreateManualJob = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!manualForm.title.trim() || !manualForm.company.trim()) return;
+    setManualSaving(true);
+    try {
+      const created = await jobsService.createManualJob(manualForm);
+      setManualForm(EMPTY_MANUAL_JOB);
+      setManualOpen(false);
+      showToast(t('jobAdded'));
+      loadStats();
+      navigate(`/jobs/${created.id}`);
+    } catch (error) {
+      console.error('Failed to add manual job:', error);
+    } finally {
+      setManualSaving(false);
+    }
   };
 
   const handleUnsave = async (job: Job) => {
@@ -427,7 +482,9 @@ export const JobsPage = () => {
   const tabs: { id: Tab; label: string; count?: number; color: string; activeColor: string }[] = [
     { id: 'new',          label: t('new'),          count: stats?.new,          color: 'hover:text-blue-600',   activeColor: 'border-blue-500 text-blue-600' },
     { id: 'saved',        label: t('saved'),        count: stats?.saved,        color: 'hover:text-yellow-600', activeColor: 'border-yellow-500 text-yellow-600' },
+    { id: 'preparing',    label: t('preparing'),    count: stats?.preparing,    color: 'hover:text-blue-600',   activeColor: 'border-blue-500 text-blue-600' },
     { id: 'applied',      label: t('applied'),      count: stats?.applied,      color: 'hover:text-green-600',  activeColor: 'border-green-500 text-green-600' },
+    { id: 'followup',     label: t('followup'),     count: stats?.followup,     color: 'hover:text-orange-600', activeColor: 'border-orange-500 text-orange-600' },
     { id: 'interviewing', label: t('interviewing'), count: stats?.interviewing, color: 'hover:text-purple-600', activeColor: 'border-purple-500 text-purple-600' },
     { id: 'all',          label: t('all'),          count: stats?.total,        color: 'hover:text-gray-700',   activeColor: 'border-gray-500 text-gray-700' },
   ];
@@ -436,10 +493,99 @@ export const JobsPage = () => {
     <div className="min-h-screen bg-gray-50 w-full">
       {/* Page header */}
       <div className="bg-white border-b border-gray-200 px-6 py-5">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
           <h1 className="text-2xl font-bold text-gray-900">{t('jobs')}</h1>
+          <button
+            onClick={() => setManualOpen(true)}
+            className="px-4 py-2 bg-gray-900 hover:bg-gray-700 text-white text-sm font-semibold rounded-lg transition"
+          >
+            + {t('addManualJob')}
+          </button>
         </div>
       </div>
+
+      {manualOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-4">
+          <form onSubmit={handleCreateManualJob} className="w-full max-w-lg bg-white rounded-xl border border-gray-200 p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">{t('manualJobTitle')}</h2>
+                <p className="text-sm text-gray-500 mt-1">{t('manualJobHint')}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setManualOpen(false)}
+                className="text-gray-400 hover:text-gray-700 text-2xl leading-none"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-xs font-bold text-gray-500">{t('jobTitle')}</span>
+                <input
+                  required
+                  value={manualForm.title}
+                  onChange={e => setManualForm(form => ({ ...form, title: e.target.value }))}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-bold text-gray-500">{t('company')}</span>
+                <input
+                  required
+                  value={manualForm.company}
+                  onChange={e => setManualForm(form => ({ ...form, company: e.target.value }))}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-bold text-gray-500">{t('location')}</span>
+                <input
+                  value={manualForm.location}
+                  onChange={e => setManualForm(form => ({ ...form, location: e.target.value }))}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-bold text-gray-500">{t('jobUrl')}</span>
+                <input
+                  type="url"
+                  value={manualForm.url}
+                  onChange={e => setManualForm(form => ({ ...form, url: e.target.value }))}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+            </div>
+            <label className="block mt-3">
+              <span className="text-xs font-bold text-gray-500">{t('description')}</span>
+              <textarea
+                value={manualForm.description}
+                onChange={e => setManualForm(form => ({ ...form, description: e.target.value }))}
+                rows={4}
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none resize-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => setManualOpen(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="submit"
+                disabled={manualSaving}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-semibold"
+              >
+                {manualSaving ? t('adding') : t('addJob')}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10 overflow-hidden">
@@ -756,6 +902,20 @@ export const JobsPage = () => {
                           )}
                           {(job.status === 'new' || job.status === 'saved') && (
                             <button
+                              onClick={e => { e.stopPropagation(); handlePrepare(job); }}
+                              disabled={actionLoading === job.id}
+                              aria-label={t('preparing')}
+                              title={t('preparing')}
+                              className="flex-1 flex flex-col items-center gap-1 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl transition disabled:opacity-40 active:scale-95"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 4H7a2 2 0 01-2-2V6a2 2 0 012-2h5l5 5v9a2 2 0 01-2 2z"/>
+                              </svg>
+                              <span className="text-xs font-semibold leading-none truncate max-w-full px-1">{t('preparing')}</span>
+                            </button>
+                          )}
+                          {(job.status === 'new' || job.status === 'saved' || job.status === 'preparing') && (
+                            <button
                               onClick={e => { e.stopPropagation(); handleApply(job); }}
                               disabled={actionLoading === job.id}
                               aria-label={t('markApplied')}
@@ -838,6 +998,17 @@ export const JobsPage = () => {
                           </button>
                         )}
                         {(job.status === 'new' || job.status === 'saved') && (
+                          <button
+                            onClick={e => { e.stopPropagation(); handlePrepare(job); }}
+                            disabled={actionLoading === job.id}
+                            title={t('preparing')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition disabled:opacity-40 whitespace-nowrap"
+                          >
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 4H7a2 2 0 01-2-2V6a2 2 0 012-2h5l5 5v9a2 2 0 01-2 2z"/></svg>
+                            {t('preparing')}
+                          </button>
+                        )}
+                        {(job.status === 'new' || job.status === 'saved' || job.status === 'preparing') && (
                           <button
                             onClick={e => { e.stopPropagation(); handleApply(job); }}
                             disabled={actionLoading === job.id}
