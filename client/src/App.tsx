@@ -17,6 +17,7 @@ const KanbanPage        = lazy(() => import('./pages/KanbanPage').then(m => ({ d
 const SettingsPage      = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const SetupPage         = lazy(() => import('./pages/SetupPage').then(m => ({ default: m.SetupPage })));
 const AnalyticsPage     = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
+const HotpicksPage      = lazy(() => import('./pages/HotpicksPage').then(m => ({ default: m.HotpicksPage })));
 const InterviewPrepPage = lazy(() => import('./pages/InterviewPrepPage').then(m => ({ default: m.InterviewPrepPage })));
 const CareerGuidesPage  = lazy(() => import('./pages/CareerGuidesPage').then(m => ({ default: m.CareerGuidesPage })));
 const LandingPage       = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
@@ -58,7 +59,7 @@ function App() {
         <Route path="/setup"        element={<ProtectedLayout><SetupPage /></ProtectedLayout>} />
         <Route path="/english-jobs" element={<Navigate to="/jobs?language=en" replace />} />
         <Route path="/analytics"    element={<ProtectedLayout><AnalyticsPage /></ProtectedLayout>} />
-        <Route path="/hotpicks"        element={<Navigate to="/jobs?type=hot" replace />} />
+        <Route path="/hotpicks"        element={<ProtectedLayout><HotpicksPage /></ProtectedLayout>} />
         <Route path="/interview-prep" element={<ProtectedLayout><InterviewPrepPage /></ProtectedLayout>} />
         <Route path="/career-guides"  element={<ProtectedLayout><CareerGuidesPage /></ProtectedLayout>} />
         <Route path="/reminders"      element={<ProtectedLayout><RemindersPage /></ProtectedLayout>} />

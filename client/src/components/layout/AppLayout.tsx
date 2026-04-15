@@ -115,7 +115,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const navItems = [
     { to: '/dashboard',    icon: <IconDashboard />,  label: t('dashboard') },
     { to: '/jobs',         icon: <IconJobs />,        label: t('browseJobs') },
-    { to: '/jobs?type=hot', icon: <IconFire />,        label: t('hotPicks') },
+    { to: '/hotpicks',     icon: <IconFire />,        label: t('hotPicks') },
     { to: '/jobs?language=en', icon: <IconGlobe />,    label: t('englishJobs') },
     { to: '/kanban',       icon: <IconKanban />,      label: t('applicationsBoard') },
     { to: '/analytics',    icon: <IconAnalytics />,   label: t('analytics') },
