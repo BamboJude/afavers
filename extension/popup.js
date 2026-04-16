@@ -1,5 +1,6 @@
 // afavers Job Capture — popup script
-const API_URL = 'https://server-production-ebd2b.up.railway.app';
+const SUPABASE_URL = 'https://mcaletfngisgofppfugr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jYWxldGZuZ2lzZ29mcHBmdWdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNDIwMjEsImV4cCI6MjA4NjkxODAyMX0.IXaomWY0h75yICaWrxUIt-gnb3zWVmoMOzBloSNJh8s';
 const DASHBOARD_URL = 'https://afavers.online/jobs';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────
@@ -26,22 +27,73 @@ function hideError(id) { $(id).classList.add('hidden'); }
 // ── Auth ──────────────────────────────────────────────────────────────────
 async function getToken() {
   return new Promise(resolve => {
-    chrome.storage.local.get(['token', 'userEmail'], result => {
-      resolve({ token: result.token, email: result.userEmail });
+    chrome.storage.local.get(['accessToken', 'refreshToken', 'userEmail', 'authUserId', 'appUserId'], result => {
+      resolve({
+        token: result.accessToken,
+        refreshToken: result.refreshToken,
+        email: result.userEmail,
+        authUserId: result.authUserId,
+        appUserId: result.appUserId,
+      });
     });
   });
 }
 
-async function saveToken(token, email) {
+async function saveToken(session) {
   return new Promise(resolve => {
-    chrome.storage.local.set({ token, userEmail: email }, resolve);
+    chrome.storage.local.set({
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      userEmail: session.email,
+      authUserId: session.authUserId,
+      appUserId: session.appUserId,
+    }, resolve);
   });
 }
 
 async function clearToken() {
   return new Promise(resolve => {
-    chrome.storage.local.remove(['token', 'userEmail'], resolve);
+    chrome.storage.local.remove(['token', 'accessToken', 'refreshToken', 'userEmail', 'authUserId', 'appUserId'], resolve);
   });
+}
+
+async function supabaseFetch(path, options = {}, token) {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
+  const res = await fetch(`${SUPABASE_URL}${path}`, { ...options, headers });
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!res.ok) {
+    throw new Error(data?.msg || data?.message || data?.error_description || data?.error || 'Request failed');
+  }
+  return data;
+}
+
+async function getAppUser(accessToken, authUserId, email) {
+  let rows = await supabaseFetch(`/rest/v1/users?select=id,email,is_admin&auth_user_id=eq.${encodeURIComponent(authUserId)}&limit=1`, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+  }, accessToken);
+
+  if (!rows?.length && email) {
+    rows = await supabaseFetch(`/rest/v1/users?select=id,email,is_admin&email=ilike.${encodeURIComponent(email)}&limit=1`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    }, accessToken);
+  }
+
+  if (!rows?.length) throw new Error('Account profile is not ready yet. Sign in on afavers once, then try again.');
+  return rows[0];
+}
+
+async function hashText(value) {
+  const bytes = new TextEncoder().encode(value || String(Date.now()));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
 }
 
 // ── Login ─────────────────────────────────────────────────────────────────
@@ -54,16 +106,26 @@ $('login-btn').addEventListener('click', async () => {
   $('login-btn').textContent = 'Signing in…';
 
   try {
-    const res = await fetch(`${API_URL}/api/auth/login`, {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Login failed');
+    if (!res.ok) throw new Error(data.error_description || data.msg || data.error || 'Login failed');
 
-    await saveToken(data.token, data.user.email);
-    setUserInfo(data.user.email);
+    const profile = await getAppUser(data.access_token, data.user.id, data.user.email);
+    await saveToken({
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      authUserId: data.user.id,
+      appUserId: profile.id,
+      email: profile.email || data.user.email,
+    });
+    setUserInfo(profile.email || data.user.email);
     showView('capture');
     extractFromPage();
   } catch (err) {
@@ -160,32 +222,59 @@ $('save-btn').addEventListener('click', async () => {
   $('save-btn').disabled = true;
   $('save-btn').textContent = 'Saving…';
 
-  const { token } = await getToken();
-  if (!token) {
+  const session = await getToken();
+  if (!session.token) {
     await clearToken();
     showView('login');
     return;
   }
 
   try {
-    const res = await fetch(`${API_URL}/api/jobs/capture`, {
+    const appUserId = session.appUserId || (await getAppUser(session.token, session.authUserId, session.email)).id;
+    const cleanUrl = url || '';
+    const externalHash = await hashText(`${appUserId}:${cleanUrl || `${title}:${company}:${location}`}`);
+    const capturedFrom = source && source !== 'manual' ? `Captured from ${source}` : 'Captured from browser extension';
+    const jobRows = await supabaseFetch('/rest/v1/jobs?on_conflict=external_id&select=id', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Prefer: 'resolution=merge-duplicates,return=representation',
       },
-      body: JSON.stringify({ title, company, location, salary, status, url, source, description }),
-    });
+      body: JSON.stringify({
+        external_id: `capture_${appUserId}_${externalHash}`,
+        title,
+        company: company || 'Unknown company',
+        location: location || 'Not specified',
+        salary: salary || null,
+        url: cleanUrl,
+        description: description ? `${capturedFrom}\n\n${description}` : capturedFrom,
+        source: 'manual',
+        posted_date: new Date().toISOString().slice(0, 10),
+        owner_user_id: appUserId,
+        is_manual: true,
+      }),
+    }, session.token);
 
-    const data = await res.json();
-    if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
-        await clearToken();
-        showView('login');
-        return;
-      }
-      throw new Error(data.error || 'Save failed');
-    }
+    const jobId = jobRows?.[0]?.id;
+    if (!jobId) throw new Error('Save failed');
+
+    await supabaseFetch('/rest/v1/user_jobs?on_conflict=user_id,job_id', {
+      method: 'POST',
+      headers: {
+        Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({
+        user_id: appUserId,
+        job_id: jobId,
+        status,
+        applied_date: ['applied', 'followup', 'interviewing', 'offered'].includes(status) ? new Date().toISOString().slice(0, 10) : null,
+        checklist: status === 'applied' ? { 'Application submitted': true } : {},
+        history: [
+          { type: 'manual', label: 'Captured from browser extension', at: new Date().toISOString() },
+          { type: 'status', label: `Moved to ${status}`, at: new Date().toISOString() },
+        ],
+        updated_at: new Date().toISOString(),
+      }),
+    }, session.token);
 
     // Success
     $('success-sub').textContent = `${title}${company ? ` at ${company}` : ''}`;
