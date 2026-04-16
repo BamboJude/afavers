@@ -379,9 +379,9 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
               </button>
               <button
                 onClick={stayLoggedIn}
-                className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition"
+                className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 text-white text-sm font-semibold rounded-xl transition"
               >
-                Continue
+                {t('stayLoggedIn')}
               </button>
             </div>
           </div>
