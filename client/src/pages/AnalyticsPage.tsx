@@ -216,7 +216,8 @@ export const AnalyticsPage = () => {
   const [dateTo, setDateTo] = useState('');
   const [search, setSearch] = useState('');
   const [officialOnly, setOfficialOnly] = useState(true);
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const locale = lang === 'de' ? 'de-DE' : 'en-GB';
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -479,7 +480,7 @@ export const AnalyticsPage = () => {
                     {data?.byWeek.slice(0, 10).map(w => (
                       <div key={w.week} className="flex items-center gap-3">
                         <span className="text-xs text-gray-500 w-24 shrink-0">
-                          {new Date(w.week).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}
+                          {new Date(w.week).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
                         </span>
                         <Bar value={w.count} max={maxWeek} color="bg-green-400" />
                         <span className="text-sm font-semibold text-gray-700 w-6 text-right">{w.count}</span>
