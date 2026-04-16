@@ -180,7 +180,7 @@ const GoalWidget = ({ stats }: { stats: DashboardStats }) => {
           ))}
           <input type="number" min={1} value={target}
             onChange={e => setTarget(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-16 px-2 py-2 text-[13px] text-center border border-[#dfe3eb] rounded focus:ring-2 focus:ring-green-500 outline-none"
+            className="w-16 px-2 py-2 text-[13px] text-center border border-[#dfe3eb] rounded focus-visible:ring-2 focus-visible:ring-green-500 outline-none"
           />
         </div>
         <div className="flex gap-2">
@@ -423,18 +423,18 @@ const MiniCalendar = ({ upcomingInterviews, followUps }: { upcomingInterviews: J
                 onChange={e => setFormTitle(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAddEvent()}
                 autoFocus
-                className="w-full px-3 py-2 text-[13px] border border-[#dfe3eb] rounded focus:ring-2 focus:ring-green-500 outline-none bg-white"
+                className="w-full px-3 py-2 text-[13px] border border-[#dfe3eb] rounded focus-visible:ring-2 focus-visible:ring-green-500 outline-none bg-white"
               />
               <div className="flex gap-2">
                 <select value={formType} onChange={e => setFormType(e.target.value as CalendarEventType)}
-                  className="flex-1 px-2 py-1.5 text-[12px] border border-[#dfe3eb] rounded focus:ring-2 focus:ring-green-500 outline-none bg-white text-[#223a5a]"
+                  className="flex-1 px-2 py-1.5 text-[12px] border border-[#dfe3eb] rounded focus-visible:ring-2 focus-visible:ring-green-500 outline-none bg-white text-[#223a5a]"
                 >
                   {(Object.entries(EVENT_TYPE_META) as [CalendarEventType, { label: string }][]).map(([k, v]) => (
                     <option key={k} value={k}>{v.label}</option>
                   ))}
                 </select>
                 <input type="time" value={formTime} onChange={e => setFormTime(e.target.value)}
-                  className="px-2 py-1.5 text-[12px] border border-[#dfe3eb] rounded focus:ring-2 focus:ring-green-500 outline-none bg-white text-[#223a5a]"
+                  className="px-2 py-1.5 text-[12px] border border-[#dfe3eb] rounded focus-visible:ring-2 focus-visible:ring-green-500 outline-none bg-white text-[#223a5a]"
                 />
               </div>
               {formTime && (

@@ -535,7 +535,7 @@ export const JobsPage = () => {
                   required
                   value={manualForm.title}
                   onChange={e => setManualForm(form => ({ ...form, title: e.target.value }))}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 />
               </label>
               <label className="block">
@@ -544,7 +544,7 @@ export const JobsPage = () => {
                   required
                   value={manualForm.company}
                   onChange={e => setManualForm(form => ({ ...form, company: e.target.value }))}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 />
               </label>
               <label className="block">
@@ -552,7 +552,7 @@ export const JobsPage = () => {
                 <input
                   value={manualForm.location}
                   onChange={e => setManualForm(form => ({ ...form, location: e.target.value }))}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 />
               </label>
               <label className="block">
@@ -561,7 +561,7 @@ export const JobsPage = () => {
                   type="url"
                   value={manualForm.url}
                   onChange={e => setManualForm(form => ({ ...form, url: e.target.value }))}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 />
               </label>
             </div>
@@ -571,7 +571,7 @@ export const JobsPage = () => {
                 value={manualForm.description}
                 onChange={e => setManualForm(form => ({ ...form, description: e.target.value }))}
                 rows={4}
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none resize-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none resize-none focus-visible:ring-2 focus-visible:ring-blue-500"
               />
             </label>
             <div className="flex justify-end gap-2 mt-4">
@@ -629,7 +629,7 @@ export const JobsPage = () => {
           <select
             value={locationFilter}
             onChange={e => { setLocationFilter(e.target.value); setPage(1); }}
-            className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+            className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none bg-white"
           >
             <option value="">{t('allStates')}</option>
             {Object.keys(STATE_CITIES).map(state => (
@@ -639,7 +639,7 @@ export const JobsPage = () => {
           <select
             value={sortBy}
             onChange={e => { setSortBy(e.target.value); setPage(1); }}
-            className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+            className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none bg-white"
           >
             <option value="posted_date">{t('newestFirst')}</option>
             <option value="match_score">{t('bestMatch')}</option>
@@ -660,7 +660,7 @@ export const JobsPage = () => {
               placeholder={t('searchPlaceholder')}
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              className="w-full pl-9 pr-9 py-2.5 border border-gray-300 rounded-lg text-sm outline-none bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-9 pr-9 py-2.5 border border-gray-300 rounded-lg text-sm outline-none bg-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent"
             />
             {searchInput && (
               <button

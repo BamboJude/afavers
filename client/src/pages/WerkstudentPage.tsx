@@ -235,7 +235,7 @@ export const WerkstudentPage = () => {
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-[#0a1a25] dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-[#0a1a25] dark:text-gray-100 placeholder-gray-400 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent outline-none"
             />
           </div>
           <input
@@ -244,7 +244,7 @@ export const WerkstudentPage = () => {
             value={location}
             onChange={e => setLocation(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            className="w-36 px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-[#0a1a25] dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+            className="w-36 px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-[#0a1a25] dark:text-gray-100 placeholder-gray-400 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent outline-none"
           />
           <button
             onClick={handleSearch}

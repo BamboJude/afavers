@@ -74,7 +74,7 @@ export const ResetPasswordPage = () => {
                     minLength={8}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent outline-none transition"
                     placeholder="Min. 8 characters"
                   />
                 </div>
@@ -85,7 +85,7 @@ export const ResetPasswordPage = () => {
                     required
                     value={confirm}
                     onChange={e => setConfirm(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent outline-none transition"
                     placeholder="Repeat new password"
                   />
                 </div>

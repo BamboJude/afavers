@@ -52,7 +52,7 @@ export const AdminLoginPage = () => {
             placeholder="Email"
             required
             autoComplete="off"
-            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
+            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus-visible:border-red-600 focus-visible:ring-1 focus-visible:ring-red-600"
           />
           <input
             type="password"
@@ -61,7 +61,7 @@ export const AdminLoginPage = () => {
             placeholder="Password"
             required
             autoComplete="off"
-            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
+            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus-visible:border-red-600 focus-visible:ring-1 focus-visible:ring-red-600"
           />
           {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
