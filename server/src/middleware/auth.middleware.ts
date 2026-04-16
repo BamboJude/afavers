@@ -32,7 +32,9 @@ export const authenticateToken = async (
   }
 
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as JWTPayload;
+    const decoded = jwt.verify(token, env.JWT_SECRET, {
+      algorithms: ['HS256'],
+    }) as JWTPayload;
 
     // Check token blacklist (catches logged-out tokens)
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');

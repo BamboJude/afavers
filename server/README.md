@@ -67,14 +67,9 @@ The server will start on [http://localhost:3000](http://localhost:3000)
 
 - `GET /health` - Server health status
 
-## Default Credentials
+## Creating your first user
 
-After running the database migration, a default user is created:
-
-- **Email**: `admin@example.com`
-- **Password**: `changeme123`
-
-⚠️ **IMPORTANT**: Change this password immediately after first login!
+No default account is seeded. Sign up through the web app or create a user in the Supabase dashboard (Authentication → Users), then promote to admin by setting `is_admin = TRUE` on that row.
 
 ## Project Structure
 
@@ -115,10 +110,10 @@ src/
 # Health check
 curl http://localhost:3000/health
 
-# Login
+# Login (replace with real credentials)
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"changeme123"}'
+  -d '{"email":"YOUR_EMAIL","password":"YOUR_PASSWORD"}'
 ```
 
 ### Using Thunder Client / Postman

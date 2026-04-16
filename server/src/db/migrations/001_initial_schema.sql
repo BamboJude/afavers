@@ -62,11 +62,9 @@ CREATE TRIGGER update_jobs_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Create initial admin user (password: 'changeme123' - MUST be changed in production)
--- Password hash for 'changeme123' using bcrypt with 10 rounds
-INSERT INTO users (email, password_hash)
-VALUES ('admin@example.com', '$2b$10$rBV2kVqN8gH7Iy6hKx7yXO8pZqHqH7Iy6hKx7yXO8pZqHqH7Iy6hK')
-ON CONFLICT (email) DO NOTHING;
+-- Admin users are now provisioned via Supabase Auth + the is_admin column
+-- (see 008_admin_role.sql). No seeded default credentials — create admins
+-- explicitly through the Supabase dashboard or admin RPC.
 
 -- Example job data for testing (optional - comment out if not needed)
 -- INSERT INTO jobs (external_id, title, company, location, description, url, source, posted_date, salary, status)

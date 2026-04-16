@@ -166,9 +166,7 @@ This creates a `dist/` folder with your production-ready React app.
 
 1. Visit https://afavers.com
 2. You should see the React app
-3. Test login with default credentials:
-   - Email: `admin@example.com`
-   - Password: `changeme123`
+3. Sign up for a new account through the Supabase Auth flow, or sign in with an existing account
 
 ---
 
@@ -191,11 +189,10 @@ Railway free tier apps sleep after inactivity. To keep it awake:
 
 ## Step 5: Post-Deployment
 
-### 5.1 Change Default Password
+### 5.1 Create the first admin
 
-1. Login with default credentials
-2. Create new user via API or update database directly
-3. Delete default admin user
+1. Sign up a normal account through the app
+2. Flip `is_admin = TRUE` on that row in the `users` table via Supabase dashboard
 
 ### 5.2 Monitor Logs
 

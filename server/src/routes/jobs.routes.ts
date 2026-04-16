@@ -365,17 +365,9 @@ router.patch('/:id/hide', async (req: AuthRequest, res) => {
   }
 });
 
-/** DELETE /api/jobs/:id */
-router.delete('/:id', async (req: AuthRequest, res) => {
-  try {
-    const jobId = parseId(req.params.id);
-    if (!jobId) return res.status(400).json({ error: 'Invalid job ID' });
-    const success = await jobModel.deleteById(jobId);
-    if (!success) return res.status(404).json({ error: 'Job not found' });
-    res.json({ success: true, message: 'Job deleted' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete job' });
-  }
-});
+// DELETE /api/jobs/:id removed (2026-04-17): the endpoint had no ownership check
+// and user_jobs.ON DELETE CASCADE meant deleting one job wiped every user's overlay.
+// No current client code calls it. Per-user removal is handled via PATCH /:id/hide
+// (is_hidden flag). Admin cleanup now goes through Supabase directly.
 
 export default router;

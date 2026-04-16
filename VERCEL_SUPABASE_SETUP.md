@@ -17,7 +17,7 @@ npm run build --workspace=client
 In Vercel, set these environment variables for the frontend project:
 
 ```bash
-VITE_SUPABASE_URL=https://mcaletfngisgofppfugr.supabase.co
+VITE_SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
@@ -47,7 +47,7 @@ https://your-vercel-domain/**
 Set these only for local admin scripts or Supabase Edge Functions. Never expose the service role key in frontend code.
 
 ```bash
-SUPABASE_URL=https://mcaletfngisgofppfugr.supabase.co
+SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 BUNDESAGENTUR_API_KEY=jobboerse-jobsuche
 ADZUNA_APP_ID=your-adzuna-app-id
@@ -61,9 +61,9 @@ Install the Supabase CLI, then link and deploy:
 
 ```bash
 supabase login
-supabase link --project-ref mcaletfngisgofppfugr
+supabase link --project-ref YOUR-PROJECT-REF
 supabase secrets set \
-  SUPABASE_URL=https://mcaletfngisgofppfugr.supabase.co \
+  SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co \
   SUPABASE_ANON_KEY=your-supabase-anon-key \
   SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key \
   BUNDESAGENTUR_API_KEY=jobboerse-jobsuche \

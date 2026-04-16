@@ -99,21 +99,15 @@ curl http://localhost:3000/health
 
 ## 5. Test Authentication (2 min)
 
+Sign up a user through the Supabase dashboard (Authentication → Users → Add user) or through the web app signup flow, then call the login endpoint:
+
 ```bash
-# Login with default credentials
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"changeme123"}'
+  -d '{"email":"YOUR_EMAIL","password":"YOUR_PASSWORD"}'
 ```
 
-✅ Should return a JWT token:
-```json
-{
-  "user": {"id":1,"email":"admin@example.com"},
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "message": "Login successful"
-}
-```
+✅ Should return a JWT token in the response body.
 
 ---
 
@@ -155,13 +149,13 @@ Import these endpoints:
 
 ---
 
-## Default Credentials
+## Creating your first user
 
-After running migrations:
-- **Email**: admin@example.com
-- **Password**: changeme123
+No default account is seeded. Sign up through the web app or create a user in the Supabase dashboard (Authentication → Users), then promote to admin with:
 
-⚠️ Change immediately in production!
+```sql
+UPDATE users SET is_admin = TRUE WHERE email = 'you@example.com';
+```
 
 ---
 

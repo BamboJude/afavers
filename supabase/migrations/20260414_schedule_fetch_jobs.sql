@@ -15,7 +15,7 @@ SELECT cron.schedule(
   $$
   SELECT
     net.http_post(
-      url := 'https://mcaletfngisgofppfugr.supabase.co/functions/v1/fetch-jobs',
+      url := 'https://YOUR-PROJECT-REF.supabase.co/functions/v1/fetch-jobs',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
         'x-cron-secret', 'YOUR_CRON_SECRET'

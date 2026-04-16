@@ -38,6 +38,20 @@ if (missingEnvVars.length > 0) {
   process.exit(1);
 }
 
+// JWT_SECRET must be strong enough to resist offline brute force.
+// Reject the placeholder strings shipped in .env.example and anything short.
+const jwtSecret = process.env.JWT_SECRET!;
+const placeholderPattern = /super.?secret|change.?this|min.?32|your.?jwt|example|placeholder/i;
+if (jwtSecret.length < 32) {
+  console.error(`❌ JWT_SECRET is too short (${jwtSecret.length} chars). Minimum 32 required.`);
+  console.error('   Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+  process.exit(1);
+}
+if (placeholderPattern.test(jwtSecret)) {
+  console.error('❌ JWT_SECRET matches a known placeholder pattern. Replace with a real secret.');
+  process.exit(1);
+}
+
 export const env: EnvConfig = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: parseInt(process.env.PORT || '3000', 10),
