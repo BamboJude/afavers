@@ -1,9 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
 import { useLanguage } from '../store/languageStore';
 import { useToastStore } from '../store/toastStore';
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  type DragEndEvent,
+  type DragStartEvent,
+  type Announcements,
+} from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
 const COLUMNS: { status: Job['status']; labelKey: string; color: string; bg: string; headerBg: string }[] = [
   { status: 'saved',        labelKey: 'saved',        color: 'text-yellow-700', bg: 'bg-yellow-50/70',  headerBg: 'bg-yellow-50  border-yellow-200' },
@@ -101,23 +115,20 @@ const SwipeRevealCard = ({
 };
 
 /** Shared card content rendered in both mobile and desktop views */
-const KanbanCard = ({ job, onClick, draggable, onDragStart, onDragEnd, faded, t }: {
+const KanbanCard = ({ job, onClick, faded, t, locale, dragHandleProps }: {
   job: Job;
   onClick: () => void;
-  draggable?: boolean;
-  onDragStart?: () => void;
-  onDragEnd?: () => void;
   faded?: boolean;
   t: (key: string) => string;
+  locale: string;
+  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }) => (
   <div
-    draggable={draggable}
-    onDragStart={onDragStart}
-    onDragEnd={onDragEnd}
     onClick={onClick}
     className={`bg-white rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow select-none cursor-pointer ${
-      draggable ? 'cursor-grab active:cursor-grabbing' : ''
+      dragHandleProps ? 'cursor-grab active:cursor-grabbing' : ''
     } ${faded ? 'opacity-50 scale-95' : ''}`}
+    {...dragHandleProps}
   >
     <h3 className="font-medium text-gray-900 text-sm mb-1 hover:text-blue-600 line-clamp-2 leading-snug">
       {job.title}
@@ -132,7 +143,7 @@ const KanbanCard = ({ job, onClick, draggable, onDragStart, onDragEnd, faded, t 
     {job.applied_date && (
       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
         <p className="text-xs text-green-600 font-medium">
-          ✓ {new Date(job.applied_date).toLocaleDateString('de-DE')}
+          ✓ {new Date(job.applied_date).toLocaleDateString(locale)}
         </p>
         {(['applied', 'followup', 'interviewing'] as Job['status'][]).includes(job.status) && (() => {
           const days = Math.floor((Date.now() - new Date(job.applied_date!).getTime()) / 86400000);
@@ -146,21 +157,87 @@ const KanbanCard = ({ job, onClick, draggable, onDragStart, onDragEnd, faded, t 
     )}
     {job.interview_date && (
       <p className="text-xs text-purple-600 mt-1 font-medium">
-        📞 {new Date(job.interview_date).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}
+        📞 {new Date(job.interview_date).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
       </p>
     )}
   </div>
 );
 
+/** Draggable wrapper that renders a KanbanCard hooked up to dnd-kit. */
+const DraggableKanbanCard = ({
+  job,
+  onClick,
+  t,
+  locale,
+}: {
+  job: Job;
+  onClick: () => void;
+  t: (key: string) => string;
+  locale: string;
+}) => {
+  const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
+    id: String(job.id),
+  });
+  const style: React.CSSProperties = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : {};
+  return (
+    <div ref={setNodeRef} style={style}>
+      <KanbanCard
+        job={job}
+        onClick={onClick}
+        t={t}
+        locale={locale}
+        faded={isDragging}
+        dragHandleProps={{
+          ...attributes,
+          ...listeners,
+          role: 'button',
+          'aria-label': `${job.title} at ${job.company}. Press space or enter to pick up.`,
+        } as React.HTMLAttributes<HTMLDivElement>}
+      />
+    </div>
+  );
+};
+
+/** Droppable column wrapper — a simple div with a dnd-kit droppable ref. */
+const DroppableColumn = ({
+  status,
+  isOver,
+  isDragging,
+  children,
+  className,
+}: {
+  status: Job['status'];
+  isOver: boolean;
+  isDragging: boolean;
+  children: React.ReactNode;
+  className: string;
+}) => {
+  const { setNodeRef } = useDroppable({ id: status });
+  void isOver; void isDragging;
+  return (
+    <div ref={setNodeRef} className={className}>
+      {children}
+    </div>
+  );
+};
+
 export const KanbanPage = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const locale = lang === 'de' ? 'de-DE' : 'en-GB';
   const { show: showToast } = useToastStore();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dragging, setDragging] = useState<Job | null>(null);
-  const [dragOver, setDragOver] = useState<Job['status'] | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [activeJob, setActiveJob] = useState<Job | null>(null);
   const [mobileTab, setMobileTab] = useState<Job['status']>('saved');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   useEffect(() => {
     fetchTrackedJobs();
@@ -169,13 +246,15 @@ export const KanbanPage = () => {
   const fetchTrackedJobs = async () => {
     try {
       setLoading(true);
+      setError(null);
       const statuses = COLUMNS.map(col => col.status);
       const results = await Promise.all(
         statuses.map(status => jobsService.getJobs({ status, limit: 100 }))
       );
       setJobs(results.flatMap(r => r.jobs));
-    } catch (error) {
-      console.error('Failed to fetch jobs:', error);
+    } catch (e) {
+      console.error('Failed to fetch jobs:', e);
+      setError(e instanceof Error ? e : new Error(String(e)));
     } finally {
       setLoading(false);
     }
@@ -249,26 +328,62 @@ export const KanbanPage = () => {
     return [removeAction];
   };
 
-  const handleDrop = async (newStatus: Job['status']) => {
-    setDragOver(null);
-    if (!dragging || dragging.status === newStatus) {
-      setDragging(null);
-      return;
-    }
+  const moveJobToStatus = async (job: Job, newStatus: Job['status']) => {
+    if (job.status === newStatus) return;
     try {
       const today = new Date().toISOString().split('T')[0];
-      const appliedDate = newStatus === 'applied' && !dragging.applied_date ? today : undefined;
-      setJobs(prev => prev.map(j => j.id === dragging.id ? {
+      const appliedDate = newStatus === 'applied' && !job.applied_date ? today : undefined;
+      setJobs(prev => prev.map(j => j.id === job.id ? {
         ...j, status: newStatus,
         ...(appliedDate ? { applied_date: appliedDate } : {}),
       } : j));
-      await jobsService.updateStatus(dragging.id, newStatus, appliedDate);
+      await jobsService.updateStatus(job.id, newStatus, appliedDate);
     } catch {
       fetchTrackedJobs();
-    } finally {
-      setDragging(null);
     }
   };
+
+  const onDragStart = (event: DragStartEvent) => {
+    const job = jobs.find(j => String(j.id) === String(event.active.id));
+    if (job) setActiveJob(job);
+  };
+
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveJob(null);
+    if (!over) return;
+    const job = jobs.find(j => String(j.id) === String(active.id));
+    if (!job) return;
+    const newStatus = String(over.id) as Job['status'];
+    if (!COLUMNS.some(col => col.status === newStatus)) return;
+    moveJobToStatus(job, newStatus);
+  };
+
+  const onDragCancel = () => setActiveJob(null);
+
+  // ARIA live announcements for screen readers
+  const announcements = useMemo<Announcements>(() => ({
+    onDragStart({ active }) {
+      const job = jobs.find(j => String(j.id) === String(active.id));
+      return job ? `Picked up job ${job.title} at ${job.company}. Use arrow keys to move between columns.` : 'Picked up card.';
+    },
+    onDragOver({ active, over }) {
+      const job = jobs.find(j => String(j.id) === String(active.id));
+      if (!over) return job ? `${job.title} is not over a column.` : 'Card is not over a column.';
+      const col = COLUMNS.find(c => c.status === String(over.id));
+      return job && col ? `${job.title} is over the ${t(col.labelKey)} column.` : 'Card is over a column.';
+    },
+    onDragEnd({ active, over }) {
+      const job = jobs.find(j => String(j.id) === String(active.id));
+      if (!over) return job ? `${job.title} was dropped without a target.` : 'Card was dropped.';
+      const col = COLUMNS.find(c => c.status === String(over.id));
+      return job && col ? `${job.title} was dropped into the ${t(col.labelKey)} column.` : 'Card was dropped.';
+    },
+    onDragCancel({ active }) {
+      const job = jobs.find(j => String(j.id) === String(active.id));
+      return job ? `${job.title} drag was cancelled.` : 'Card drag was cancelled.';
+    },
+  }), [jobs, t]);
 
   if (loading) {
     return (
@@ -296,7 +411,24 @@ export const KanbanPage = () => {
         </div>
       </div>
 
-      {jobs.length === 0 ? (
+      {error ? (
+        <div className="max-w-lg mx-auto mt-16 px-6">
+          <div
+            role="alert"
+            className="bg-white border border-red-200 rounded-2xl p-6 shadow-sm text-center"
+          >
+            <div className="text-4xl mb-3" aria-hidden="true">⚠️</div>
+            <p className="text-gray-900 text-base font-semibold mb-1">Couldn't load your board</p>
+            <p className="text-gray-500 text-sm mb-5 break-words">{error.message}</p>
+            <button
+              onClick={fetchTrackedJobs}
+              className="px-5 py-2.5 bg-green-600 hover:bg-green-700 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 text-white font-semibold rounded-xl transition"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : jobs.length === 0 ? (
         <div className="text-center py-24 px-6">
           <div className="text-5xl mb-4">🗂️</div>
           <p className="text-gray-500 text-lg font-medium mb-1">{t('noJobsTracked')}</p>
@@ -358,6 +490,7 @@ export const KanbanPage = () => {
                       job={job}
                       onClick={() => navigate(`/jobs/${job.id}`)}
                       t={t}
+                      locale={locale}
                     />
                   </SwipeRevealCard>
                 ))
@@ -365,64 +498,86 @@ export const KanbanPage = () => {
             </div>
           </div>
 
-          {/* ── Desktop view: drag-and-drop columns ── */}
+          {/* ── Desktop view: drag-and-drop columns (dnd-kit) ── */}
           <div className="hidden lg:block p-6 overflow-x-auto">
-            <div className="flex gap-4 min-w-max">
-              {COLUMNS.map(col => {
-                const colJobs = getJobsForStatus(col.status);
-                const isTarget = dragOver === col.status && dragging?.status !== col.status;
-                return (
-                  <div
-                    key={col.status}
-                    className={`w-72 flex-shrink-0 rounded-2xl border-2 flex flex-col transition-all duration-150 ${
-                      isTarget
-                        ? 'border-blue-400 bg-blue-50/50 shadow-md scale-[1.01]'
-                        : 'border-gray-200 bg-white'
-                    }`}
-                    onDragOver={e => { e.preventDefault(); setDragOver(col.status); }}
-                    onDragLeave={() => setDragOver(null)}
-                    onDrop={() => handleDrop(col.status)}
-                  >
-                    {/* Column header */}
-                    <div className={`px-4 py-3 border-b rounded-t-2xl ${col.headerBg}`}>
-                      <div className="flex justify-between items-center">
-                        <h2 className={`font-semibold text-sm ${col.color}`}>{t(col.labelKey)}</h2>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full bg-white/80 ${col.color}`}>
-                          {colJobs.length}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Cards */}
-                    <div className="p-3 space-y-2.5 min-h-36 flex-1">
-                      {colJobs.length === 0 ? (
-                        <div className={`text-center py-8 text-sm rounded-xl border-2 border-dashed transition-colors ${
-                          isTarget ? 'border-blue-300 text-blue-400' : 'border-gray-200 text-gray-300'
-                        }`}>
-                          {dragging ? '↓ Drop here' : 'No jobs'}
+            <DndContext
+              sensors={sensors}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+              onDragCancel={onDragCancel}
+              accessibility={{ announcements }}
+            >
+              <div className="flex gap-4 min-w-max">
+                {COLUMNS.map(col => {
+                  const colJobs = getJobsForStatus(col.status);
+                  const isDragging = !!activeJob;
+                  const isOverTarget = isDragging && activeJob?.status !== col.status;
+                  return (
+                    <DroppableColumn
+                      key={col.status}
+                      status={col.status}
+                      isOver={false}
+                      isDragging={isDragging}
+                      className={`w-72 flex-shrink-0 rounded-2xl border-2 flex flex-col transition-all duration-150 ${
+                        isOverTarget
+                          ? 'border-blue-400 bg-blue-50/50 shadow-md'
+                          : 'border-gray-200 bg-white'
+                      }`}
+                    >
+                      {/* Column header */}
+                      <div className={`px-4 py-3 border-b rounded-t-2xl ${col.headerBg}`}>
+                        <div className="flex justify-between items-center">
+                          <h2 className={`font-semibold text-sm ${col.color}`}>{t(col.labelKey)}</h2>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full bg-white/80 ${col.color}`}>
+                            {colJobs.length}
+                          </span>
                         </div>
-                      ) : (
-                        colJobs.map(job => (
-                          <KanbanCard
-                            key={job.id}
-                            job={job}
-                            onClick={() => navigate(`/jobs/${job.id}`)}
-                            draggable
-                            onDragStart={() => setDragging(job)}
-                            onDragEnd={() => { setDragging(null); setDragOver(null); }}
-                            faded={dragging?.id === job.id}
-                            t={t}
-                          />
-                        ))
-                      )}
-                    </div>
+                      </div>
+
+                      {/* Cards */}
+                      <div className="p-3 space-y-2.5 min-h-36 flex-1">
+                        {colJobs.length === 0 ? (
+                          <div
+                            className={`text-center py-8 text-sm rounded-xl border-2 border-dashed transition-colors ${
+                              isOverTarget ? 'border-blue-300 text-blue-400' : 'border-gray-200 text-gray-300'
+                            }`}
+                          >
+                            {isDragging ? t('kanbanDropHere') : t('kanbanEmpty')}
+                          </div>
+                        ) : (
+                          colJobs.map(job => (
+                            <DraggableKanbanCard
+                              key={job.id}
+                              job={job}
+                              onClick={() => navigate(`/jobs/${job.id}`)}
+                              t={t}
+                              locale={locale}
+                            />
+                          ))
+                        )}
+                      </div>
+                    </DroppableColumn>
+                  );
+                })}
+              </div>
+
+              {/* Drag preview overlay */}
+              <DragOverlay>
+                {activeJob ? (
+                  <div className="w-72">
+                    <KanbanCard
+                      job={activeJob}
+                      onClick={() => {}}
+                      t={t}
+                      locale={locale}
+                    />
                   </div>
-                );
-              })}
-            </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
 
             <p className="text-xs text-gray-400 mt-4 text-center">
-              Drag cards between columns to update their status
+              {t('kanbanHint')}
             </p>
           </div>
         </>
