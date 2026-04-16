@@ -13,6 +13,23 @@ interface SupabaseAuthUser {
   email?: string;
 }
 
+const DEMO_EMAIL = 'demo@afavers.com';
+const DEMO_PASSWORD = 'demo1234';
+const DEMO_STATUSES: Array<'applied' | 'preparing' | 'saved' | 'followup' | 'interviewing' | 'offered' | 'rejected'> = [
+  'applied',
+  'applied',
+  'preparing',
+  'preparing',
+  'saved',
+  'saved',
+  'followup',
+  'interviewing',
+  'interviewing',
+  'offered',
+  'rejected',
+  'saved',
+];
+
 interface AuthState {
   user: User | null;
   token: string | null;
@@ -24,6 +41,10 @@ interface AuthState {
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateActivity: () => void;
+}
+
+function isDemoEmail(email?: string | null): boolean {
+  return email?.toLowerCase() === DEMO_EMAIL;
 }
 
 async function getCurrentAppUser(authUser?: SupabaseAuthUser): Promise<User> {
@@ -64,6 +85,66 @@ async function getCurrentAppUser(authUser?: SupabaseAuthUser): Promise<User> {
   };
 }
 
+async function resetDemoData(userId: number): Promise<void> {
+  const { data: jobs, error: jobsError } = await supabase
+    .from('jobs')
+    .select('id,title,company')
+    .eq('is_manual', false)
+    .order('created_at', { ascending: false })
+    .limit(DEMO_STATUSES.length + 4);
+
+  if (jobsError) throw new Error(jobsError.message);
+  const picks = (jobs ?? []).slice(0, DEMO_STATUSES.length);
+  if (picks.length === 0) return;
+
+  const { error: deleteError } = await supabase
+    .from('user_jobs')
+    .delete()
+    .eq('user_id', userId);
+  if (deleteError) throw new Error(deleteError.message);
+
+  const today = new Date();
+  const rows = picks.map((job, index) => {
+    const status = DEMO_STATUSES[index];
+    const appliedDate = ['applied', 'followup', 'interviewing', 'offered', 'rejected'].includes(status)
+      ? new Date(today.getTime() - (index + 2) * 86400000).toISOString().slice(0, 10)
+      : null;
+    const followUpDate = status === 'followup'
+      ? today.toISOString().slice(0, 10)
+      : status === 'applied'
+        ? new Date(today.getTime() + 7 * 86400000).toISOString().slice(0, 10)
+        : null;
+    const interviewDate = status === 'interviewing'
+      ? new Date(today.getTime() + (index + 1) * 86400000).toISOString().slice(0, 10)
+      : null;
+
+    return {
+      user_id: userId,
+      job_id: job.id,
+      status,
+      applied_date: appliedDate,
+      follow_up_date: followUpDate,
+      interview_date: interviewDate,
+      checklist: status === 'preparing'
+        ? { 'CV tailored': true, 'Cover letter ready': index % 2 === 0 }
+        : status === 'applied' || status === 'followup' || status === 'interviewing'
+          ? { 'CV tailored': true, 'Cover letter ready': true, 'Application submitted': true }
+          : {},
+      notes: status === 'followup' ? 'Demo note: send a polite follow-up today.' : null,
+      history: [
+        { type: 'manual', label: 'Added to demo tracker', at: new Date(today.getTime() - (index + 4) * 86400000).toISOString() },
+        { type: 'status', label: `Moved to ${status}`, at: new Date(today.getTime() - (index + 1) * 86400000).toISOString() },
+      ],
+      updated_at: new Date().toISOString(),
+    };
+  });
+
+  const { error: insertError } = await supabase
+    .from('user_jobs')
+    .insert(rows);
+  if (insertError) throw new Error(insertError.message);
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -92,7 +173,22 @@ export const useAuthStore = create<AuthState>()(
       },
 
       loginDemo: async () => {
-        throw new Error('Demo mode is temporarily unavailable while the backend moves to Supabase.');
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: DEMO_EMAIL,
+          password: DEMO_PASSWORD,
+        });
+        if (error) throw new Error(error.message);
+        if (!data.session) throw new Error('Demo account unavailable.');
+
+        const user = await getCurrentAppUser(data.user ?? undefined);
+        await resetDemoData(user.id);
+        set({
+          user,
+          token: data.session.access_token,
+          isAuthenticated: true,
+          isDemo: true,
+          lastActivity: Date.now(),
+        });
       },
 
       register: async (email, password) => {
@@ -134,7 +230,7 @@ supabase.auth.getSession().then(async ({ data }) => {
       user,
       token: data.session.access_token,
       isAuthenticated: true,
-      isDemo: false,
+      isDemo: isDemoEmail(user.email),
       lastActivity: Date.now(),
     });
   } catch {
@@ -157,7 +253,7 @@ supabase.auth.onAuthStateChange((_event, session) => {
         user,
         token: session.access_token,
         isAuthenticated: true,
-        isDemo: false,
+        isDemo: isDemoEmail(user.email),
         lastActivity: Date.now(),
       });
     } catch {
