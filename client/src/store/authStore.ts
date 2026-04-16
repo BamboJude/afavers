@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
 
 interface User {
@@ -218,7 +218,21 @@ export const useAuthStore = create<AuthState>()(
         set({ lastActivity: Date.now() });
       },
     }),
-    { name: 'auth-storage' }
+    {
+      name: 'auth-storage',
+      // Keep auth state in sessionStorage so it is wiped on tab close,
+      // mirroring the Supabase client's storage choice in lib/supabase.ts.
+      storage: createJSONStorage(() => sessionStorage),
+      // Never persist the Supabase access token; supabase-js owns the
+      // canonical session in its own storage. Persisting the token here
+      // would duplicate a sensitive credential.
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        isDemo: state.isDemo,
+        lastActivity: state.lastActivity,
+      }),
+    }
   )
 );
 

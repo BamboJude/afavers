@@ -275,7 +275,7 @@ export const JobDetailPage = () => {
                 isHtml(job.description) ? (
                   <div
                     className="prose prose-sm max-w-none text-gray-700 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.description) }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.description, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style', 'form', 'iframe', 'script', 'object', 'embed'], FORBID_ATTR: ['style', 'formaction', 'form', 'onerror', 'onload'] }) }}
                   />
                 ) : (
                   <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm">{job.description}</p>
