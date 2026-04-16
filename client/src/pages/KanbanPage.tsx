@@ -16,6 +16,9 @@ const COLUMNS: { status: Job['status']; labelKey: string; color: string; bg: str
   { status: 'archived',     labelKey: 'archived',     color: 'text-gray-700',   bg: 'bg-gray-50/70',    headerBg: 'bg-gray-50    border-gray-200' },
 ];
 
+const ZOOM_LEVELS = [75, 90, 100, 115, 130] as const;
+type ZoomLevel = typeof ZOOM_LEVELS[number];
+
 /** Swipe-left to reveal action buttons (mobile only) */
 const SwipeRevealCard = ({
   actions,
@@ -101,7 +104,7 @@ const SwipeRevealCard = ({
 };
 
 /** Shared card content rendered in both mobile and desktop views */
-const KanbanCard = ({ job, onClick, draggable, onDragStart, onDragEnd, faded, t }: {
+const KanbanCard = ({ job, onClick, draggable, onDragStart, onDragEnd, faded, t, compact = false }: {
   job: Job;
   onClick: () => void;
   draggable?: boolean;
@@ -109,22 +112,23 @@ const KanbanCard = ({ job, onClick, draggable, onDragStart, onDragEnd, faded, t 
   onDragEnd?: () => void;
   faded?: boolean;
   t: (key: string) => string;
+  compact?: boolean;
 }) => (
   <div
     draggable={draggable}
     onDragStart={onDragStart}
     onDragEnd={onDragEnd}
     onClick={onClick}
-    className={`bg-white rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow select-none cursor-pointer ${
+    className={`bg-white rounded-xl ${compact ? 'p-3' : 'p-4'} border border-gray-200 hover:shadow-md transition-shadow select-none cursor-pointer ${
       draggable ? 'cursor-grab active:cursor-grabbing' : ''
     } ${faded ? 'opacity-50 scale-95' : ''}`}
   >
-    <h3 className="font-medium text-gray-900 text-sm mb-1 hover:text-blue-600 line-clamp-2 leading-snug">
+    <h3 className={`font-medium text-gray-900 ${compact ? 'text-xs' : 'text-sm'} mb-1 hover:text-blue-600 line-clamp-2 leading-snug`}>
       {job.title}
     </h3>
-    <p className="text-xs font-medium text-gray-600 mb-1">{job.company}</p>
-    <p className="text-xs text-gray-400">📍 {job.location}</p>
-    {job.notes && (
+    <p className="text-xs font-medium text-gray-600 mb-1 line-clamp-1">{job.company}</p>
+    <p className="text-xs text-gray-400 line-clamp-1">📍 {job.location}</p>
+    {job.notes && !compact && (
       <p className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100 line-clamp-2 italic">
         "{job.notes}"
       </p>
@@ -161,10 +165,18 @@ export const KanbanPage = () => {
   const [dragging, setDragging] = useState<Job | null>(null);
   const [dragOver, setDragOver] = useState<Job['status'] | null>(null);
   const [mobileTab, setMobileTab] = useState<Job['status']>('saved');
+  const [zoom, setZoom] = useState<ZoomLevel>(() => {
+    const stored = Number(localStorage.getItem('kanban-zoom'));
+    return ZOOM_LEVELS.includes(stored as ZoomLevel) ? stored as ZoomLevel : 100;
+  });
 
   useEffect(() => {
     fetchTrackedJobs();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('kanban-zoom', String(zoom));
+  }, [zoom]);
 
   const fetchTrackedJobs = async () => {
     try {
@@ -183,6 +195,13 @@ export const KanbanPage = () => {
 
   const getJobsForStatus = (status: Job['status']) =>
     jobs.filter(j => j.status === status);
+
+  const zoomIndex = ZOOM_LEVELS.indexOf(zoom);
+  const zoomOut = () => setZoom(ZOOM_LEVELS[Math.max(0, zoomIndex - 1)]);
+  const zoomIn = () => setZoom(ZOOM_LEVELS[Math.min(ZOOM_LEVELS.length - 1, zoomIndex + 1)]);
+  const columnWidth = Math.round(288 * (zoom / 100));
+  const compactCards = zoom <= 90;
+  const boardGap = zoom <= 90 ? 12 : 16;
 
   const handleUnsave = async (job: Job) => {
     setJobs(prev => prev.filter(j => j.id !== job.id));
@@ -367,18 +386,50 @@ export const KanbanPage = () => {
 
           {/* ── Desktop view: drag-and-drop columns ── */}
           <div className="hidden lg:block p-6 overflow-x-auto">
-            <div className="flex gap-4 min-w-max">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <p className="text-xs text-gray-500">
+                Drag cards between columns to update their status.
+              </p>
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1.5">
+                <button
+                  onClick={zoomOut}
+                  disabled={zoomIndex === 0}
+                  className="w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Zoom out"
+                >
+                  -
+                </button>
+                <button
+                  onClick={() => setZoom(100)}
+                  className="min-w-16 h-8 px-2 rounded-md text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                  title="Reset zoom"
+                >
+                  {zoom}%
+                </button>
+                <button
+                  onClick={zoomIn}
+                  disabled={zoomIndex === ZOOM_LEVELS.length - 1}
+                  className="w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Zoom in"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div className="flex min-w-max" style={{ gap: boardGap }}>
               {COLUMNS.map(col => {
                 const colJobs = getJobsForStatus(col.status);
                 const isTarget = dragOver === col.status && dragging?.status !== col.status;
                 return (
                   <div
                     key={col.status}
-                    className={`w-72 flex-shrink-0 rounded-2xl border-2 flex flex-col transition-all duration-150 ${
+                    className={`flex-shrink-0 rounded-2xl border-2 flex flex-col transition-all duration-150 ${
                       isTarget
                         ? 'border-blue-400 bg-blue-50/50 shadow-md scale-[1.01]'
                         : 'border-gray-200 bg-white'
                     }`}
+                    style={{ width: columnWidth }}
                     onDragOver={e => { e.preventDefault(); setDragOver(col.status); }}
                     onDragLeave={() => setDragOver(null)}
                     onDrop={() => handleDrop(col.status)}
@@ -394,7 +445,7 @@ export const KanbanPage = () => {
                     </div>
 
                     {/* Cards */}
-                    <div className="p-3 space-y-2.5 min-h-36 flex-1">
+                    <div className={`${compactCards ? 'p-2 space-y-2' : 'p-3 space-y-2.5'} min-h-36 flex-1`}>
                       {colJobs.length === 0 ? (
                         <div className={`text-center py-8 text-sm rounded-xl border-2 border-dashed transition-colors ${
                           isTarget ? 'border-blue-300 text-blue-400' : 'border-gray-200 text-gray-300'
@@ -412,6 +463,7 @@ export const KanbanPage = () => {
                             onDragEnd={() => { setDragging(null); setDragOver(null); }}
                             faded={dragging?.id === job.id}
                             t={t}
+                            compact={compactCards}
                           />
                         ))
                       )}
@@ -420,10 +472,6 @@ export const KanbanPage = () => {
                 );
               })}
             </div>
-
-            <p className="text-xs text-gray-400 mt-4 text-center">
-              Drag cards between columns to update their status
-            </p>
           </div>
         </>
       )}
