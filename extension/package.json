@@ -1,0 +1,17 @@
+{
+  "name": "afavers-extension",
+  "version": "1.2.0",
+  "description": "afavers Job Capture — Chrome/Firefox extension that saves jobs directly to Supabase.",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "node build.js",
+    "build:watch": "node build.js --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.103.3"
+  }
+}
