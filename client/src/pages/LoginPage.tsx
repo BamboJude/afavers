@@ -140,7 +140,7 @@ export const LoginPage = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition bg-gray-50 focus:bg-white text-sm"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent outline-none transition bg-gray-50 focus:bg-white text-sm"
                   placeholder="you@example.com"
                 />
               </div>
@@ -166,7 +166,7 @@ export const LoginPage = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-11 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition bg-gray-50 focus:bg-white text-sm"
+                  className="w-full pl-10 pr-11 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent outline-none transition bg-gray-50 focus:bg-white text-sm"
                   placeholder="••••••••"
                 />
                 <button

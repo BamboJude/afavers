@@ -114,7 +114,7 @@ export const SettingsPage = () => {
                 rows={3}
                 value={settings.keywords}
                 onChange={e => setSettings(s => ({ ...s, keywords: e.target.value }))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm resize-none bg-white"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent outline-none text-sm resize-none bg-white"
                 placeholder={t('keywordsPlaceholder')}
               />
             </div>
@@ -126,7 +126,7 @@ export const SettingsPage = () => {
                 rows={2}
                 value={settings.locations}
                 onChange={e => setSettings(s => ({ ...s, locations: e.target.value }))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm resize-none bg-white"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent outline-none text-sm resize-none bg-white"
                 placeholder={t('locationsPlaceholder')}
               />
             </div>
@@ -238,7 +238,7 @@ export const SettingsPage = () => {
                     }
                   }}
                   placeholder="Type keyword, press Enter"
-                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent bg-white"
                 />
                 <button
                   onClick={() => {
@@ -376,7 +376,7 @@ export const SettingsPage = () => {
                   type="password"
                   value={pwForm[f.key as keyof typeof pwForm]}
                   onChange={e => setPwForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm bg-white"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent outline-none text-sm bg-white"
                   placeholder={f.placeholderKey ? t(f.placeholderKey) : f.placeholder}
                 />
               </div>

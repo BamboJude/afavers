@@ -392,7 +392,7 @@ export const JobDetailPage = () => {
                 value={interviewDate}
                 onChange={e => handleSaveInterviewDate(e.target.value)}
                 disabled={savingInterviewDate}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm text-gray-700 disabled:opacity-50"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:border-transparent outline-none text-sm text-gray-700 disabled:opacity-50"
               />
               {interviewDate && (
                 <div className="flex items-center justify-between mt-2">
@@ -417,7 +417,7 @@ export const JobDetailPage = () => {
                 onChange={e => setNotes(e.target.value)}
                 placeholder={t('notesPlaceholder')}
                 rows={5}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
               />
               <div className="flex justify-between items-center mt-2">
                 <span className={`text-xs transition ${notesSaved ? 'text-green-600' : 'text-transparent'}`}>
@@ -441,7 +441,7 @@ export const JobDetailPage = () => {
                 onChange={e => setCoverLetter(e.target.value)}
                 placeholder={t('coverLetterPlaceholder')}
                 rows={8}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
               />
               <div className="flex justify-between items-center mt-2">
                 <span className={`text-xs transition ${coverLetterSaved ? 'text-green-600' : 'text-transparent'}`}>
