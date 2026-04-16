@@ -186,10 +186,14 @@ const EMPTY_MANUAL_JOB: ManualJobForm = {
 const SwipeableCard = ({
   onSave,
   onHide,
+  saveLabel,
+  hideLabel,
   children,
 }: {
   onSave?: () => void;   // undefined = save not applicable for this job
   onHide: () => void;
+  saveLabel: string;
+  hideLabel: string;
   children: React.ReactNode;
 }) => {
   const { touchHandlers, cardStyle, bgOpacity, action } = useSwipeAction(
@@ -212,11 +216,11 @@ const SwipeableCard = ({
             {visibleAction === 'save' ? (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
-                Save
+                {saveLabel}
               </>
             ) : (
               <>
-                Hide
+                {hideLabel}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
               </>
             )}
@@ -239,6 +243,7 @@ export const JobsPage = () => {
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<Error | null>(null);
   const [page, setPage] = useState(1);
   const initialTab    = (searchParams.get('tab') as Tab) || 'new';
   const initialSearch = searchParams.get('search') || '';
@@ -297,6 +302,7 @@ export const JobsPage = () => {
   const fetchJobs = async () => {
     try {
       setLoading(true);
+      setFetchError(null);
       const filters: JobFilters = {
         limit: LIMIT,
         offset: (page - 1) * LIMIT,
@@ -318,6 +324,7 @@ export const JobsPage = () => {
       setTotal(response.total);
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
+      setFetchError(error instanceof Error ? error : new Error(String(error)));
     } finally {
       setLoading(false);
     }
@@ -624,7 +631,7 @@ export const JobsPage = () => {
             onChange={e => { setLocationFilter(e.target.value); setPage(1); }}
             className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
           >
-            <option value="">All states</option>
+            <option value="">{t('allStates')}</option>
             {Object.keys(STATE_CITIES).map(state => (
               <option key={state} value={STATE_CITIES[state].join('|')}>{state}</option>
             ))}
@@ -635,7 +642,7 @@ export const JobsPage = () => {
             className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
           >
             <option value="posted_date">{t('newestFirst')}</option>
-            <option value="match_score">Best match</option>
+            <option value="match_score">{t('bestMatch')}</option>
             <option value="created_at">{t('recentlyAdded')}</option>
             <option value="deadline">{t('expiringSoon')}</option>
             <option value="title">{t('titleAZ')}</option>
@@ -714,7 +721,7 @@ export const JobsPage = () => {
                 : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
             }`}
           >
-            Strong match
+            {t('strongMatch')}
           </button>
           <button
             onClick={() => { setRemoteOnly(r => !r); setPage(1); }}
@@ -734,7 +741,7 @@ export const JobsPage = () => {
                 : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
             }`}
           >
-            English
+            {t('englishOnly')}
           </button>
           <button
             onClick={() => { setStudentOnly(value => !value); setPage(1); }}
@@ -744,7 +751,7 @@ export const JobsPage = () => {
                 : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
             }`}
           >
-            Werkstudent
+            {t('werkstudentOnly')}
           </button>
         </div>
         {/* Active filter indicator */}
@@ -770,19 +777,36 @@ export const JobsPage = () => {
           <div className="space-y-2.5">
             {[...Array(6)].map((_, i) => <JobSkeleton key={i} delay={i * 50} />)}
           </div>
+        ) : fetchError ? (
+          <div
+            role="alert"
+            className="bg-white rounded-2xl border border-red-200 p-10 text-center shadow-sm"
+          >
+            <div className="text-4xl mb-3" aria-hidden="true">⚠️</div>
+            <p className="text-gray-900 text-base font-semibold">Couldn't load jobs</p>
+            <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto break-words">
+              {fetchError.message}
+            </p>
+            <button
+              onClick={fetchJobs}
+              className="mt-5 px-5 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 text-white text-sm font-semibold transition"
+            >
+              Retry
+            </button>
+          </div>
         ) : jobs.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-200 p-16 text-center">
             <div className="text-4xl mb-4">🔍</div>
             <p className="text-gray-500 text-base font-medium">{t('noJobsFound')}</p>
             <p className="text-gray-400 text-sm mt-2 max-w-md mx-auto">
-              Try clearing one filter, widening your cities in Settings, or using broader keywords like analyst, project, GIS, energy, consulting.
+              {t('noJobsHint')}
             </p>
             {filterCount > 0 && (
               <button
                 onClick={clearAllFilters}
-                className="mt-5 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 transition"
+                className="mt-5 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition"
               >
-                Clear filters
+                {t('clearFilters')}
               </button>
             )}
             {activeTab === 'new' && (
@@ -796,6 +820,8 @@ export const JobsPage = () => {
               <SwipeableCard
                 onSave={job.status === 'new' ? () => handleSave(job) : undefined}
                 onHide={() => handleHide(job)}
+                saveLabel={t('save')}
+                hideLabel={t('hide')}
               >
                 <div
                   onClick={() => navigate(`/jobs/${job.id}`)}
@@ -843,7 +869,7 @@ export const JobsPage = () => {
                           )}
                           {job.deadline && (
                             <span className="text-orange-500 font-medium">
-                              ⏰ {new Date(job.deadline).toLocaleDateString('de-DE')}
+                              ⏰ {new Date(job.deadline).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-GB')}
                             </span>
                           )}
                           {job.salary && (

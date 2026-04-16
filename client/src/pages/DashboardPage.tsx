@@ -886,11 +886,11 @@ const STATUS_CONFIG: Record<BoardStatus, {
   offered:      { label: 'Offered',      bg: 'bg-emerald-50', text: 'text-emerald-700',dot: 'bg-emerald-500',leftBorder: '#059669' },
 };
 
-const JobCard = ({ job, status, onClick }: { job: Job; status: BoardStatus; onClick: () => void }) => {
+const JobCard = ({ job, status, onClick, locale }: { job: Job; status: BoardStatus; onClick: () => void; locale: string }) => {
   const cfg = STATUS_CONFIG[status];
   const dateStr = job.applied_date
-    ? new Date(job.applied_date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
-    : new Date(job.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+    ? new Date(job.applied_date).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
+    : new Date(job.created_at).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
 
   return (
     <div
@@ -914,10 +914,12 @@ const ApplicationBoard = ({
   stats,
   boardJobs,
   onJobClick,
+  locale,
 }: {
   stats: DashboardStats;
   boardJobs: Record<BoardStatus, Job[]>;
   onJobClick: (id: number) => void;
+  locale: string;
 }) => {
   const statuses: BoardStatus[] = ['saved', 'preparing', 'applied', 'followup', 'interviewing', 'offered'];
   const counts: Record<BoardStatus, number> = {
@@ -961,7 +963,7 @@ const ApplicationBoard = ({
       {total > 0 ? (
         <div className="divide-y divide-gray-100">
           {recentJobs.map(({ job, status }) => (
-            <JobCard key={job.id} job={job} status={status} onClick={() => onJobClick(job.id)} />
+            <JobCard key={job.id} job={job} status={status} onClick={() => onJobClick(job.id)} locale={locale} />
           ))}
         </div>
       ) : (
@@ -1135,7 +1137,8 @@ function useGreeting(email: string | undefined) {
 export const DashboardPage = () => {
   const { isDemo, user } = useAuthStore();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const locale = lang === 'de' ? 'de-DE' : 'en-GB';
   const { greeting, displayName, todayFormatted } = useGreeting(user?.email);
   const streak = useStreak();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -1146,6 +1149,7 @@ export const DashboardPage = () => {
   const { filterKeywords, filterEnabled, newsOnDashboard } = usePreferencesStore();
   const filteredStoryJobs = storyJobs.filter(j => jobMatchesFilter(j, filterKeywords, filterEnabled));
   const [loading, setLoading] = useState(true);
+  const [statsError, setStatsError] = useState<Error | null>(null);
   const [fetching, setFetching] = useState(false);
   const [fetchMsg, setFetchMsg] = useState('');
   const [editMode, setEditMode] = useState(false);
@@ -1185,10 +1189,12 @@ export const DashboardPage = () => {
   const loadStats = async () => {
     try {
       setLoading(true);
+      setStatsError(null);
       const data = await jobsService.getStats();
       setStats(data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      setStatsError(error instanceof Error ? error : new Error(String(error)));
     } finally {
       setLoading(false);
     }
@@ -1210,6 +1216,27 @@ export const DashboardPage = () => {
 
   if (loading) return <DashboardSkeleton />;
 
+  if (statsError && !stats) {
+    return (
+      <div className="bg-[#f4f6fa] min-h-screen flex items-center justify-center p-6" style={{ fontFamily: "'Figtree', system-ui, sans-serif" }}>
+        <div
+          role="alert"
+          className="max-w-md w-full bg-white border border-red-200 rounded-2xl p-8 shadow-sm text-center"
+        >
+          <div className="text-4xl mb-3" aria-hidden="true">⚠️</div>
+          <p className="text-gray-900 text-base font-bold mb-1">Couldn't load your dashboard</p>
+          <p className="text-gray-500 text-sm mb-5 break-words">{statsError.message}</p>
+          <button
+            onClick={loadStats}
+            className="px-5 py-2.5 bg-green-600 hover:bg-green-700 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 text-white font-semibold rounded-xl transition"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const totalTracked = (stats?.saved || 0) + (stats?.preparing || 0) + (stats?.applied || 0) + (stats?.followup || 0) + (stats?.interviewing || 0) + (stats?.offered || 0);
 
   return (
@@ -1224,11 +1251,11 @@ export const DashboardPage = () => {
             {todayFormatted}
             {(followUps.length > 0 || upcomingInterviews.length > 0 || (stats?.new_today ?? 0) > 0) && (
               <span className="ml-2">
-                {followUps.length > 0 && <span className="text-amber-500 font-semibold">{followUps.length} follow-up{followUps.length > 1 ? 's' : ''} due</span>}
+                {followUps.length > 0 && <span className="text-amber-500 font-semibold">{followUps.length} {t('headerFollowUpsDue')}</span>}
                 {followUps.length > 0 && upcomingInterviews.length > 0 && <span className="mx-1.5 text-gray-300">·</span>}
-                {upcomingInterviews.length > 0 && <span className="text-purple-500 font-semibold">{upcomingInterviews.length} interview{upcomingInterviews.length > 1 ? 's' : ''} coming up</span>}
+                {upcomingInterviews.length > 0 && <span className="text-purple-500 font-semibold">{upcomingInterviews.length} {t('interviewsComingUp')}</span>}
                 {(followUps.length > 0 || upcomingInterviews.length > 0) && (stats?.new_today ?? 0) > 0 && <span className="mx-1.5 text-gray-300">·</span>}
-                {(stats?.new_today ?? 0) > 0 && <span className="text-[#16a34a] font-semibold">{stats!.new_today} new jobs today</span>}
+                {(stats?.new_today ?? 0) > 0 && <span className="text-[#16a34a] font-semibold">{stats!.new_today} {t('newJobsToday')}</span>}
               </span>
             )}
           </p>
@@ -1236,18 +1263,18 @@ export const DashboardPage = () => {
         <div className="flex items-center gap-3">
           {streak > 1 && (
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-full text-amber-700 text-[12px] font-black">
-              {streak}-day streak
+              {streak}{t('dayStreak')}
             </div>
           )}
           <button
             onClick={() => setEditMode(e => !e)}
-            className={`text-[13px] font-bold px-4 py-2 rounded-full border transition ${
+            className={`text-[13px] font-bold px-4 py-2 rounded-full border transition focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
               editMode
                 ? 'bg-[#0a1a25] text-white border-[#0a1a25]'
                 : 'bg-white text-[#0a1a25] border-gray-200 hover:bg-gray-50 hover:border-gray-300'
             }`}
           >
-            {editMode ? 'Done' : 'Edit dashboard'}
+            {editMode ? t('done') : t('editDashboard')}
           </button>
         </div>
       </div>
@@ -1401,7 +1428,7 @@ export const DashboardPage = () => {
                             <IconClock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                             {f.title} · {f.company}
                           </span>
-                          <span className="text-[12px] text-[#6f839c] shrink-0 ml-3">{new Date(f.follow_up_date).toLocaleDateString('de-DE')}</span>
+                          <span className="text-[12px] text-[#6f839c] shrink-0 ml-3">{new Date(f.follow_up_date).toLocaleDateString(locale)}</span>
                         </div>
                       ))}
                     </div>
@@ -1423,7 +1450,7 @@ export const DashboardPage = () => {
                       {upcomingInterviews.map(j => (
                         <div key={j.id} onClick={() => navigate(`/jobs/${j.id}`)} className="flex justify-between items-center px-[18px] py-3 cursor-pointer hover:bg-[#f4f6fa] transition border-l-[3px] border-l-purple-500">
                           <span className="text-[14px] font-bold text-[#223a5a] truncate flex-1">{j.title} · {j.company}</span>
-                          <span className="text-[12px] text-[#6f839c] shrink-0 ml-3">{new Date(j.interview_date!).toLocaleDateString('de-DE')}</span>
+                          <span className="text-[12px] text-[#6f839c] shrink-0 ml-3">{new Date(j.interview_date!).toLocaleDateString(locale)}</span>
                         </div>
                       ))}
                     </div>
@@ -1440,7 +1467,7 @@ export const DashboardPage = () => {
                     onMoveDown={moveDown}
                     noPad
                   >
-                    <ApplicationBoard stats={stats} boardJobs={boardJobs} onJobClick={(id) => navigate(`/jobs/${id}`)} />
+                    <ApplicationBoard stats={stats} boardJobs={boardJobs} onJobClick={(id) => navigate(`/jobs/${id}`)} locale={locale} />
                   </Module>
                 );
               } else if (key === 'pipeline') {

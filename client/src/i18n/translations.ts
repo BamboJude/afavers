@@ -301,7 +301,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     freeNoCard: 'Free to use · No credit card required',
 
     // Dashboard header extras
-    followUpsDue: 'follow-up(s) due',
+    headerFollowUpsDue: 'follow-up(s) due',
     interviewsComingUp: 'interview(s) coming up',
     newJobsToday: 'new jobs today',
     dayStreak: '-day streak',
@@ -630,7 +630,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     freeNoCard: 'Kostenlos · Keine Kreditkarte nötig',
 
     // Dashboard header extras
-    followUpsDue: 'Nachfassaktion(en) fällig',
+    headerFollowUpsDue: 'Nachfassaktion(en) fällig',
     interviewsComingUp: 'anstehende(s) Gespräch(e)',
     newJobsToday: 'neue Stellen heute',
     dayStreak: '-Tage-Serie',
