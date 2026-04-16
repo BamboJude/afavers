@@ -1,44 +1,40 @@
 # afavers
 
-> afavers is a free personal job application tracker built specifically for the German job market. It automatically fetches job listings from Bundesagentur für Arbeit (the official German federal employment agency) every 2 hours and gives users a full dashboard to manage their job search.
+> afavers is a personal job application tracker for people searching for work in Germany. It helps users find jobs, save opportunities, track applications, follow up, and export a clean job-search record.
 
 ## What afavers does
 
-- Automatically fetches green and sustainability-focused jobs in Germany (consulting, renewable energy, environment, GIS, Nachhaltigkeit) from Bundesagentur für Arbeit every 2 hours
-- Lets users save jobs, track applications through a Kanban pipeline (New → Saved → Applied → Interview → Offer)
-- Provides interview prep resources: YouTube video guides on German job interviews, salary negotiation, and work culture
-- Career guides covering the German job market, post-graduation job search, and green jobs in Germany
-- Job search analytics: applications by status, source, and region
-- Hot Picks: swipe-style triage for quickly sorting new jobs
-- English-language job filter for international applicants
-- Reminders and calendar for interviews and follow-ups
-- Bilingual: English and German interface
-- Available on web (afavers.com) and iOS (via Capacitor)
-- Free forever, no ads
+- Fetches jobs from German job sources and stores them in Supabase
+- Lets users save jobs and track applications through a pipeline
+- Supports saved, preparing, applied, follow-up, interviewing, offered, rejected, and archived stages
+- Provides PDF, Excel, and CSV exports for job-search reports
+- Includes a browser extension for saving jobs from external sites
+- Offers Hot Picks, a swipe-style job triage flow
+- Includes English-language filtering for international applicants
+- Provides reminders for interviews and follow-ups
+- Supports English and German
 
 ## Who it is for
 
-International job seekers, expats, graduates, and students searching for jobs in Germany — especially in green tech, sustainability, environmental consulting, energy transition (Energiewende), and GIS sectors. Particularly useful for non-native German speakers navigating the German application process (Bewerbung).
+International job seekers, graduates, students, and anyone who wants a clearer job application tracker for Germany.
 
 ## Key pages
 
-- Landing / home: https://afavers.com/
-- Live demo (no login needed): https://afavers.com/demo
-- Register: https://afavers.com/register
-- Login: https://afavers.com/login
-- Disclaimer / legal: https://afavers.com/disclaimer
+- Landing / home: https://afavers.online/
+- Live demo: https://afavers.online/demo
+- Register: https://afavers.online/register
+- Login: https://afavers.online/login
+- Disclaimer / legal: https://afavers.online/disclaimer
 
 ## Technology
 
-- Frontend: React + Vite + Tailwind CSS, deployed to cPanel (afavers.com)
-- Backend: Express + TypeScript, deployed on Railway
-- Database: Supabase PostgreSQL
-- Job data source: Bundesagentur für Arbeit API (official, no scraping)
-
-## Languages
-
-English (primary), German (secondary)
+- Frontend: React, TypeScript, Vite, Tailwind CSS
+- Hosting: Vercel
+- Auth: Supabase Auth
+- Database: Supabase Postgres
+- Backend tasks: Supabase Edge Functions and Supabase Cron
+- Extension: Chrome and Firefox browser extension
 
 ## Contact
 
-Website: https://afavers.com
+Website: https://afavers.online

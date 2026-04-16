@@ -1,6 +1,6 @@
 # Supabase Edge Functions
 
-Functions in this directory replace the old Express endpoints needed by the frontend:
+Functions in this directory handle the backend tasks used by the frontend:
 
 - `fetch-jobs`: fetches Bundesagentur and Adzuna jobs and upserts them into `jobs`
 - `werkstudent-search`: live Werkstudent search proxy for Bundesagentur

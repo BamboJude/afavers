@@ -1,30 +1,29 @@
 {
-  "name": "job-tracker",
+  "name": "afavers",
   "version": "1.0.0",
   "type": "module",
-  "description": "Full-stack job tracking platform",
+  "description": "A job search tracker for Germany, powered by Supabase and Vercel.",
   "private": true,
   "workspaces": [
-    "client",
-    "server"
+    "client"
   ],
   "scripts": {
-    "dev:server": "npm run dev --workspace=server",
+    "dev": "npm run dev --workspace=client",
     "dev:client": "npm run dev --workspace=client",
-    "build": "npm run build --workspace=server && npm run build --workspace=client",
+    "build": "npm run build --workspace=client",
     "build:client": "npm run build --workspace=client",
-    "build:server": "npm run build --workspace=server",
-    "install:server": "npm install --workspace=server",
-    "install:client": "npm install --workspace=client"
+    "lint": "npm run lint --workspace=client"
   },
   "keywords": [
     "job-tracker",
     "job-search",
+    "germany",
+    "supabase",
+    "vercel",
     "react",
-    "nodejs",
     "postgresql"
   ],
-  "author": "",
+  "author": "Bambo Jude",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0",

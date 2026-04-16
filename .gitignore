@@ -31,7 +31,6 @@ client/.env.production
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
-!.vscode/sftp.json
 .idea/
 .DS_Store
 *.suo
