@@ -9,7 +9,7 @@ Functions in this directory handle the backend tasks used by the frontend:
 Deploy:
 
 ```bash
-supabase link --project-ref mcaletfngisgofppfugr
+supabase link --project-ref YOUR-PROJECT-REF
 supabase functions deploy fetch-jobs --no-verify-jwt
 supabase functions deploy werkstudent-search
 supabase functions deploy news --no-verify-jwt
