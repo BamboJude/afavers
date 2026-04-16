@@ -12,6 +12,7 @@ export const supabase = createClient(
   supabaseAnonKey || 'missing-anon-key',
   {
     auth: {
+      storageKey: 'afavers-supabase-auth-v2',
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
