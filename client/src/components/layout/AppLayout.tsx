@@ -274,25 +274,8 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
               <Logo />
             </Link>
 
-            {/* Right: session timer + theme toggle + avatar */}
+            {/* Right: theme toggle + avatar */}
             <div className="ml-auto flex items-center gap-2 shrink-0">
-              {showWarning && (
-                <button
-                  onClick={stayLoggedIn}
-                  title="Session expiring — click to continue"
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold tabular-nums transition-all
-                    ${secondsLeft <= 5
-                      ? 'bg-red-500 text-white animate-pulse'
-                      : 'bg-amber-400 text-amber-900'
-                    }`}
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" strokeWidth="2"/>
-                    <path strokeLinecap="round" strokeWidth="2" d="M12 7v5l3 3"/>
-                  </svg>
-                  {secondsLeft}s
-                </button>
-              )}
               <button
                 onClick={toggleTheme}
                 title={isDark ? 'Light mode' : 'Dark mode'}
@@ -354,12 +337,12 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
               </svg>
             </div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
-              {secondsLeft === 0 ? 'Session Expired' : 'Session Expiring'}
+              {secondsLeft === 0 ? 'Still there?' : 'Session paused for security'}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
               {secondsLeft === 0
-                ? 'Would you like to extend your session?'
-                : 'Your session will end in'}
+                ? 'Continue to keep working, or sign out if you are done.'
+                : 'You have been inactive for 5 minutes. Continue within'}
             </p>
             {secondsLeft > 0 && (
               <>

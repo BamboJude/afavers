@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-const IDLE_MS  = 30 * 1000; // 30s of inactivity → show dialog
-const GRACE_MS = 15 * 1000; // 15s grace period in the dialog before forced logout
+const IDLE_MS = 5 * 60 * 1000; // 5 minutes of inactivity before showing the dialog
+const GRACE_MS = 60 * 1000; // 60s visible warning; dialog stays open at 0
 
 export const useIdleTimer = (onLogout: () => void) => {
   const [showWarning, setShowWarning]   = useState(false);
@@ -50,7 +50,7 @@ export const useIdleTimer = (onLogout: () => void) => {
   }, []);
 
   /**
-   * Reset: clears dialog and restarts the silent 30s idle timer.
+   * Reset: clears dialog and restarts the silent 5 minute idle timer.
    * Called by the Continue button or on mount.
    */
   const reset = useCallback(() => {
@@ -59,7 +59,7 @@ export const useIdleTimer = (onLogout: () => void) => {
     warningRef.current = false;
     setShowWarning(false);
 
-    // Restart silent idle countdown — no dialog until it fires
+    // Restart silent idle tracking — no dialog until it fires
     logoutTimer.current = setTimeout(() => {
       showDialog(GRACE_MS / 1000);
     }, IDLE_MS);
@@ -77,14 +77,14 @@ export const useIdleTimer = (onLogout: () => void) => {
         // Session expired while away → grace period dialog
         showDialog(GRACE_MS / 1000);
       } else {
-        // Show dialog with the actual remaining session time
-        showDialog(Math.ceil(remaining / 1000));
+        // Returning before the idle limit counts as activity.
+        reset();
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [showDialog]);
+  }, [reset, showDialog]);
 
   // ── Activity listeners ── only reset when dialog is NOT open ─────────────
   useEffect(() => {
