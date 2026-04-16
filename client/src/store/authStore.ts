@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
 
 interface User {
@@ -52,12 +52,15 @@ function isDemoEmail(email?: string | null): boolean {
 
 function clearStoredAuth(): void {
   try {
-    localStorage.removeItem('auth-storage');
-    localStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
-    LEGACY_AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
-    Object.keys(localStorage)
-      .filter((key) => key.startsWith('sb-') && key.includes('-auth-token'))
-      .forEach((key) => localStorage.removeItem(key));
+    const storageAreas = [localStorage, sessionStorage];
+    storageAreas.forEach((storage) => {
+      storage.removeItem('auth-storage');
+      storage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
+      LEGACY_AUTH_STORAGE_KEYS.forEach((key) => storage.removeItem(key));
+      Object.keys(storage)
+        .filter((key) => key.startsWith('sb-') && key.includes('-auth-token'))
+        .forEach((key) => storage.removeItem(key));
+    });
   } catch {
     // Browser storage can be blocked in some privacy modes.
   }
@@ -250,9 +253,14 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      // Keep auth state in sessionStorage so it is wiped on tab close,
+      // mirroring the Supabase client's storage choice in lib/supabase.ts.
+      storage: createJSONStorage(() => sessionStorage),
+      // Never persist the Supabase access token; supabase-js owns the
+      // canonical session in its own storage. Persisting the token here
+      // would duplicate a sensitive credential.
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
         isAuthenticated: state.isAuthenticated,
         isDemo: state.isDemo,
         lastActivity: state.lastActivity,

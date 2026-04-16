@@ -82,8 +82,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    return jsonResponse({ jobs, total: jobs.length, searchTerm, locations, userKeywords });
+    return jsonResponse({ jobs, total: jobs.length, searchTerm, locations, userKeywords }, 200, req);
   } catch (error) {
-    return jsonResponse({ error: error instanceof Error ? error.message : 'Search failed' }, 500);
+    return jsonResponse({ error: error instanceof Error ? error.message : 'Search failed' }, 500, req);
   }
 });
