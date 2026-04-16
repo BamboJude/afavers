@@ -55,7 +55,21 @@ export const OnboardingRedirect = ({ children }: { children: React.ReactNode }) 
     return () => { cancelled = true; };
   }, [user?.id, location.pathname]);
 
-  if (checking) return null;
+  if (checking) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900"
+      >
+        <span className="sr-only">Loading…</span>
+        <div
+          aria-hidden="true"
+          className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"
+        />
+      </div>
+    );
+  }
   if (needsSetup) return <Navigate to="/setup" replace state={{ from: location.pathname }} />;
   return <>{children}</>;
 };
