@@ -68,6 +68,7 @@ export interface AnalyticsData {
   byWeek:     { week: string;     count: number }[];
   byStatus:   { status: string;   count: number }[];
   byLocation: { location: string; count: number }[];
+  jobs: Job[];
 }
 
 export interface JobsResponse {

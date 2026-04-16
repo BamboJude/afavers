@@ -485,6 +485,11 @@ export const jobsService = {
         acc[week] = (acc[week] ?? 0) + 1;
         return acc;
       }, {})).map(([week, count]) => ({ week, count })),
+      jobs: jobs.sort((a, b) => {
+        const aDate = a.applied_date ?? a.updated_at ?? a.created_at;
+        const bDate = b.applied_date ?? b.updated_at ?? b.created_at;
+        return String(bDate).localeCompare(String(aDate));
+      }),
     };
   },
 
