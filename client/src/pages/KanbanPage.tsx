@@ -264,15 +264,15 @@ export const KanbanPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const statuses = COLUMNS.map(col => col.status);
-      const results = await Promise.all(
-        statuses.map(status => jobsService.getJobs({ status, limit: 100 }))
-      );
-      setJobs(results.flatMap(r => r.jobs));
+      if (import.meta.env.DEV) console.time('[Kanban] fetchTrackedJobs');
+      const trackedStatuses = new Set(COLUMNS.map(col => col.status));
+      const all = await jobsService.getAllJobs();
+      setJobs(all.filter(job => !job.is_hidden && trackedStatuses.has(job.status)));
     } catch (e) {
       console.error('Failed to fetch jobs:', e);
       setError(e instanceof Error ? e : new Error(String(e)));
     } finally {
+      if (import.meta.env.DEV) console.timeEnd('[Kanban] fetchTrackedJobs');
       setLoading(false);
     }
   };

@@ -315,6 +315,15 @@ export const jobsService = {
     };
   },
 
+  /**
+   * Return every merged job for the current user in a single round-trip.
+   * Used by views that need all columns/statuses at once (e.g. Kanban board)
+   * instead of issuing N status-filtered calls that each refetch everything.
+   */
+  async getAllJobs(): Promise<Job[]> {
+    return getMergedJobs();
+  },
+
   async getJob(id: number): Promise<Job> {
     const userId = getUserId();
     const [{ data: job, error }, overlays, settings] = await Promise.all([
