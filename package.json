@@ -1,28 +1,24 @@
 {
-  "name": "job-tracker",
+  "name": "afavers",
   "version": "1.0.0",
   "type": "module",
-  "description": "Full-stack job tracking platform",
+  "description": "afavers — automated job tracker (Supabase + Vercel + React)",
   "private": true,
   "workspaces": [
-    "client",
-    "server"
+    "client"
   ],
   "scripts": {
-    "dev:server": "npm run dev --workspace=server",
+    "dev": "npm run dev --workspace=client",
     "dev:client": "npm run dev --workspace=client",
-    "build": "npm run build --workspace=server && npm run build --workspace=client",
+    "build": "npm run build --workspace=client",
     "build:client": "npm run build --workspace=client",
-    "build:server": "npm run build --workspace=server",
-    "install:server": "npm install --workspace=server",
     "install:client": "npm install --workspace=client"
   },
   "keywords": [
     "job-tracker",
     "job-search",
     "react",
-    "nodejs",
-    "postgresql"
+    "supabase"
   ],
   "author": "",
   "license": "MIT",

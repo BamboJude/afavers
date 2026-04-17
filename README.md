@@ -43,15 +43,17 @@ afavers fixes this by pulling everything into one dashboard automatically, letti
 
 ## Tech stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 18 + TypeScript + Vite + Tailwind CSS |
-| State | Zustand (auth + language preference) |
-| Backend | Supabase PostgreSQL + Supabase APIs |
-| Database | PostgreSQL (Supabase) |
-| Auth | Supabase Auth |
-| Automation | Supabase Cron / Edge Functions |
-| Hosting | Vercel (frontend) |
+| Layer            | Technology                                          |
+|------------------|-----------------------------------------------------|
+| Frontend         | React 18 + TypeScript + Vite + Tailwind CSS         |
+| State            | Zustand (auth + language preference)                |
+| Data / API       | Supabase PostgreSQL (direct via `@supabase/supabase-js`) |
+| Auth             | Supabase Auth                                       |
+| Background jobs  | Supabase Edge Functions + `pg_cron`                 |
+| Hosting (web)    | Vercel                                              |
+| Browser extension| Plain Chrome/Firefox MV3 extension talking to Supabase |
+
+There is **no separate backend server**. The Express API was retired once the frontend and the extension both moved directly onto Supabase. All server-side logic now lives in Supabase Edge Functions (`supabase/functions/`) and Postgres RPC functions.
 
 ---
 
@@ -59,29 +61,28 @@ afavers fixes this by pulling everything into one dashboard automatically, letti
 
 ```
 afavers/
-├── client/                    # React frontend (Vite)
+├── client/                       # React frontend (Vite) — Vercel-deployed
 │   ├── src/
-│   │   ├── components/        # Reusable UI components
-│   │   ├── pages/             # Dashboard, Jobs, Kanban, Settings...
-│   │   ├── services/          # API layer
-│   │   ├── store/             # Zustand stores (auth, language)
-│   │   ├── i18n/              # EN/DE translations
+│   │   ├── components/           # Reusable UI components
+│   │   ├── pages/                # Dashboard, Jobs, Kanban, Settings, Admin, ...
+│   │   ├── services/             # Supabase queries + RPC wrappers
+│   │   ├── store/                # Zustand stores (auth, language)
+│   │   ├── i18n/                 # EN/DE translations
 │   │   └── types/
-│   └── public/                # .htaccess, robots.txt, sitemap.xml
+│   └── public/                   # .htaccess, robots.txt, sitemap.xml
 │
-└── server/                    # Express backend
-    └── src/
-        ├── config/
-        ├── middleware/         # JWT auth
-        ├── models/             # Database queries
-        ├── routes/             # API routes
-        ├── services/
-        │   └── fetchers/       # Bundesagentur + Adzuna fetchers
-        │                       # Language detection (stop-word heuristic)
-        ├── jobs/               # Cron job setup
-        ├── utils/
-        └── db/
-            └── migrations/     # SQL migration files
+├── supabase/
+│   ├── migrations/               # SQL migrations applied via Supabase SQL editor
+│   └── functions/
+│       ├── _shared/              # Shared helpers (cors, jobs, language detect)
+│       ├── fetch-jobs/           # Bundesagentur + Adzuna fetch (cron-triggered)
+│       ├── werkstudent-search/   # Live Werkstudent search proxy
+│       └── news/                 # Tagesschau news proxy
+│
+├── extension/                    # Chrome / Firefox MV3 extension (Supabase-direct)
+│
+├── vercel.json                   # Frontend build config
+└── VERCEL_SUPABASE_SETUP.md      # End-to-end deployment guide
 ```
 
 ---
@@ -91,106 +92,92 @@ afavers/
 ### Prerequisites
 
 - Node.js 18+
-- PostgreSQL database (or a free [Supabase](https://supabase.com) project)
-- Adzuna API credentials (free at [developer.adzuna.com](https://developer.adzuna.com))
+- A free [Supabase](https://supabase.com) project (PostgreSQL + Auth)
+- Adzuna API credentials (free at [developer.adzuna.com](https://developer.adzuna.com)) — only required if you want the Adzuna source
 
 ### 1. Clone
 
 ```bash
 git clone https://github.com/BamboJude/afavers.git
 cd afavers
-```
-
-### 2. Backend setup
-
-```bash
-cd server
 npm install
-cp .env.example .env
-# Edit .env with your values (see table below)
-npm run dev
-# Runs on http://localhost:3000
 ```
 
-Run the database migrations in order:
+### 2. Apply database migrations
 
-```bash
-psql "$DATABASE_URL" < src/db/migrations/001_initial_schema.sql
-psql "$DATABASE_URL" < src/db/migrations/002_user_jobs.sql
-psql "$DATABASE_URL" < src/db/migrations/003_user_settings.sql
-psql "$DATABASE_URL" < src/db/migrations/004_add_language.sql
-```
+Open the Supabase SQL editor for your project and run the files in `supabase/migrations/` in chronological (filename) order. All files end in `.sql` and are named `YYYYMMDDHHMMSS_*.sql`; run them top-to-bottom.
 
-### 3. Frontend setup
+### 3. Configure the frontend
 
 ```bash
 cd client
-npm install
 cp .env.example .env
-# Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-npm run dev
-# Opens at http://localhost:5173
+# Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY from your Supabase project
 ```
 
-### 4. Create your account
+### 4. Start the dev server
 
-Visit `http://localhost:5173/register` and sign up.
+```bash
+# from the repo root
+npm run dev
+# Vite opens at http://localhost:5173
+```
+
+### 5. Create your account
+
+Visit `http://localhost:5173` and sign up via Supabase Auth. To promote yourself to admin, run in the Supabase SQL editor:
+
+```sql
+UPDATE public.users SET is_admin = TRUE WHERE email = 'you@example.com';
+```
+
+### 6. (Optional) Deploy the Edge Functions
+
+See `VERCEL_SUPABASE_SETUP.md` for the full CLI walkthrough. Minimum secrets:
+
+```bash
+supabase secrets set \
+  SUPABASE_URL=... SUPABASE_ANON_KEY=... SUPABASE_SERVICE_ROLE_KEY=... \
+  BUNDESAGENTUR_API_KEY=jobboerse-jobsuche \
+  ADZUNA_APP_ID=... ADZUNA_APP_KEY=... \
+  CRON_SECRET=$(openssl rand -hex 32)
+supabase functions deploy fetch-jobs --no-verify-jwt
+supabase functions deploy werkstudent-search
+supabase functions deploy news --no-verify-jwt
+```
+
+To schedule fetches, run `supabase/migrations/20260414_schedule_fetch_jobs.sql` in the SQL editor after substituting your `CRON_SECRET`.
 
 ---
 
 ## Environment variables
 
-**`server/.env`**
-
-| Variable | Required | Description |
-|---|---|---|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `JWT_SECRET` | Yes | Secret for JWT signing (min 32 chars) |
-| `ADZUNA_APP_ID` | Yes | Adzuna API app ID |
-| `ADZUNA_APP_KEY` | Yes | Adzuna API key |
-| `CLIENT_URL` | No | Frontend URL for CORS (default: http://localhost:5173) |
-| `PORT` | No | Server port (default: 3000) |
-
 **`client/.env`**
 
-| Variable | Required | Description |
-|---|---|---|
-| `VITE_SUPABASE_URL` | Yes | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anon key for browser access |
+| Variable                | Required | Description                              |
+|-------------------------|----------|------------------------------------------|
+| `VITE_SUPABASE_URL`     | Yes      | Supabase project URL                     |
+| `VITE_SUPABASE_ANON_KEY`| Yes      | Supabase anon key for browser access     |
 
----
+**Supabase Edge Function secrets** (set via `supabase secrets set`, never in committed files):
 
-## Deploying to production
-
-### Frontend (Vercel) + backend services (Supabase)
-
-1. Connect this GitHub repo to Vercel
-2. Add Supabase frontend env variables in Vercel
-3. Run `npm run build --workspace=client`
-4. Deploy from Vercel
-
-See `VERCEL_SUPABASE_SETUP.md` for the full Vercel + Supabase setup.
-
-### Database (Supabase)
-
-1. Create a free project at [supabase.com](https://supabase.com)
-2. Run all four migration files via the SQL Editor
-
-### Frontend (Vercel / any static host)
-
-```bash
-cd client
-npm run build
-# Vercel serves client/dist with SPA rewrites from vercel.json
-```
-
-The `public/.htaccess` file in this repo handles SPA routing on Apache automatically.
+| Variable                    | Required | Description                                        |
+|-----------------------------|----------|----------------------------------------------------|
+| `SUPABASE_URL`              | Yes      | Project URL (server-side)                          |
+| `SUPABASE_ANON_KEY`         | Yes      | Anon key (used for user JWT verification)          |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes      | Service role key for admin writes                  |
+| `BUNDESAGENTUR_API_KEY`     | No       | Defaults to the public `jobboerse-jobsuche` key    |
+| `ADZUNA_APP_ID`             | No       | Optional; Adzuna source skipped if missing         |
+| `ADZUNA_APP_KEY`            | No       | Optional; Adzuna source skipped if missing         |
+| `CRON_SECRET`               | Yes      | Shared secret for the `pg_cron` → fetch-jobs call  |
 
 ---
 
 ## Customising the job search
 
-Edit `server/src/services/fetchers/bundesagentur.fetcher.ts` to change your keywords, locations, and search radius. The same applies to `adzuna.fetcher.ts`.
+Per-user keywords and locations live in `public.user_settings`. Change them from the Settings page in the app, or directly in SQL. The Edge Function picks them up on the next cron run.
+
+Default fallback keywords/locations live at the top of `supabase/functions/_shared/jobs.ts`.
 
 ---
 
@@ -198,8 +185,8 @@ Edit `server/src/services/fetchers/bundesagentur.fetcher.ts` to change your keyw
 
 - Designing a relational schema where jobs are shared globally but status/notes are per-user (via a `user_jobs` join table)
 - Building a language detection heuristic using stop-word frequency — no external library needed
-- Moving a full-stack app toward Supabase-backed frontend data access
-- Deploying a frontend on Vercel while keeping PostgreSQL data in Supabase
+- Moving a full-stack app onto Supabase-only: RLS instead of a JWT middleware, Edge Functions instead of Express cron jobs, direct `@supabase/supabase-js` calls instead of a REST layer
+- Deploying a frontend on Vercel while keeping everything data-adjacent in Supabase
 - The value of building something you actually use every day — every bug hurts, which means every fix actually matters
 
 ---
