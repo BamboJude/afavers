@@ -15,7 +15,8 @@ interface SupabaseAuthUser {
 
 const DEMO_EMAIL = 'demo@afavers.com';
 const DEMO_PASSWORD = 'demo1234';
-const SUPABASE_AUTH_STORAGE_KEY = 'afavers-supabase-auth-v2';
+const SUPABASE_AUTH_STORAGE_KEY = 'afavers-supabase-auth-v3';
+const LEGACY_AUTH_STORAGE_KEYS = ['afavers-supabase-auth-v2'];
 const DEMO_STATUSES: Array<'applied' | 'preparing' | 'saved' | 'followup' | 'interviewing' | 'offered' | 'rejected'> = [
   'applied',
   'applied',
@@ -53,6 +54,7 @@ function clearStoredAuth(): void {
   try {
     localStorage.removeItem('auth-storage');
     localStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
+    LEGACY_AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
     Object.keys(localStorage)
       .filter((key) => key.startsWith('sb-') && key.includes('-auth-token'))
       .forEach((key) => localStorage.removeItem(key));

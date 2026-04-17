@@ -21,13 +21,15 @@ if (Capacitor.isNativePlatform()) {
   StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
 }
 
-const APP_VERSION = '2026-04-16-auth-cache-v2';
-const SUPABASE_AUTH_STORAGE_KEY = 'afavers-supabase-auth-v2';
+const APP_VERSION = '2026-04-17-domain-auth-repair-v3';
+const SUPABASE_AUTH_STORAGE_KEY = 'afavers-supabase-auth-v3';
+const LEGACY_AUTH_STORAGE_KEYS = ['afavers-supabase-auth-v2'];
 
 function clearAuthStorage() {
   try {
     localStorage.removeItem('auth-storage');
     localStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
+    LEGACY_AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
     Object.keys(localStorage)
       .filter((key) => key.startsWith('sb-') && key.includes('-auth-token'))
       .forEach((key) => localStorage.removeItem(key));
