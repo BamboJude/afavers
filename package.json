@@ -12,7 +12,8 @@
     "dev:client": "npm run dev --workspace=client",
     "build": "npm run build --workspace=client",
     "build:client": "npm run build --workspace=client",
-    "lint": "npm run lint --workspace=client"
+    "lint": "npm run lint --workspace=client",
+    "install:client": "npm install --workspace=client"
   },
   "keywords": [
     "job-tracker",
