@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { friendlyErrorMessage } from '../utils/errorMessage';
 
 export const RegisterPage = () => {
   const [email, setEmail] = useState('');
@@ -33,7 +34,7 @@ export const RegisterPage = () => {
       const isAuthenticated = useAuthStore.getState().isAuthenticated;
       navigate(isAuthenticated ? '/setup' : '/login');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setError(friendlyErrorMessage(err, 'Registration failed'));
     } finally {
       setLoading(false);
     }

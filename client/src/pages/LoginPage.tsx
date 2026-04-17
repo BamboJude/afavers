@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useLanguage } from '../store/languageStore';
+import { friendlyErrorMessage } from '../utils/errorMessage';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -37,7 +38,7 @@ export const LoginPage = () => {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('invalidCredentials'));
+      setError(friendlyErrorMessage(err, t('invalidCredentials')));
     } finally {
       setLoading(false);
     }
