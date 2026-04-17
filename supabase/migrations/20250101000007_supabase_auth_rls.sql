@@ -1,5 +1,11 @@
--- Bridge the existing integer users table to Supabase Auth and enable RLS.
--- Run this in the Supabase SQL editor after the existing migrations.
+-- Bridge the integer users table to Supabase Auth and enable row-level security.
+-- Ported from server/src/db/migrations/011_supabase_auth_rls.sql with two deliberate changes:
+--  1. `public.current_app_user_id()` is NOT defined here. The authoritative definition
+--     lives in 20260415_tracker_private_manual_jobs.sql (it resolves via `auth.jwt() ->> 'email'`).
+--  2. `public.public_jobs` view is NOT defined here. The authoritative version is
+--     redefined in 20260415_tracker_private_manual_jobs.sql to exclude `owner_user_id` rows.
+--  3. The permissive `jobs_select_authenticated` policy (USING true) is NOT created here.
+--     The restrictive owner-aware variant is installed in 20260415_tracker_private_manual_jobs.sql.
 
 ALTER TABLE public.users
   ADD COLUMN IF NOT EXISTS auth_user_id UUID UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE;
@@ -35,16 +41,6 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_auth_user();
 
-CREATE OR REPLACE FUNCTION public.current_app_user_id()
-RETURNS INTEGER
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT id FROM public.users WHERE auth_user_id = auth.uid()
-$$;
-
 CREATE TABLE IF NOT EXISTS public.werkstudent_saved (
   id          SERIAL PRIMARY KEY,
   user_id     INTEGER NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
@@ -61,6 +57,20 @@ CREATE TABLE IF NOT EXISTS public.werkstudent_saved (
 );
 
 CREATE INDEX IF NOT EXISTS idx_werkstudent_saved_user ON public.werkstudent_saved(user_id);
+
+-- Provisional stub for current_app_user_id so the SELECT policies below validate.
+-- It is immediately replaced in 20260415_tracker_private_manual_jobs.sql with the
+-- authoritative auth.jwt()-based implementation.
+CREATE OR REPLACE FUNCTION public.current_app_user_id()
+RETURNS INTEGER
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT id FROM public.users WHERE auth_user_id = auth.uid()
+$$;
+GRANT EXECUTE ON FUNCTION public.current_app_user_id() TO authenticated;
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.jobs ENABLE ROW LEVEL SECURITY;
@@ -82,19 +92,6 @@ CREATE POLICY users_update_own ON public.users
   FOR UPDATE TO authenticated
   USING (id = public.current_app_user_id())
   WITH CHECK (id = public.current_app_user_id());
-
-DROP POLICY IF EXISTS jobs_select_authenticated ON public.jobs;
-CREATE POLICY jobs_select_authenticated ON public.jobs
-  FOR SELECT TO authenticated
-  USING (true);
-
-CREATE OR REPLACE VIEW public.public_jobs AS
-SELECT id, title, company, location, url, salary, source, posted_date, created_at
-FROM public.jobs
-WHERE url IS NOT NULL
-ORDER BY created_at DESC;
-
-GRANT SELECT ON public.public_jobs TO anon, authenticated;
 
 DROP POLICY IF EXISTS user_jobs_own_all ON public.user_jobs;
 CREATE POLICY user_jobs_own_all ON public.user_jobs

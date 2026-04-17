@@ -1,10 +1,10 @@
 # Vercel + Supabase setup
 
-This project is being moved to a free-friendly setup:
+This project runs entirely on Vercel + Supabase:
 
 - Vercel serves the React frontend.
-- Supabase provides Auth, PostgreSQL, and direct app data access.
-- The old Express API remains in the repo while the remaining backend-only features move to Supabase Edge Functions.
+- Supabase provides Auth, PostgreSQL, direct app data access, and Edge Functions for background work.
+- There is no standalone backend server — the former Express stack has been retired.
 
 ## Vercel frontend
 
@@ -79,23 +79,19 @@ supabase functions deploy news --no-verify-jwt
 
 To schedule automatic fetching, open `supabase/migrations/20260414_schedule_fetch_jobs.sql`, replace `YOUR_CRON_SECRET`, and run it in the Supabase SQL editor.
 
-## Backend migration status
+## Backend topology
 
-Already moved to Supabase from the browser:
+Everything that used to live in the Express API now runs on Supabase:
 
-- Supabase Auth
-- jobs, dashboard stats, job detail, kanban/status overlays
-- settings/setup
-- public jobs
-- Werkstudent saved/applied state
-- gamification widget
-
-Moved to Supabase Edge Functions:
-
-- automatic scheduled job fetching
-- Werkstudent live search
-- news proxy
-
-Still needs Supabase Edge Functions or another replacement:
-
-- admin/contact inbox
+| Feature                              | Where it runs now                                |
+|--------------------------------------|--------------------------------------------------|
+| Auth                                 | Supabase Auth                                    |
+| Jobs, dashboard stats, kanban        | Browser → Supabase via `@supabase/supabase-js`   |
+| User settings                        | Browser → Supabase                               |
+| Werkstudent saved state              | Browser → Supabase                               |
+| Gamification widget + progression    | Browser → Supabase RPCs                          |
+| Scheduled job fetching               | Edge Function `fetch-jobs` + `pg_cron`           |
+| Live Werkstudent search              | Edge Function `werkstudent-search`               |
+| News proxy                           | Edge Function `news`                             |
+| Admin dashboards                     | Browser → `admin_*` RPC functions (SECURITY DEFINER) |
+| Contact inbox                        | Browser → Supabase; admin reads via RPCs         |

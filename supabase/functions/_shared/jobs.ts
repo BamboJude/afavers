@@ -164,7 +164,57 @@ function dedupe(jobs: ExternalJob[]): ExternalJob[] {
   return [...byId.values()];
 }
 
-export async function saveJobs(jobs: ExternalJob[]): Promise<{ total: number; inserted: number; updated: number; failed: number }> {
+/**
+ * Remove jobs from a given source that are no longer returned by the latest fetch,
+ * as long as no user has interacted with them (status still 'new' or missing).
+ * Safety: if the latest fetch returned no IDs for the source we keep everything
+ * (prevents wiping the table when an upstream API is temporarily failing).
+ */
+export async function deleteStaleJobs(source: string, activeExternalIds: string[]): Promise<number> {
+  if (!activeExternalIds.length) return 0;
+  const supabase = adminClient();
+
+  // Find candidate stale rows for this source (not in the active id list).
+  const chunks: string[][] = [];
+  const chunkSize = 500;
+  for (let i = 0; i < activeExternalIds.length; i += chunkSize) {
+    chunks.push(activeExternalIds.slice(i, i + chunkSize));
+  }
+
+  // Pull all ids for this source, then filter client-side for any not in the active set.
+  const { data: currentRows, error: selectError } = await supabase
+    .from('jobs')
+    .select('id, external_id')
+    .eq('source', source);
+  if (selectError) throw selectError;
+
+  const activeSet = new Set(activeExternalIds);
+  const candidateIds = (currentRows ?? [])
+    .filter((row) => row.external_id && !activeSet.has(row.external_id))
+    .map((row) => row.id);
+  if (!candidateIds.length) return 0;
+
+  // Only delete rows that no user has touched (all user_jobs rows for that job are either absent or status='new').
+  const { data: touched, error: touchedError } = await supabase
+    .from('user_jobs')
+    .select('job_id,status')
+    .in('job_id', candidateIds);
+  if (touchedError) throw touchedError;
+  const touchedIds = new Set((touched ?? []).filter((row) => row.status && row.status !== 'new').map((row) => row.job_id));
+  const deletable = candidateIds.filter((id) => !touchedIds.has(id));
+  if (!deletable.length) return 0;
+
+  let deleted = 0;
+  for (let i = 0; i < deletable.length; i += chunkSize) {
+    const batch = deletable.slice(i, i + chunkSize);
+    const { error, count } = await supabase.from('jobs').delete({ count: 'exact' }).in('id', batch);
+    if (error) throw error;
+    deleted += count ?? 0;
+  }
+  return deleted;
+}
+
+export async function saveJobs(jobs: ExternalJob[]): Promise<{ total: number; inserted: number; updated: number; failed: number; deleted: number }> {
   const supabase = adminClient();
   const unique = dedupe(jobs);
   const ids = unique.map((job) => job.id);
@@ -189,16 +239,33 @@ export async function saveJobs(jobs: ExternalJob[]): Promise<{ total: number; in
   }));
 
   if (!rows.length) {
-    return { total: 0, inserted: 0, updated: 0, failed: 0 };
+    return { total: 0, inserted: 0, updated: 0, failed: 0, deleted: 0 };
   }
 
   const { error } = await supabase.from('jobs').upsert(rows, { onConflict: 'external_id' });
   if (error) throw error;
+
+  // Clean up stale jobs per source (only ones no user has tracked).
+  const bySource = new Map<string, string[]>();
+  for (const job of unique) {
+    const source = job.id.split('_')[0];
+    if (!bySource.has(source)) bySource.set(source, []);
+    bySource.get(source)!.push(job.id);
+  }
+  let deleted = 0;
+  for (const [source, activeIds] of bySource) {
+    try {
+      deleted += await deleteStaleJobs(source, activeIds);
+    } catch (error) {
+      console.error(`deleteStaleJobs(${source}) failed:`, error);
+    }
+  }
 
   return {
     total: unique.length,
     inserted: unique.filter((job) => !existingIds.has(job.id)).length,
     updated: unique.filter((job) => existingIds.has(job.id)).length,
     failed: 0,
+    deleted,
   };
 }
