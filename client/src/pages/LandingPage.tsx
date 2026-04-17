@@ -293,7 +293,7 @@ export const LandingPage = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col" style={{ fontFamily: "'Figtree', system-ui, sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800;900&display=swap');
+        /* Figtree is preloaded in index.html to avoid a per-render @import. */
         @keyframes fadeUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
         @keyframes shimmer{0%,100%{background-position:0% center}50%{background-position:100% center}}
         @keyframes scaleIn{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}
