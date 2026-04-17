@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { settingsService, type Settings } from '../services/settings.service';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../store/languageStore';
 import { useAuthStore } from '../store/authStore';
 import { usePreferencesStore, ALL_NEWS_TOPICS, type NewsTopic } from '../store/preferencesStore';
+import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
 
 const FEED_PRESETS = [
   { label: 'Tech / IT',    kw: ['developer', 'software engineer', 'data analyst', 'DevOps', 'IT'] },
@@ -18,10 +19,18 @@ export const SettingsPage = () => {
   const { t } = useLanguage();
   const isDemo = useAuthStore((s) => s.isDemo);
   const [settings, setSettings] = useState<Settings>({ keywords: '', locations: '' });
+  // Snapshot of the last-saved settings — used to detect unsaved edits.
+  const [savedSnapshot, setSavedSnapshot] = useState<Settings>({ keywords: '', locations: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+
+  const isDirty = useMemo(
+    () => settings.keywords !== savedSnapshot.keywords || settings.locations !== savedSnapshot.locations,
+    [settings, savedSnapshot]
+  );
+  const { showPrompt, confirmLeave, cancelLeave } = useUnsavedChangesGuard(isDirty);
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -63,6 +72,7 @@ export const SettingsPage = () => {
   useEffect(() => {
     settingsService.get().then(data => {
       setSettings(data);
+      setSavedSnapshot(data);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -72,6 +82,7 @@ export const SettingsPage = () => {
     setError('');
     try {
       await settingsService.save(settings);
+      setSavedSnapshot(settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch {
@@ -392,6 +403,40 @@ export const SettingsPage = () => {
                 className="px-6 py-2.5 bg-gray-900 hover:bg-black disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition"
               >
                 {pwSaving ? t('saving') : t('updatePassword')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unsaved-changes confirmation dialog. Rendered when the user tries
+          to navigate away (SPA or hard reload) with pending edits. */}
+      {showPrompt && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="unsaved-title"
+        >
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <h3 id="unsaved-title" className="text-base font-semibold text-gray-900">
+              {t('unsavedChangesTitle') || 'Unsaved changes'}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {t('unsavedChangesBody') || 'You have unsaved changes. Leave the page anyway?'}
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={cancelLeave}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-xl transition"
+              >
+                {t('cancel') || 'Cancel'}
+              </button>
+              <button
+                onClick={confirmLeave}
+                className="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition"
+              >
+                {t('leaveAnyway') || 'Leave anyway'}
               </button>
             </div>
           </div>
