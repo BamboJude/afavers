@@ -52,11 +52,12 @@ CREATE POLICY password_reset_tokens_deny_all ON public.password_reset_tokens
 ---------------------------------------------------------------------
 -- contact_messages
 ---------------------------------------------------------------------
--- NOTE: no migration in this repo currently creates contact_messages --
--- it is referenced by server/src/controllers/contact.controller.ts and by
--- the admin_list_messages / admin_mark_message_read / admin_delete_message
--- RPCs in 20260415_admin_rpc.sql. Wrap in DO blocks so the migration does
--- not fail when the table is absent; tighten whenever it is created.
+-- contact_messages is created by 20250101000006_contact_messages.sql and
+-- is read by the admin_list_messages / admin_mark_message_read /
+-- admin_delete_message RPCs in 20260415_admin_rpc.sql (which are
+-- SECURITY DEFINER and therefore bypass the RLS below). We still wrap the
+-- policy in a DO block with IF EXISTS so that reordering or partial
+-- application of the migration tree does not break this step.
 
 DO $$
 BEGIN

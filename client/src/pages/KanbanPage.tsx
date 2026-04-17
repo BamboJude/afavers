@@ -207,26 +207,24 @@ const DraggableKanbanCard = ({
   );
 };
 
-/** Droppable column wrapper — a simple div with a dnd-kit droppable ref. */
+/** Droppable column wrapper. Wires dnd-kit's `isOver` to a stronger highlight. */
 const DroppableColumn = ({
   status,
-  isOver,
-  isDragging,
   children,
   className,
   style,
+  activeHighlight,
 }: {
   status: Job['status'];
-  isOver: boolean;
-  isDragging: boolean;
   children: React.ReactNode;
   className: string;
   style?: React.CSSProperties;
+  /** Stronger style applied when a draggable is currently over this column. */
+  activeHighlight: string;
 }) => {
-  const { setNodeRef } = useDroppable({ id: status });
-  void isOver; void isDragging;
+  const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
-    <div ref={setNodeRef} className={className} style={style}>
+    <div ref={setNodeRef} className={`${className} ${isOver ? activeHighlight : ''}`} style={style}>
       {children}
     </div>
   );
@@ -566,19 +564,18 @@ export const KanbanPage = () => {
                 {COLUMNS.map(col => {
                   const colJobs = getJobsForStatus(col.status);
                   const isDragging = !!activeJob;
-                  const isOverTarget = isDragging && activeJob?.status !== col.status;
+                  const isPotentialTarget = isDragging && activeJob?.status !== col.status;
                   return (
                     <DroppableColumn
                       key={col.status}
                       status={col.status}
-                      isOver={false}
-                      isDragging={isDragging}
                       className={`flex-shrink-0 rounded-2xl border-2 flex flex-col transition-all duration-150 ${
-                        isOverTarget
-                          ? 'border-blue-400 bg-blue-50/50 shadow-md'
+                        isPotentialTarget
+                          ? 'border-blue-200 bg-blue-50/30'
                           : 'border-gray-200 bg-white'
                       }`}
                       style={{ width: columnWidth }}
+                      activeHighlight="!border-blue-500 !bg-blue-100 shadow-lg"
                     >
                       {/* Column header */}
                       <div className={`px-4 py-3 border-b rounded-t-2xl ${col.headerBg}`}>
@@ -595,7 +592,7 @@ export const KanbanPage = () => {
                         {colJobs.length === 0 ? (
                           <div
                             className={`text-center py-8 text-sm rounded-xl border-2 border-dashed transition-colors ${
-                              isOverTarget ? 'border-blue-300 text-blue-400' : 'border-gray-200 text-gray-300'
+                              isPotentialTarget ? 'border-blue-300 text-blue-400' : 'border-gray-200 text-gray-300'
                             }`}
                           >
                             {isDragging ? t('kanbanDropHere') : t('kanbanEmpty')}

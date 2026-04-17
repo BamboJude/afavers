@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
- * Blocks both hard unloads and SPA navigations when `dirty` is true.
+ * Blocks hard unloads and SPA Link navigations when `dirty` is true.
  *
  * React Router v7's `useBlocker` requires a Data Router
  * (`createBrowserRouter` + `RouterProvider`). This app uses the classic
  * `<BrowserRouter>`, so we implement a focused guard by intercepting
- * `history.pushState` / `replaceState` / `popstate` for the lifetime of
- * the component that mounts this hook.
+ * `history.pushState` / `replaceState` for the lifetime of the component.
+ *
+ * **Known limitation**: browser Back/Forward buttons are NOT intercepted.
+ * A popstate handler that tries to "undo" the pop after the fact is
+ * inherently unreliable in BrowserRouter (we cannot know the previous URL
+ * without racing the router) and can corrupt the history stack, so we do
+ * not attempt it. Users who click Back with unsaved changes will simply
+ * navigate away without the in-app dialog — but the `beforeunload`
+ * handler still prompts on hard reloads and tab close.
  *
  * Usage:
  *   const { showPrompt, confirmLeave, cancelLeave } = useUnsavedChangesGuard(isDirty);
@@ -59,23 +66,9 @@ export function useUnsavedChangesGuard(dirty: boolean) {
     window.history.pushState = wrap(originalPush);
     window.history.replaceState = wrap(originalReplace);
 
-    const onPopState = (event: PopStateEvent) => {
-      if (!dirtyRef.current) return;
-      // User hit Back/Forward; push the current URL back so we stay put
-      // until they confirm, then re-trigger the pop on confirm.
-      const targetUrl = window.location.href;
-      originalPush(event.state, '', window.location.href);
-      pendingRef.current = () => {
-        window.location.href = targetUrl;
-      };
-      setShowPrompt(true);
-    };
-    window.addEventListener('popstate', onPopState);
-
     return () => {
       window.history.pushState = originalPush;
       window.history.replaceState = originalReplace;
-      window.removeEventListener('popstate', onPopState);
     };
   }, []);
 
