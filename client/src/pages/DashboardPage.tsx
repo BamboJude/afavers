@@ -1241,7 +1241,7 @@ export const DashboardPage = () => {
 
   return (
     <div className="bg-[#f4f6fa] min-h-screen" style={{ fontFamily: "'Figtree', system-ui, sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800;900&display=swap');`}</style>
+      {/* Figtree is preloaded once in index.html — no per-render @import. */}
 
       {/* Page header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
@@ -115,14 +115,16 @@ const SwipeRevealCard = ({
 };
 
 /** Shared card content rendered in both mobile and desktop views */
-const KanbanCard = ({ job, onClick, faded, t, locale, dragHandleProps }: {
+type KanbanCardProps = {
   job: Job;
   onClick: () => void;
   faded?: boolean;
   t: (key: string) => string;
   locale: string;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
-}) => (
+};
+
+const KanbanCardBase = ({ job, onClick, faded, t, locale, dragHandleProps }: KanbanCardProps) => (
   <div
     onClick={onClick}
     className={`bg-white rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow select-none cursor-pointer ${
@@ -162,6 +164,29 @@ const KanbanCard = ({ job, onClick, faded, t, locale, dragHandleProps }: {
     )}
   </div>
 );
+
+/**
+ * Memoised card: comparing load-bearing props keeps non-dragged cards quiet
+ * while the drag source toggles its `faded` state. dragHandleProps is excluded
+ * from comparison — dnd-kit returns a fresh object every render.
+ */
+const KanbanCard = memo(KanbanCardBase, (prev, next) => {
+  if (prev.faded !== next.faded) return false;
+  const a = prev.job;
+  const b = next.job;
+  return (
+    a.id === b.id &&
+    a.title === b.title &&
+    a.company === b.company &&
+    a.location === b.location &&
+    a.status === b.status &&
+    a.notes === b.notes &&
+    a.applied_date === b.applied_date &&
+    a.interview_date === b.interview_date &&
+    a.updated_at === b.updated_at &&
+    prev.locale === next.locale
+  );
+});
 
 /** Draggable wrapper that renders a KanbanCard hooked up to dnd-kit. */
 const DraggableKanbanCard = ({
@@ -247,15 +272,18 @@ export const KanbanPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const statuses = COLUMNS.map(col => col.status);
-      const results = await Promise.all(
-        statuses.map(status => jobsService.getJobs({ status, limit: 100 }))
-      );
-      setJobs(results.flatMap(r => r.jobs));
+      if (import.meta.env.DEV) console.time('[Kanban] fetchTrackedJobs');
+      // Single merged fetch + in-memory filter. The previous implementation
+      // issued one status-filtered call per column (8x) and each call ran
+      // `getMergedJobs()` internally — 24 Supabase round-trips per mount.
+      const all = await jobsService.getAllJobs();
+      const trackedStatuses = new Set(COLUMNS.map(col => col.status));
+      setJobs(all.filter(job => !job.is_hidden && trackedStatuses.has(job.status)));
     } catch (e) {
       console.error('Failed to fetch jobs:', e);
       setError(e instanceof Error ? e : new Error(String(e)));
     } finally {
+      if (import.meta.env.DEV) console.timeEnd('[Kanban] fetchTrackedJobs');
       setLoading(false);
     }
   };
