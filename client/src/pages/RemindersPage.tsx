@@ -97,7 +97,7 @@ const NewReminderForm = ({ onSave, onCancel }: { onSave: (r: Omit<Reminder, 'id'
             onChange={e => setTitle(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSave()}
             placeholder="Title"
-            className="w-full text-lg font-medium text-gray-900 placeholder-gray-300 border-b border-gray-200 pb-2 outline-none focus:border-green-500 transition bg-transparent"
+            className="w-full text-lg font-medium text-gray-900 placeholder-gray-300 border-b border-gray-200 pb-2 outline-none focus-visible:border-green-500 transition bg-transparent"
           />
 
           {/* Notes */}
@@ -106,7 +106,7 @@ const NewReminderForm = ({ onSave, onCancel }: { onSave: (r: Omit<Reminder, 'id'
             onChange={e => setNotes(e.target.value)}
             placeholder="Notes"
             rows={2}
-            className="w-full text-sm text-gray-700 placeholder-gray-300 border-b border-gray-200 pb-2 outline-none resize-none focus:border-green-500 transition bg-transparent"
+            className="w-full text-sm text-gray-700 placeholder-gray-300 border-b border-gray-200 pb-2 outline-none resize-none focus-visible:border-green-500 transition bg-transparent"
           />
 
           {/* Date + Time */}

@@ -5,6 +5,7 @@ import {
   type WerkstudentJob,
   type WerkstudentStatus,
 } from '../services/werkstudent.service';
+import { useLanguage } from '../store/languageStore';
 
 const CARD_GRADIENTS = [
   'from-emerald-500 to-teal-600',
@@ -21,10 +22,10 @@ function getInitials(company: string) {
   return company.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('') || '?';
 }
 
-function formatDate(d?: string) {
+function formatDate(d: string | undefined, locale: string) {
   if (!d) return null;
   try {
-    return new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return new Date(d).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
   } catch { return null; }
 }
 
@@ -35,6 +36,7 @@ const JobCard = ({
   onSave,
   onApply,
   onUnsave,
+  locale,
 }: {
   job: WerkstudentJob;
   index: number;
@@ -42,10 +44,11 @@ const JobCard = ({
   onSave: () => void;
   onApply: () => void;
   onUnsave: () => void;
+  locale: string;
 }) => {
   const gradient = CARD_GRADIENTS[index % CARD_GRADIENTS.length];
   const initials = getInitials(job.company);
-  const date = formatDate(job.postedDate);
+  const date = formatDate(job.postedDate, locale);
 
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 hover:shadow-lg hover:border-green-300 dark:hover:border-green-600 transition-all flex flex-col gap-3">
@@ -131,6 +134,8 @@ const JobCard = ({
 };
 
 export const WerkstudentPage = () => {
+  const { lang } = useLanguage();
+  const locale = lang === 'de' ? 'de-DE' : 'en-GB';
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -235,7 +240,7 @@ export const WerkstudentPage = () => {
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-[#0a1a25] dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-[#0a1a25] dark:text-gray-100 placeholder-gray-400 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent outline-none"
             />
           </div>
           <input
@@ -244,7 +249,7 @@ export const WerkstudentPage = () => {
             value={location}
             onChange={e => setLocation(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            className="w-36 px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-[#0a1a25] dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+            className="w-36 px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-[#0a1a25] dark:text-gray-100 placeholder-gray-400 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent outline-none"
           />
           <button
             onClick={handleSearch}
@@ -319,6 +324,7 @@ export const WerkstudentPage = () => {
                   onSave={() => handleSave(job)}
                   onApply={() => handleApply(job)}
                   onUnsave={() => handleUnsave(job)}
+                  locale={locale}
                 />
               ))}
             </div>

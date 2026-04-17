@@ -391,7 +391,7 @@ export const AdminPage = () => {
               value={userSearch}
               onChange={e => setUserSearch(e.target.value)}
               placeholder="Search by email…"
-              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent bg-white"
             />
             <button type="submit" className="px-4 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-black transition">
               Search
@@ -590,7 +590,7 @@ export const AdminPage = () => {
                         value={replyText[msg.id] || ''}
                         onChange={e => setReplyText(prev => ({ ...prev, [msg.id]: e.target.value }))}
                         placeholder="Write your reply…"
-                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500 resize-none bg-white"
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-green-500 resize-none bg-white"
                       />
                       <div className="flex items-center gap-2">
                         <button
@@ -653,7 +653,7 @@ export const AdminPage = () => {
                       value={inboxReply[email.uid] || ''}
                       onChange={e => setInboxReply(prev => ({ ...prev, [email.uid]: e.target.value }))}
                       placeholder="Write your reply…"
-                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500 resize-none bg-white"
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-green-500 resize-none bg-white"
                     />
                     <div className="flex items-center gap-2">
                       <button
@@ -679,9 +679,9 @@ export const AdminPage = () => {
                   <h3 className="text-base font-semibold text-gray-900">New Email</h3>
                   <button onClick={() => setComposing(false)} className="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
                 </div>
-                <input value={compose.to} onChange={e => setCompose(p => ({ ...p, to: e.target.value }))} placeholder="To (email)" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500" />
-                <input value={compose.subject} onChange={e => setCompose(p => ({ ...p, subject: e.target.value }))} placeholder="Subject" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500" />
-                <textarea rows={6} value={compose.body} onChange={e => setCompose(p => ({ ...p, body: e.target.value }))} placeholder="Message…" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500 resize-none" />
+                <input value={compose.to} onChange={e => setCompose(p => ({ ...p, to: e.target.value }))} placeholder="To (email)" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-green-500" />
+                <input value={compose.subject} onChange={e => setCompose(p => ({ ...p, subject: e.target.value }))} placeholder="Subject" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-green-500" />
+                <textarea rows={6} value={compose.body} onChange={e => setCompose(p => ({ ...p, body: e.target.value }))} placeholder="Message…" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-green-500 resize-none" />
                 <div className="flex gap-3">
                   <button onClick={() => setComposing(false)} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 transition">Cancel</button>
                   <button onClick={handleComposeSend} disabled={sending || !compose.to || !compose.subject || !compose.body} className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition">

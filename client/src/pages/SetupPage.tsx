@@ -219,7 +219,7 @@ export const SetupPage = () => {
                   rows={2}
                   value={keywords}
                   onChange={e => { setKeywords(e.target.value); setSelectedField(null); }}
-                  className="w-full px-3 py-2.5 border border-[#dfe3eb] rounded-xl focus:ring-2 focus:ring-[#16a34a] focus:border-transparent outline-none text-[13px] resize-none text-[#0a1a25] bg-[#f4f6fa]"
+                  className="w-full px-3 py-2.5 border border-[#dfe3eb] rounded-xl focus-visible:ring-2 focus-visible:ring-[#16a34a] focus-visible:border-transparent outline-none text-[13px] resize-none text-[#0a1a25] bg-[#f4f6fa]"
                   placeholder="e.g. project manager, analyst, Ingenieur"
                 />
               </div>
@@ -294,7 +294,7 @@ export const SetupPage = () => {
                   type="text"
                   value={locations}
                   onChange={e => setLocations(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-[#dfe3eb] rounded-xl focus:ring-2 focus:ring-[#16a34a] focus:border-transparent outline-none text-[13px] text-[#0a1a25] bg-[#f4f6fa]"
+                  className="w-full px-3 py-2.5 border border-[#dfe3eb] rounded-xl focus-visible:ring-2 focus-visible:ring-[#16a34a] focus-visible:border-transparent outline-none text-[13px] text-[#0a1a25] bg-[#f4f6fa]"
                   placeholder="e.g. Bonn, Wuppertal, remote"
                 />
               </div>

@@ -37,7 +37,8 @@ export const AnalyticsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const locale = lang === 'de' ? 'de-DE' : 'en-GB';
   const navigate = useNavigate();
 
   const handleExport = async () => {
@@ -124,7 +125,7 @@ export const AnalyticsPage = () => {
                   {data?.byWeek.map(w => (
                     <div key={w.week} className="flex items-center gap-3">
                       <span className="text-xs text-gray-500 w-24 shrink-0">
-                        {new Date(w.week).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}
+                        {new Date(w.week).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
                       </span>
                       <Bar value={w.count} max={maxWeek} color="bg-green-400" />
                       <span className="text-sm font-semibold text-gray-700 w-6 text-right">{w.count}</span>

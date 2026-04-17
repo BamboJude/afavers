@@ -285,6 +285,49 @@ export const translations: Record<Lang, Record<string, string>> = {
     newsEnergyClimate: 'Energy & Climate',
     newsEconomy: 'Economy',
     newsAll: 'All News',
+
+    // Login / Register extras
+    welcomeBack: 'Welcome back',
+    signInSubtitle: 'Sign in to your account to continue',
+    createAccountTitle: 'Create your account',
+    registerSubtitle: 'Your automated job search assistant',
+    alreadyHaveAccount: 'Already have an account?',
+    creatingAccount: 'Creating account...',
+    emailPlaceholder: 'you@example.com',
+    passwordMinHint: 'At least 8 characters',
+    passwordTooShort: 'Password must be at least 8 characters.',
+    passwordsDontMatch: 'Passwords do not match.',
+    registrationFailed: 'Registration failed',
+    freeNoCard: 'Free to use · No credit card required',
+
+    // Dashboard header extras
+    headerFollowUpsDue: 'follow-up(s) due',
+    interviewsComingUp: 'interview(s) coming up',
+    newJobsToday: 'new jobs today',
+    dayStreak: '-day streak',
+    editDashboard: 'Edit dashboard',
+    done: 'Done',
+
+    // Kanban extras
+    kanbanEmpty: 'No jobs',
+    kanbanDropHere: '↓ Drop here',
+    kanbanHint: 'Drag cards between columns to update their status',
+
+    // Jobs filter extras
+    allStates: 'All states',
+    bestMatch: 'Best match',
+    strongMatch: 'Strong match',
+    englishOnly: 'English',
+    werkstudentOnly: 'Werkstudent',
+    clearFilters: 'Clear filters',
+    noJobsHint: 'Try clearing one filter, widening your cities in Settings, or using broader keywords like analyst, project, GIS, energy, consulting.',
+
+    // Accessibility
+    skipToContent: 'Skip to main content',
+
+    // Bottom nav "More" sheet
+    moreMenu: 'More',
+    closeMenu: 'Close',
   },
 
   de: {
@@ -571,5 +614,48 @@ export const translations: Record<Lang, Record<string, string>> = {
     newsEnergyClimate: 'Energie & Klima',
     newsEconomy: 'Wirtschaft',
     newsAll: 'Alle Nachrichten',
+
+    // Login / Register extras
+    welcomeBack: 'Willkommen zurück',
+    signInSubtitle: 'Melden Sie sich an, um fortzufahren',
+    createAccountTitle: 'Konto erstellen',
+    registerSubtitle: 'Ihr automatisierter Jobsuche-Assistent',
+    alreadyHaveAccount: 'Schon ein Konto?',
+    creatingAccount: 'Konto wird erstellt...',
+    emailPlaceholder: 'name@beispiel.de',
+    passwordMinHint: 'Mindestens 8 Zeichen',
+    passwordTooShort: 'Das Passwort muss mindestens 8 Zeichen haben.',
+    passwordsDontMatch: 'Die Passwörter stimmen nicht überein.',
+    registrationFailed: 'Registrierung fehlgeschlagen',
+    freeNoCard: 'Kostenlos · Keine Kreditkarte nötig',
+
+    // Dashboard header extras
+    headerFollowUpsDue: 'Nachfassaktion(en) fällig',
+    interviewsComingUp: 'anstehende(s) Gespräch(e)',
+    newJobsToday: 'neue Stellen heute',
+    dayStreak: '-Tage-Serie',
+    editDashboard: 'Dashboard bearbeiten',
+    done: 'Fertig',
+
+    // Kanban extras
+    kanbanEmpty: 'Keine Stellen',
+    kanbanDropHere: '↓ Hier ablegen',
+    kanbanHint: 'Karten zwischen Spalten ziehen, um den Status zu ändern',
+
+    // Jobs filter extras
+    allStates: 'Alle Bundesländer',
+    bestMatch: 'Beste Übereinstimmung',
+    strongMatch: 'Starke Übereinstimmung',
+    englishOnly: 'Englisch',
+    werkstudentOnly: 'Werkstudent',
+    clearFilters: 'Filter zurücksetzen',
+    noJobsHint: 'Versuche einen Filter zu entfernen, mehr Städte in den Einstellungen zu ergänzen oder breitere Suchbegriffe wie Analyst, Projekt, GIS, Energie, Beratung zu verwenden.',
+
+    // Accessibility
+    skipToContent: 'Zum Hauptinhalt springen',
+
+    // Bottom nav "More" sheet
+    moreMenu: 'Mehr',
+    closeMenu: 'Schließen',
   },
 };

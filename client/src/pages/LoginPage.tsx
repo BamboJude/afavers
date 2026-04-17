@@ -109,8 +109,8 @@ export const LoginPage = () => {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-            <p className="text-gray-500 text-sm mt-1">Sign in to your account to continue</p>
+            <h2 className="text-2xl font-bold text-gray-900">{t('welcomeBack')}</h2>
+            <p className="text-gray-500 text-sm mt-1">{t('signInSubtitle')}</p>
           </div>
 
           {error && (
@@ -139,7 +139,7 @@ export const LoginPage = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition bg-gray-50 focus:bg-white text-sm"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent outline-none transition bg-gray-50 focus:bg-white text-sm"
                   placeholder="you@example.com"
                 />
               </div>
@@ -165,7 +165,7 @@ export const LoginPage = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-11 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition bg-gray-50 focus:bg-white text-sm"
+                  className="w-full pl-10 pr-11 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:border-transparent outline-none transition bg-gray-50 focus:bg-white text-sm"
                   placeholder="••••••••"
                 />
                 <button

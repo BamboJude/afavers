@@ -91,6 +91,7 @@ const Logo = ({ size = 22 }: { size?: number }) => (
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const { user, logout } = useAuthStore();
   const { t } = useLanguage();
   const { theme, toggleTheme } = useThemeStore();
@@ -129,6 +130,14 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+
+      {/* Skip link for keyboard / screen-reader users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[60] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white dark:focus:bg-gray-900 focus:text-gray-900 dark:focus:text-gray-100 focus:shadow-lg focus:ring-2 focus:ring-green-500"
+      >
+        {t('skipToContent')}
+      </a>
 
       {/* ── Sidebar ── */}
       <aside
@@ -309,7 +318,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
         <DemoBanner />
 
-        <main className="flex-1">
+        <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
           {children}
           <div className="lg:hidden" style={{ height: 'calc(64px + env(safe-area-inset-bottom))' }} />
         </main>
@@ -317,15 +326,15 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* ── Mobile bottom navigation ── */}
       <nav
+        aria-label="Primary"
         className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-stretch"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {[
           { to: '/dashboard',  icon: <IconDashboard />, label: t('home') },
           { to: '/jobs',       icon: <IconJobs />,      label: t('browse') },
-          { to: '/hotpicks',   icon: <IconFire />,      label: t('hotPicks') },
-          { to: '/reminders',  icon: <IconBell />,      label: 'Reminders' },
           { to: '/kanban',     icon: <IconKanban />,    label: t('board') },
+          { to: '/reminders',  icon: <IconBell />,      label: 'Reminders' },
         ].map(item => (
           <NavLink
             key={item.to}
@@ -340,7 +349,101 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <span>{item.label}</span>
           </NavLink>
         ))}
+        <button
+          type="button"
+          onClick={() => setMoreOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={moreOpen}
+          aria-controls="mobile-more-sheet"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-green-500 transition-colors"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <span>{t('moreMenu')}</span>
+        </button>
       </nav>
+
+      {/* ── Mobile "More" bottom sheet ── */}
+      {moreOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-more-title"
+          id="mobile-more-sheet"
+        >
+          {/* Backdrop */}
+          <button
+            type="button"
+            aria-label={t('closeMenu')}
+            onClick={() => setMoreOpen(false)}
+            className="absolute inset-0 bg-black/40 animate-fade-in"
+          />
+          {/* Sheet */}
+          <div
+            className="absolute bottom-0 inset-x-0 bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl border-t border-gray-200 dark:border-gray-700 animate-slide-up"
+            style={{ paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}
+          >
+            <div className="flex items-center justify-center pt-2 pb-1">
+              <span className="block w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" aria-hidden="true" />
+            </div>
+            <div className="flex items-center justify-between px-5 pt-2 pb-3">
+              <h2 id="mobile-more-title" className="text-base font-bold text-gray-900 dark:text-gray-100">
+                {t('moreMenu')}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setMoreOpen(false)}
+                aria-label={t('closeMenu')}
+                className="p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded focus-visible:ring-2 focus-visible:ring-green-500 transition"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-3 pb-3 grid grid-cols-2 gap-2">
+              {[
+                { to: '/hotpicks',       icon: <IconFire />,       label: t('hotPicks') },
+                { to: '/jobs?language=en', icon: <IconGlobe />,    label: t('englishJobs') },
+                { to: '/analytics',      icon: <IconAnalytics />,  label: t('analytics') },
+                { to: '/news',           icon: <IconNews />,       label: t('news') },
+                { to: '/interview-prep', icon: <IconVideo />,      label: t('interviewPrep') },
+                { to: '/settings',       icon: <IconSettings />,   label: t('settings') },
+              ].map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setMoreOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-1 ${
+                      isActive
+                        ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                        : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    }`
+                  }
+                >
+                  <span className="text-gray-500 dark:text-gray-400">{item.icon}</span>
+                  <span className="truncate">{item.label}</span>
+                </NavLink>
+              ))}
+              {isAdmin && (
+                <NavLink
+                  to="/admin"
+                  onClick={() => setMoreOpen(false)}
+                  className="col-span-2 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span className="truncate">Admin Panel</span>
+                </NavLink>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <ToastContainer />
 
@@ -379,9 +482,9 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
               </button>
               <button
                 onClick={stayLoggedIn}
-                className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition"
+                className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 text-white text-sm font-semibold rounded-xl transition"
               >
-                Continue
+                {t('stayLoggedIn')}
               </button>
             </div>
           </div>

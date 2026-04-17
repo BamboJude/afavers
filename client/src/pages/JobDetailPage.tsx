@@ -22,7 +22,8 @@ const isHtml = (str: string) => /<[a-z][\s\S]*>/i.test(str);
 export const JobDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const locale = lang === 'de' ? 'de-DE' : 'en-GB';
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState('');
@@ -244,13 +245,13 @@ export const JobDetailPage = () => {
                 {job.posted_date && (
                   <div className="flex items-center gap-1.5">
                     <span className="text-gray-400 text-xs">{t('posted')}</span>
-                    <span className="font-medium text-gray-700">{new Date(job.posted_date).toLocaleDateString('de-DE')}</span>
+                    <span className="font-medium text-gray-700">{new Date(job.posted_date).toLocaleDateString(locale)}</span>
                   </div>
                 )}
                 {job.deadline && (
                   <div className="flex items-center gap-1.5">
                     <span className="text-gray-400 text-xs">{t('deadline')}</span>
-                    <span className="font-semibold text-red-600">{new Date(job.deadline).toLocaleDateString('de-DE')}</span>
+                    <span className="font-semibold text-red-600">{new Date(job.deadline).toLocaleDateString(locale)}</span>
                   </div>
                 )}
                 {job.salary && (
@@ -262,7 +263,7 @@ export const JobDetailPage = () => {
                 {job.applied_date && (
                   <div className="flex items-center gap-1.5">
                     <span className="text-gray-400 text-xs">{t('applied')}</span>
-                    <span className="font-medium text-blue-700">{new Date(job.applied_date).toLocaleDateString('de-DE')}</span>
+                    <span className="font-medium text-blue-700">{new Date(job.applied_date).toLocaleDateString(locale)}</span>
                   </div>
                 )}
               </div>
@@ -392,12 +393,12 @@ export const JobDetailPage = () => {
                 value={interviewDate}
                 onChange={e => handleSaveInterviewDate(e.target.value)}
                 disabled={savingInterviewDate}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm text-gray-700 disabled:opacity-50"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:border-transparent outline-none text-sm text-gray-700 disabled:opacity-50"
               />
               {interviewDate && (
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-sm text-purple-700 font-medium">
-                    📞 {new Date(interviewDate).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })}
+                    📞 {new Date(interviewDate).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}
                   </span>
                   <button
                     onClick={() => handleSaveInterviewDate('')}
@@ -417,7 +418,7 @@ export const JobDetailPage = () => {
                 onChange={e => setNotes(e.target.value)}
                 placeholder={t('notesPlaceholder')}
                 rows={5}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
               />
               <div className="flex justify-between items-center mt-2">
                 <span className={`text-xs transition ${notesSaved ? 'text-green-600' : 'text-transparent'}`}>
@@ -441,7 +442,7 @@ export const JobDetailPage = () => {
                 onChange={e => setCoverLetter(e.target.value)}
                 placeholder={t('coverLetterPlaceholder')}
                 rows={8}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent outline-none transition resize-none text-sm text-gray-700 placeholder-gray-300"
               />
               <div className="flex justify-between items-center mt-2">
                 <span className={`text-xs transition ${coverLetterSaved ? 'text-green-600' : 'text-transparent'}`}>
