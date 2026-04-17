@@ -9,10 +9,20 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Prefer sessionStorage so Supabase access/refresh tokens are wiped when the
+// tab closes. Known UX regression: users are signed out on tab close. Falls
+// back to undefined in non-browser contexts (SSR, tests), which tells the
+// Supabase SDK to keep the session in memory only.
+const authStorage: Storage | undefined =
+  typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined'
+    ? window.sessionStorage
+    : undefined;
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    storage: authStorage,
   },
 });

@@ -22,8 +22,8 @@ Deno.serve(async (req) => {
 
     const data = await response.json();
     if (Array.isArray(data.news)) data.news = data.news.slice(0, MAX_ARTICLES);
-    return jsonResponse(data);
+    return jsonResponse(data, 200, req);
   } catch (error) {
-    return jsonResponse({ error: error instanceof Error ? error.message : 'Failed to fetch news' }, 502);
+    return jsonResponse({ error: error instanceof Error ? error.message : 'Failed to fetch news' }, 502, req);
   }
 });

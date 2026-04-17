@@ -8,3 +8,10 @@ RewriteCond %{REQUEST_FILENAME} !-d
 
 # Route everything else to index.html (SPA)
 RewriteRule ^ index.html [QSA,L]
+
+# Security headers
+# Content-Security-Policy starts in Report-Only mode -- monitor for 48h,
+# then switch the header name to Content-Security-Policy to enforce.
+<IfModule mod_headers.c>
+    Header always set Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+</IfModule>
