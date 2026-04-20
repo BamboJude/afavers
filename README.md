@@ -73,9 +73,10 @@ afavers/
 │
 ├── supabase/
 │   ├── migrations/               # SQL migrations applied via Supabase SQL editor
+│   ├── manual/                   # SQL examples that require deployment-specific edits
 │   └── functions/
 │       ├── _shared/              # Shared helpers (cors, jobs, language detect)
-│       ├── fetch-jobs/           # Bundesagentur + Adzuna fetch (cron-triggered)
+│       ├── fetch-jobs/           # Bundesagentur + Adzuna fetch (cron/manual)
 │       ├── werkstudent-search/   # Live Werkstudent search proxy
 │       └── news/                 # Tagesschau news proxy
 │
@@ -146,7 +147,7 @@ supabase functions deploy werkstudent-search
 supabase functions deploy news --no-verify-jwt
 ```
 
-To schedule fetches, run `supabase/migrations/20260414_schedule_fetch_jobs.sql` in the SQL editor after substituting your `CRON_SECRET`.
+To schedule fetches, copy `supabase/manual/schedule_fetch_jobs.example.sql`, replace `YOUR-PROJECT-REF` and `YOUR_CRON_SECRET`, then run it in the SQL editor.
 
 ---
 
@@ -169,7 +170,7 @@ To schedule fetches, run `supabase/migrations/20260414_schedule_fetch_jobs.sql` 
 | `BUNDESAGENTUR_API_KEY`     | No       | Defaults to the public `jobboerse-jobsuche` key    |
 | `ADZUNA_APP_ID`             | No       | Optional; Adzuna source skipped if missing         |
 | `ADZUNA_APP_KEY`            | No       | Optional; Adzuna source skipped if missing         |
-| `CRON_SECRET`               | Yes      | Shared secret for the `pg_cron` → fetch-jobs call  |
+| `CRON_SECRET`               | Yes for cron | Shared secret for the `pg_cron` → fetch-jobs call. Manual dashboard fetches use the signed-in user's Supabase session. |
 
 ---
 

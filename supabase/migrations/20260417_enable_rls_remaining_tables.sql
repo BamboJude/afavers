@@ -39,15 +39,26 @@ CREATE POLICY activity_log_deny_all ON public.activity_log
 -- These tokens grant account takeover if leaked. Deny anon + authenticated
 -- entirely. The server must use the service_role key for all reads/writes.
 
-ALTER TABLE IF EXISTS public.password_reset_tokens ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'password_reset_tokens'
+  ) THEN
+    EXECUTE 'ALTER TABLE public.password_reset_tokens ENABLE ROW LEVEL SECURITY';
 
-DROP POLICY IF EXISTS password_reset_tokens_deny_all ON public.password_reset_tokens;
-CREATE POLICY password_reset_tokens_deny_all ON public.password_reset_tokens
-  AS RESTRICTIVE
-  FOR ALL
-  TO anon, authenticated
-  USING (false)
-  WITH CHECK (false);
+    EXECUTE 'DROP POLICY IF EXISTS password_reset_tokens_deny_all ON public.password_reset_tokens';
+    EXECUTE $policy$
+      CREATE POLICY password_reset_tokens_deny_all ON public.password_reset_tokens
+        AS RESTRICTIVE
+        FOR ALL
+        TO anon, authenticated
+        USING (false)
+        WITH CHECK (false)
+    $policy$;
+  END IF;
+END
+$$;
 
 ---------------------------------------------------------------------
 -- contact_messages

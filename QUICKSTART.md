@@ -66,7 +66,7 @@ UPDATE public.users SET is_admin = TRUE WHERE email = 'you@example.com';
 
 - Configure Edge Function secrets and deploy `fetch-jobs`, `werkstudent-search`, `news`
   (see `VERCEL_SUPABASE_SETUP.md`).
-- Schedule automated fetching via `supabase/migrations/20260414_schedule_fetch_jobs.sql`
-  (remember to substitute `YOUR_CRON_SECRET`).
+- Schedule automated fetching by copying `supabase/manual/schedule_fetch_jobs.example.sql`
+  and substituting `YOUR-PROJECT-REF` plus `YOUR_CRON_SECRET`.
 - Deploy the client to Vercel — `vercel.json` is already wired for the
   `client/` workspace build.

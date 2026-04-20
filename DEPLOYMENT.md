@@ -12,4 +12,5 @@ In short:
 3. Apply every SQL file under `supabase/migrations/` (in filename order) via
    the Supabase SQL editor.
 4. Deploy the Edge Functions in `supabase/functions/` with `supabase functions deploy`.
-5. Configure the `pg_cron` schedule via `supabase/migrations/20260414_schedule_fetch_jobs.sql`.
+5. Configure the `pg_cron` schedule from `supabase/manual/schedule_fetch_jobs.example.sql`
+   after replacing the project ref and cron secret placeholders.

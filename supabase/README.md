@@ -15,7 +15,7 @@ supabase functions deploy werkstudent-search
 supabase functions deploy news --no-verify-jwt
 ```
 
-`fetch-jobs` uses `CRON_SECRET` for scheduled calls. `news` is public because the news page can be loaded before a user signs in.
+`fetch-jobs` uses `CRON_SECRET` for scheduled calls and accepts a valid signed-in Supabase user session for manual dashboard fetches. `news` is public because the news page can be loaded before a user signs in.
 
 Required secrets:
 
@@ -29,4 +29,4 @@ ADZUNA_APP_KEY
 CRON_SECRET
 ```
 
-After deploying `fetch-jobs`, run `supabase/migrations/20260414_schedule_fetch_jobs.sql` in the Supabase SQL editor, replacing `YOUR_CRON_SECRET` first.
+After deploying `fetch-jobs`, copy `supabase/manual/schedule_fetch_jobs.example.sql`, replace `YOUR-PROJECT-REF` and `YOUR_CRON_SECRET`, then run it in the Supabase SQL editor.
