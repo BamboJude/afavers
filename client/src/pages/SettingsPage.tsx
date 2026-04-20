@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { settingsService, type Settings } from '../services/settings.service';
+import { DEFAULT_JOB_ALERT, jobAlertsService, type JobAlert, type JobAlertFrequency } from '../services/jobAlerts.service';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../store/languageStore';
 import { useAuthStore } from '../store/authStore';
@@ -19,16 +20,25 @@ export const SettingsPage = () => {
   const { t } = useLanguage();
   const isDemo = useAuthStore((s) => s.isDemo);
   const [settings, setSettings] = useState<Settings>({ keywords: '', locations: '' });
+  const [jobAlert, setJobAlert] = useState<JobAlert>(DEFAULT_JOB_ALERT);
   // Snapshot of the last-saved settings — used to detect unsaved edits.
   const [savedSnapshot, setSavedSnapshot] = useState<Settings>({ keywords: '', locations: '' });
+  const [savedAlertSnapshot, setSavedAlertSnapshot] = useState<JobAlert>(DEFAULT_JOB_ALERT);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
   const isDirty = useMemo(
-    () => settings.keywords !== savedSnapshot.keywords || settings.locations !== savedSnapshot.locations,
-    [settings, savedSnapshot]
+    () =>
+      settings.keywords !== savedSnapshot.keywords ||
+      settings.locations !== savedSnapshot.locations ||
+      jobAlert.enabled !== savedAlertSnapshot.enabled ||
+      jobAlert.keywords !== savedAlertSnapshot.keywords ||
+      jobAlert.locations !== savedAlertSnapshot.locations ||
+      jobAlert.min_score !== savedAlertSnapshot.min_score ||
+      jobAlert.frequency !== savedAlertSnapshot.frequency,
+    [settings, savedSnapshot, jobAlert, savedAlertSnapshot]
   );
   const { showPrompt, confirmLeave, cancelLeave } = useUnsavedChangesGuard(isDirty);
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
@@ -70,9 +80,22 @@ export const SettingsPage = () => {
   };
 
   useEffect(() => {
-    settingsService.get().then(data => {
+    Promise.all([
+      settingsService.get(),
+      jobAlertsService.getPrimary(),
+    ]).then(([data, alert]) => {
       setSettings(data);
       setSavedSnapshot(data);
+      setJobAlert((current) => ({
+        ...alert,
+        keywords: alert.keywords || data.keywords || current.keywords,
+        locations: alert.locations || data.locations || current.locations,
+      }));
+      setSavedAlertSnapshot((current) => ({
+        ...alert,
+        keywords: alert.keywords || data.keywords || current.keywords,
+        locations: alert.locations || data.locations || current.locations,
+      }));
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -81,8 +104,11 @@ export const SettingsPage = () => {
     setSaving(true);
     setError('');
     try {
+      const savedAlertData = await jobAlertsService.save(jobAlert);
       await settingsService.save(settings);
       setSavedSnapshot(settings);
+      setJobAlert(savedAlertData);
+      setSavedAlertSnapshot(savedAlertData);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch {
@@ -157,6 +183,86 @@ export const SettingsPage = () => {
                 {saving ? t('saving') : t('saveSettings')}
               </button>
             </div>
+          </div>
+
+          {/* Priority Email Alerts */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">Priority email alerts</h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Get a compact email when new high-match jobs fit what you are focused on right now.
+                </p>
+              </div>
+              <button
+                onClick={() => setJobAlert((alert) => ({ ...alert, enabled: !alert.enabled }))}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${jobAlert.enabled ? 'bg-green-500' : 'bg-gray-200'}`}
+                aria-label="Toggle priority email alerts"
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${jobAlert.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-sm text-orange-900">
+              <strong>Example:</strong> Werkstudent roles in NRW for IT, GIS, data analysis, or similar keywords. Afavers only emails jobs that clear your match score and have not already been sent to you.
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Alert keywords</label>
+              <p className="text-xs text-gray-400 mb-2">Use your current search focus. Separate values with commas.</p>
+              <textarea
+                rows={3}
+                value={jobAlert.keywords}
+                onChange={e => setJobAlert((alert) => ({ ...alert, keywords: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:border-transparent outline-none text-sm resize-none bg-white"
+                placeholder="werkstudent, IT, GIS, data analyst, data analysis"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Alert locations</label>
+              <p className="text-xs text-gray-400 mb-2">NRW is understood as Düsseldorf, Köln, Essen, Dortmund, Bochum, Bonn, Duisburg, Münster, and nearby cities.</p>
+              <textarea
+                rows={2}
+                value={jobAlert.locations}
+                onChange={e => setJobAlert((alert) => ({ ...alert, locations: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:border-transparent outline-none text-sm resize-none bg-white"
+                placeholder="NRW, Düsseldorf, Köln, Essen, Dortmund, Bochum"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">How often</label>
+                <select
+                  value={jobAlert.frequency}
+                  onChange={e => setJobAlert((alert) => ({ ...alert, frequency: e.target.value as JobAlertFrequency }))}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:border-transparent"
+                >
+                  <option value="instant">Every job fetch</option>
+                  <option value="daily">Daily digest</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Minimum match</label>
+                <select
+                  value={jobAlert.min_score}
+                  onChange={e => setJobAlert((alert) => ({ ...alert, min_score: Number(e.target.value) }))}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:border-transparent"
+                >
+                  <option value={65}>Good match and above</option>
+                  <option value={70}>High match and above</option>
+                  <option value={80}>Very high match only</option>
+                </select>
+              </div>
+            </div>
+
+            {jobAlert.last_sent_at && (
+              <p className="text-xs text-gray-400">
+                Last alert sent {new Date(jobAlert.last_sent_at).toLocaleString()}.
+              </p>
+            )}
           </div>
 
           {/* Keyword presets */}

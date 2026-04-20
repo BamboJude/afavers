@@ -126,12 +126,15 @@ Useful files:
 - `supabase/migrations/20260415_tracker_private_manual_jobs.sql`
 - `supabase/migrations/20260415_admin_rpc.sql`
 - `supabase/migrations/20260414_schedule_fetch_jobs.sql`
+- `supabase/migrations/20260420_job_email_alerts.sql`
+- `supabase/migrations/20260420_schedule_job_alerts.sql`
 - `supabase/README.md`
 
 Deploy Edge Functions with the Supabase CLI after linking your project:
 
 ```bash
 npx supabase functions deploy fetch-jobs --project-ref your-project-ref --no-verify-jwt
+npx supabase functions deploy job-alerts --project-ref your-project-ref --no-verify-jwt
 npx supabase functions deploy news --project-ref your-project-ref --no-verify-jwt
 npx supabase functions deploy werkstudent-search --project-ref your-project-ref
 ```
