@@ -15,6 +15,8 @@ interface SupabaseAuthUser {
 
 const DEMO_EMAIL = 'demo@afavers.com';
 const DEMO_PASSWORD = 'demo1234';
+const SUPABASE_AUTH_STORAGE_KEY = 'afavers-supabase-auth-v3';
+const LEGACY_AUTH_STORAGE_KEYS = ['afavers-supabase-auth-v2'];
 const DEMO_STATUSES: Array<'applied' | 'preparing' | 'saved' | 'followup' | 'interviewing' | 'offered' | 'rejected'> = [
   'applied',
   'applied',
@@ -34,8 +36,8 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  hasCheckedSession: boolean;
   isDemo: boolean;
+  hasCheckedSession: boolean;
   lastActivity: number | null;
   login: (email: string, password: string, adminKey?: string) => Promise<void>;
   loginDemo: () => Promise<void>;
@@ -46,6 +48,27 @@ interface AuthState {
 
 function isDemoEmail(email?: string | null): boolean {
   return email?.toLowerCase() === DEMO_EMAIL;
+}
+
+function clearStoredAuth(): void {
+  try {
+    const storageAreas = [localStorage, sessionStorage];
+    storageAreas.forEach((storage) => {
+      storage.removeItem('auth-storage');
+      storage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
+      LEGACY_AUTH_STORAGE_KEYS.forEach((key) => storage.removeItem(key));
+      Object.keys(storage)
+        .filter((key) => key.startsWith('sb-') && key.includes('-auth-token'))
+        .forEach((key) => storage.removeItem(key));
+    });
+  } catch {
+    // Browser storage can be blocked in some privacy modes.
+  }
+}
+
+function clearAuthState(): void {
+  clearStoredAuth();
+  useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isDemo: false, hasCheckedSession: true, lastActivity: null });
 }
 
 async function getCurrentAppUser(authUser?: SupabaseAuthUser): Promise<User> {
@@ -152,8 +175,8 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
-      hasCheckedSession: false,
       isDemo: false,
+      hasCheckedSession: false,
       lastActivity: null,
 
       login: async (email, password, _adminKey?) => {
@@ -169,8 +192,8 @@ export const useAuthStore = create<AuthState>()(
           user,
           token: data.session.access_token,
           isAuthenticated: true,
-          hasCheckedSession: true,
           isDemo: false,
+          hasCheckedSession: true,
           lastActivity: Date.now(),
         });
       },
@@ -189,8 +212,8 @@ export const useAuthStore = create<AuthState>()(
           user,
           token: data.session.access_token,
           isAuthenticated: true,
-          hasCheckedSession: true,
           isDemo: true,
+          hasCheckedSession: true,
           lastActivity: Date.now(),
         });
       },
@@ -208,15 +231,20 @@ export const useAuthStore = create<AuthState>()(
           user,
           token: data.session.access_token,
           isAuthenticated: true,
-          hasCheckedSession: true,
           isDemo: false,
+          hasCheckedSession: true,
           lastActivity: Date.now(),
         });
       },
 
       logout: async () => {
-        await supabase.auth.signOut();
-        set({ user: null, token: null, isAuthenticated: false, hasCheckedSession: true, isDemo: false, lastActivity: null });
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // Clear local state even if the remote session is already invalid.
+        }
+        clearStoredAuth();
+        set({ user: null, token: null, isAuthenticated: false, isDemo: false, hasCheckedSession: true, lastActivity: null });
       },
 
       updateActivity: () => {
@@ -243,7 +271,7 @@ export const useAuthStore = create<AuthState>()(
 
 supabase.auth.getSession().then(async ({ data }) => {
   if (!data.session) {
-    useAuthStore.setState({ hasCheckedSession: true });
+    clearAuthState();
     return;
   }
   try {
@@ -252,19 +280,21 @@ supabase.auth.getSession().then(async ({ data }) => {
       user,
       token: data.session.access_token,
       isAuthenticated: true,
-      hasCheckedSession: true,
       isDemo: isDemoEmail(user.email),
+      hasCheckedSession: true,
       lastActivity: Date.now(),
     });
   } catch {
-    await supabase.auth.signOut();
-    useAuthStore.setState({ user: null, token: null, isAuthenticated: false, hasCheckedSession: true, isDemo: false, lastActivity: null });
+    try {
+      await supabase.auth.signOut();
+    } catch {}
+    clearAuthState();
   }
 });
 
 supabase.auth.onAuthStateChange((_event, session) => {
   if (!session) {
-    useAuthStore.setState({ user: null, token: null, isAuthenticated: false, hasCheckedSession: true, isDemo: false, lastActivity: null });
+    clearAuthState();
     return;
   }
 
@@ -276,12 +306,12 @@ supabase.auth.onAuthStateChange((_event, session) => {
         user,
         token: session.access_token,
         isAuthenticated: true,
-        hasCheckedSession: true,
         isDemo: isDemoEmail(user.email),
+        hasCheckedSession: true,
         lastActivity: Date.now(),
       });
     } catch {
-      useAuthStore.setState({ token: session.access_token, isAuthenticated: false, hasCheckedSession: true });
+      useAuthStore.setState({ user: null, token: session.access_token, isAuthenticated: false, isDemo: false, hasCheckedSession: true });
     }
   }, 0);
 });

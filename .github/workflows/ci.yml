@@ -78,4 +78,11 @@ jobs:
           deno-version: v2.x
 
       - name: Type-check supabase functions
-        run: deno check supabase/functions/**/*.ts
+        run: |
+          deno check \
+            supabase/functions/_shared/cors.ts \
+            supabase/functions/_shared/jobs.ts \
+            supabase/functions/_shared/language.ts \
+            supabase/functions/fetch-jobs/index.ts \
+            supabase/functions/news/index.ts \
+            supabase/functions/werkstudent-search/index.ts

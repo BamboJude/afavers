@@ -21,8 +21,24 @@ if (Capacitor.isNativePlatform()) {
   StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
 }
 
-// ── Cache nuke — clears SW caches, unregisters service workers, clears storage ─
-async function nukeCache() {
+const APP_VERSION = '2026-04-17-domain-auth-repair-v3';
+const SUPABASE_AUTH_STORAGE_KEY = 'afavers-supabase-auth-v3';
+const LEGACY_AUTH_STORAGE_KEYS = ['afavers-supabase-auth-v2'];
+
+function clearAuthStorage() {
+  try {
+    localStorage.removeItem('auth-storage');
+    localStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
+    LEGACY_AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith('sb-') && key.includes('-auth-token'))
+      .forEach((key) => localStorage.removeItem(key));
+    sessionStorage.clear();
+  } catch {}
+}
+
+// ── Cache refresh — clears SW caches and stale auth without deleting preferences ─
+async function refreshAppCache(reload = true) {
   try {
     if ('serviceWorker' in navigator) {
       const regs = await navigator.serviceWorker.getRegistrations();
@@ -33,17 +49,16 @@ async function nukeCache() {
       await Promise.all(keys.map(k => caches.delete(k)));
     }
   } catch {}
-  localStorage.clear();
-  sessionStorage.clear();
-  window.location.reload();
+  clearAuthStorage();
+  localStorage.setItem('app_version', APP_VERSION);
+  if (reload) window.location.reload();
 }
 
-// ── Version check — if app version changed, auto-clear stale SW cache ─────────
+// ── Version check — if app version changed, auto-clear stale app/auth cache ───
 try {
-  const APP_VERSION = '__APP_VERSION__';
   const storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
-    nukeCache(); // version mismatch: nuke and reload
+    refreshAppCache(); // version mismatch: clear stale cache and reload once
   } else {
     localStorage.setItem('app_version', APP_VERSION);
   }
@@ -65,7 +80,7 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Er
       error.name === 'ChunkLoadError' ||
       /loading chunk|failed to fetch dynamically imported module/i.test(error.message)
     ) {
-      nukeCache();
+      refreshAppCache();
     }
   }
   render() {
@@ -75,7 +90,7 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Er
           <h2 style={{ color: '#dc2626' }}>Something went wrong</h2>
           <p style={{ color: '#6b7280', fontSize: 14 }}>A cached version of the app may be out of date.</p>
           <button
-            onClick={nukeCache}
+            onClick={() => refreshAppCache()}
             style={{ marginTop: 16, padding: '10px 20px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
           >
             Clear cache &amp; reload

@@ -1,207 +1,180 @@
-# afavers — Automated Job Tracker
+# afavers
 
-**Live at [afavers.com](https://afavers.com)**
+afavers is a personal job search tracker for people applying for work in Germany.
 
----
+It started as a very practical problem: job hunting creates too much scattered information. Links are saved in one place, notes in another, applications in a spreadsheet, follow-ups in your head, and then someone asks for proof of your job search and you have to rebuild the story manually.
 
-## Why I built this
+afavers keeps that story in one place.
 
-Job hunting is exhausting — especially when you're searching in a second language, across multiple websites, while trying to stay on top of what you've applied to, what's still pending, and what you've already dismissed.
+Live app: [afavers.online](https://afavers.online)
 
-I was doing all of this manually: browser tabs everywhere, notes scattered across notebooks and phone memos, missing deadlines, re-discovering listings I'd already seen and rejected. It was noise, and it was draining time I could spend actually preparing for applications.
+## What It Does
 
-So I built **afavers** — a personal job tracking platform that does the searching for me and keeps everything in one place.
+- Finds new jobs from German job sources and stores them in Supabase
+- Lets users save, reject, prepare, apply, follow up, interview, archive, and track offers
+- Turns the job search into a Kanban-style application board
+- Saves manually captured jobs from LinkedIn, company pages, StepStone, Indeed, and other sites through the browser extension
+- Keeps notes, checklist items, follow-up dates, interview dates, and application history per user
+- Exports job search reports as PDF, Excel, or CSV
+- Includes a report mode for job-search proof, useful when preparing documents for appointments such as the foreign office
+- Supports English and German UI
+- Includes admin tools for users, messages, and platform stats
 
-It's not a perfect product. It's a project — built to solve a real problem I face daily, while practising the skills I want to grow professionally. If it helps someone else going through the same thing, even better.
+## Why I Built It
 
----
+I wanted something more useful than another job board.
 
-## What it does
+The core idea is simple: people already use spreadsheets to track applications. afavers should replace that spreadsheet, not add more work. A user should be able to search, save, apply, follow up, and later export a clean record without rebuilding everything from memory.
 
-- **Fetches jobs automatically every 2 hours** from the German Federal Employment Agency (Bundesagentur für Arbeit) and Adzuna, filtered by your own keywords and locations
-- **English jobs filter** — automatically detects the language of each job description so you can browse English-language listings separately
-- **Kanban board** — drag jobs through your personal pipeline: Saved → Applied → Interviewing → Offered / Rejected
-- **Job detail view** — read the full description, set your status, add private notes, track your applied date and follow-up date
-- **Dashboard overview** — see at a glance how many new jobs are waiting, how many you've applied to, how many interviews are in progress
-- **EN / DE UI** — the interface itself is available in English and German
-- **Search and filter** — keyword search across all listings, filter by status, sort by date
+It is especially shaped around the reality of searching in Germany as an international applicant: lots of portals, language filtering, paperwork, proof of effort, and the need to stay organized over several weeks or months.
 
----
+## Main Features
 
-## The problem it solves
+**Application Tracker**
 
-When you're job hunting in Germany as a foreigner, or in a niche field like sustainability, GIS, or environmental consulting, relevant jobs are spread across many platforms. You end up:
+Track jobs through saved, preparing, applied, follow-up, interviewing, offered, rejected, and archived stages.
 
-- Checking the same job boards every day manually
-- Losing track of which jobs you've already seen or applied to
-- Missing deadlines because you saved a link somewhere and forgot about it
-- Having no clear picture of where you are in your overall job search
+**Reports And Exports**
 
-afavers fixes this by pulling everything into one dashboard automatically, letting you triage fast (save or hide), and giving you a pipeline view of every active application.
+Export the tracker as PDF, Excel, or CSV. The report includes job title, company, location, status, application date, follow-up date, interview date, notes, checklist, timeline, and job URL.
 
----
+**Browser Extension**
 
-## Tech stack
+Save jobs from external job boards directly into your tracker.
 
-| Layer            | Technology                                          |
-|------------------|-----------------------------------------------------|
-| Frontend         | React 18 + TypeScript + Vite + Tailwind CSS         |
-| State            | Zustand (auth + language preference)                |
-| Data / API       | Supabase PostgreSQL (direct via `@supabase/supabase-js`) |
-| Auth             | Supabase Auth                                       |
-| Background jobs  | Supabase Edge Functions + `pg_cron`                 |
-| Hosting (web)    | Vercel                                              |
-| Browser extension| Plain Chrome/Firefox MV3 extension talking to Supabase |
+**Hot Picks**
 
-There is **no separate backend server**. The Express API was retired once the frontend and the extension both moved directly onto Supabase. All server-side logic now lives in Supabase Edge Functions (`supabase/functions/`) and Postgres RPC functions.
+Swipe-style triage for quickly saving or rejecting jobs.
 
----
+**Dashboard**
 
-## Project structure
+See what needs attention today: follow-ups, interviews, active applications, and new jobs.
 
-```
+**Supabase Backend**
+
+Supabase handles auth, Postgres data, row-level security, Edge Functions, and scheduled job fetching.
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React, TypeScript, Vite, Tailwind CSS |
+| State | Zustand |
+| Auth | Supabase Auth |
+| Database | Supabase Postgres |
+| Backend tasks | Supabase Edge Functions |
+| Scheduling | Supabase Cron |
+| Hosting | Vercel |
+| Extension | Chrome and Firefox browser extension |
+| Mobile shell | Capacitor iOS project |
+
+## Repository Structure
+
+```text
 afavers/
-├── client/                       # React frontend (Vite) — Vercel-deployed
-│   ├── src/
-│   │   ├── components/           # Reusable UI components
-│   │   ├── pages/                # Dashboard, Jobs, Kanban, Settings, Admin, ...
-│   │   ├── services/             # Supabase queries + RPC wrappers
-│   │   ├── store/                # Zustand stores (auth, language)
-│   │   ├── i18n/                 # EN/DE translations
-│   │   └── types/
-│   └── public/                   # .htaccess, robots.txt, sitemap.xml
-│
+├── client/                 # React web app
+│   ├── src/                # Pages, stores, services, components
+│   ├── public/             # Static assets and extension download
+│   └── ios/                # Capacitor iOS project
+├── extension/              # Browser extension source
 ├── supabase/
-│   ├── migrations/               # SQL migrations applied via Supabase SQL editor
-│   ├── manual/                   # SQL examples that require deployment-specific edits
-│   └── functions/
-│       ├── _shared/              # Shared helpers (cors, jobs, language detect)
-│       ├── fetch-jobs/           # Bundesagentur + Adzuna fetch (cron/manual)
-│       ├── werkstudent-search/   # Live Werkstudent search proxy
-│       └── news/                 # Tagesschau news proxy
-│
-├── extension/                    # Chrome / Firefox MV3 extension (Supabase-direct)
-│
-├── vercel.json                   # Frontend build config
-└── VERCEL_SUPABASE_SETUP.md      # End-to-end deployment guide
+│   ├── functions/          # Edge functions for jobs, news, werkstudent search
+│   └── migrations/         # SQL migrations used in Supabase
+├── package.json            # Root workspace scripts
+└── vercel.json             # Vercel build config
 ```
 
----
+## Running Locally
 
-## Running locally
-
-### Prerequisites
-
-- Node.js 18+
-- A free [Supabase](https://supabase.com) project (PostgreSQL + Auth)
-- Adzuna API credentials (free at [developer.adzuna.com](https://developer.adzuna.com)) — only required if you want the Adzuna source
-
-### 1. Clone
+Install dependencies:
 
 ```bash
-git clone https://github.com/BamboJude/afavers.git
-cd afavers
 npm install
 ```
 
-### 2. Apply database migrations
-
-Open the Supabase SQL editor for your project and run the files in `supabase/migrations/` in chronological (filename) order. All files end in `.sql` and are named `YYYYMMDDHHMMSS_*.sql`; run them top-to-bottom.
-
-### 3. Configure the frontend
+Create `client/.env`:
 
 ```bash
-cd client
-cp .env.example .env
-# Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY from your Supabase project
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 4. Start the dev server
+Start the app:
 
 ```bash
-# from the repo root
 npm run dev
-# Vite opens at http://localhost:5173
 ```
 
-### 5. Create your account
-
-Visit `http://localhost:5173` and sign up via Supabase Auth. To promote yourself to admin, run in the Supabase SQL editor:
-
-```sql
-UPDATE public.users SET is_admin = TRUE WHERE email = 'you@example.com';
-```
-
-### 6. (Optional) Deploy the Edge Functions
-
-See `VERCEL_SUPABASE_SETUP.md` for the full CLI walkthrough. Minimum secrets:
+Build it:
 
 ```bash
-supabase secrets set \
-  SUPABASE_URL=... SUPABASE_ANON_KEY=... SUPABASE_SERVICE_ROLE_KEY=... \
-  BUNDESAGENTUR_API_KEY=jobboerse-jobsuche \
-  ADZUNA_APP_ID=... ADZUNA_APP_KEY=... \
-  CRON_SECRET=$(openssl rand -hex 32)
-supabase functions deploy fetch-jobs --no-verify-jwt
-supabase functions deploy werkstudent-search
-supabase functions deploy news --no-verify-jwt
+npm run build
 ```
 
-To schedule fetches, copy `supabase/manual/schedule_fetch_jobs.example.sql`, replace `YOUR-PROJECT-REF` and `YOUR_CRON_SECRET`, then run it in the SQL editor.
+## Supabase Setup
 
----
+The app expects these pieces in Supabase:
 
-## Environment variables
+- Auth enabled
+- Public tables for users, jobs, user job tracking, settings, and contact messages
+- Row-level security policies
+- Edge Functions in `supabase/functions`
+- Scheduled job fetch migration in `supabase/migrations`
 
-**`client/.env`**
+Useful files:
 
-| Variable                | Required | Description                              |
-|-------------------------|----------|------------------------------------------|
-| `VITE_SUPABASE_URL`     | Yes      | Supabase project URL                     |
-| `VITE_SUPABASE_ANON_KEY`| Yes      | Supabase anon key for browser access     |
+- `supabase/migrations/20260415_tracker_private_manual_jobs.sql`
+- `supabase/migrations/20260415_admin_rpc.sql`
+- `supabase/migrations/20260414_schedule_fetch_jobs.sql`
+- `supabase/migrations/20260420_job_email_alerts.sql`
+- `supabase/migrations/20260420_schedule_job_alerts.sql`
+- `supabase/README.md`
 
-**Supabase Edge Function secrets** (set via `supabase secrets set`, never in committed files):
+Deploy Edge Functions with the Supabase CLI after linking your project:
 
-| Variable                    | Required | Description                                        |
-|-----------------------------|----------|----------------------------------------------------|
-| `SUPABASE_URL`              | Yes      | Project URL (server-side)                          |
-| `SUPABASE_ANON_KEY`         | Yes      | Anon key (used for user JWT verification)          |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes      | Service role key for admin writes                  |
-| `BUNDESAGENTUR_API_KEY`     | No       | Defaults to the public `jobboerse-jobsuche` key    |
-| `ADZUNA_APP_ID`             | No       | Optional; Adzuna source skipped if missing         |
-| `ADZUNA_APP_KEY`            | No       | Optional; Adzuna source skipped if missing         |
-| `CRON_SECRET`               | Yes for cron | Shared secret for the `pg_cron` → fetch-jobs call. Manual dashboard fetches use the signed-in user's Supabase session. |
+```bash
+npx supabase functions deploy fetch-jobs --project-ref your-project-ref --no-verify-jwt
+npx supabase functions deploy job-alerts --project-ref your-project-ref --no-verify-jwt
+npx supabase functions deploy news --project-ref your-project-ref --no-verify-jwt
+npx supabase functions deploy werkstudent-search --project-ref your-project-ref
+```
 
----
+## Browser Extension
 
-## Customising the job search
+The extension source lives in `extension/`.
 
-Per-user keywords and locations live in `public.user_settings`. Change them from the Settings page in the app, or directly in SQL. The Edge Function picks them up on the next cron run.
+The Chrome download used by the landing page is served from:
 
-Default fallback keywords/locations live at the top of `supabase/functions/_shared/jobs.ts`.
+```text
+client/public/afavers-chrome-extension.zip
+```
 
----
+Firefox is distributed through Mozilla Add-ons.
 
-## What I learned building this
+## Deployment
 
-- Designing a relational schema where jobs are shared globally but status/notes are per-user (via a `user_jobs` join table)
-- Building a language detection heuristic using stop-word frequency — no external library needed
-- Moving a full-stack app onto Supabase-only: RLS instead of a JWT middleware, Edge Functions instead of Express cron jobs, direct `@supabase/supabase-js` calls instead of a REST layer
-- Deploying a frontend on Vercel while keeping everything data-adjacent in Supabase
-- The value of building something you actually use every day — every bug hurts, which means every fix actually matters
+The web app deploys from GitHub to Vercel.
 
----
+Vercel uses:
 
-## Status
+```text
+Build command: npm run build --workspace=client
+Output directory: client/dist
+```
 
-This is a personal project, actively used and occasionally improved. It's not polished commercial software — it's a working tool built in real conditions. Contributions, suggestions, and feedback are welcome.
+Required Vercel environment variables:
 
----
+```bash
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+## Notes
+
+This repository used to include an Express/Railway backend. That has been removed because the live app now uses Supabase directly.
+
+The goal is to keep the project small enough to understand, but useful enough that someone can actually run their job search from it.
 
 ## License
 
-MIT — free to use, fork, and deploy your own instance.
-
----
-
-*Built to solve a real problem: job hunting in Germany without losing your mind.*
+MIT

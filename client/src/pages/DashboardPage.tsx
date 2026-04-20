@@ -91,13 +91,6 @@ const IconBarChart = ({ className = 'w-4 h-4' }: { className?: string }) => (
   </svg>
 );
 
-const IconRefresh = ({ className = 'w-4 h-4' }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <polyline points="23 4 23 10 17 10" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" strokeWidth="1.5" strokeLinecap="round"/>
-  </svg>
-);
-
 // ── Goal widget ───────────────────────────────────────────────────────────────
 
 const GOAL_PRESETS: Record<GoalType, number[]> = {
@@ -1135,7 +1128,7 @@ function useGreeting(email: string | undefined) {
 }
 
 export const DashboardPage = () => {
-  const { isDemo, user } = useAuthStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
   const locale = lang === 'de' ? 'de-DE' : 'en-GB';
@@ -1150,8 +1143,6 @@ export const DashboardPage = () => {
   const filteredStoryJobs = storyJobs.filter(j => jobMatchesFilter(j, filterKeywords, filterEnabled));
   const [loading, setLoading] = useState(true);
   const [statsError, setStatsError] = useState<Error | null>(null);
-  const [fetching, setFetching] = useState(false);
-  const [fetchMsg, setFetchMsg] = useState('');
   const [editMode, setEditMode] = useState(false);
   const { visible, toggle } = useWidgetVisibility();
   const { order: widgetOrder, move: moveWidget, reorder: reorderWidgets } = useWidgetOrder();
@@ -1197,20 +1188,6 @@ export const DashboardPage = () => {
       setStatsError(error instanceof Error ? error : new Error(String(error)));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleFetchJobs = async () => {
-    setFetching(true);
-    setFetchMsg('');
-    try {
-      const result = await jobsService.fetchJobs();
-      setFetchMsg(`${result.inserted ?? 0} ${t('fetchComplete')}`);
-      loadStats();
-    } catch {
-      setFetchMsg(t('fetchFailed'));
-    } finally {
-      setFetching(false);
     }
   };
 
@@ -1520,9 +1497,8 @@ export const DashboardPage = () => {
                     { icon: <IconSearch className="w-4 h-4" />, iconBg: 'bg-green-100 text-green-600', label: t('browseJobs'), sub: `${stats?.new || 0} new`, onClick: () => navigate('/jobs') },
                     { icon: <IconGlobe className="w-4 h-4" />, iconBg: 'bg-blue-100 text-blue-600', label: t('englishJobs'), sub: t('englishJobsDesc'), onClick: () => navigate('/english-jobs') },
                     { icon: <IconBarChart className="w-4 h-4" />, iconBg: 'bg-purple-100 text-purple-600', label: t('analytics'), sub: t('analyticsDesc'), onClick: () => navigate('/analytics') },
-                    { icon: <IconRefresh className={`w-4 h-4 ${fetching ? 'animate-spin' : ''}`} />, iconBg: 'bg-amber-100 text-amber-600', label: t('fetchJobs'), sub: fetching ? t('fetching') : t('autoFetchNote'), onClick: isDemo ? undefined : handleFetchJobs, disabled: fetching || isDemo },
                   ].map((card, i) => (
-                    <button key={i} onClick={card.onClick} disabled={'disabled' in card && card.disabled} className="flex items-center gap-2.5 p-3 bg-gray-50 hover:bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition text-left disabled:opacity-50 hover:shadow-sm group">
+                    <button key={i} onClick={card.onClick} className="flex items-center gap-2.5 p-3 bg-gray-50 hover:bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition text-left disabled:opacity-50 hover:shadow-sm group">
                       <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg} transition-transform group-hover:scale-110`}>{card.icon}</span>
                       <div className="min-w-0">
                         <p className="text-[12px] font-black text-[#0a1a25] truncate">{card.label}</p>
@@ -1531,11 +1507,6 @@ export const DashboardPage = () => {
                     </button>
                   ))}
                 </div>
-                {fetchMsg && (
-                  <p className={`text-[12px] mt-3 text-center font-bold ${fetchMsg.includes('failed') || fetchMsg.includes('fehlgeschlagen') ? 'text-red-500' : 'text-[#16a34a]'}`}>
-                    {fetchMsg}
-                  </p>
-                )}
               </Module>
             )}
 

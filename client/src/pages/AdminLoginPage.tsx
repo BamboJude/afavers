@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { friendlyErrorMessage } from '../utils/errorMessage';
 
 export const AdminLoginPage = () => {
   const [email, setEmail] = useState('');
@@ -25,7 +26,7 @@ export const AdminLoginPage = () => {
       }
       navigate('/admin');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(friendlyErrorMessage(err, 'Login failed'));
     } finally {
       setLoading(false);
     }

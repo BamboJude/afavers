@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
@@ -29,6 +29,9 @@ const COLUMNS: { status: Job['status']; labelKey: string; color: string; bg: str
   { status: 'rejected',     labelKey: 'rejected',     color: 'text-red-700',    bg: 'bg-red-50/70',     headerBg: 'bg-red-50     border-red-200' },
   { status: 'archived',     labelKey: 'archived',     color: 'text-gray-700',   bg: 'bg-gray-50/70',    headerBg: 'bg-gray-50    border-gray-200' },
 ];
+
+const ZOOM_LEVELS = [75, 90, 100, 115, 130] as const;
+type ZoomLevel = typeof ZOOM_LEVELS[number];
 
 /** Swipe-left to reveal action buttons (mobile only) */
 const SwipeRevealCard = ({
@@ -115,29 +118,28 @@ const SwipeRevealCard = ({
 };
 
 /** Shared card content rendered in both mobile and desktop views */
-type KanbanCardProps = {
+const KanbanCard = ({ job, onClick, faded, t, locale, dragHandleProps, compact = false }: {
   job: Job;
   onClick: () => void;
   faded?: boolean;
   t: (key: string) => string;
+  compact?: boolean;
   locale: string;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
-};
-
-const KanbanCardBase = ({ job, onClick, faded, t, locale, dragHandleProps }: KanbanCardProps) => (
+}) => (
   <div
     onClick={onClick}
-    className={`bg-white rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow select-none cursor-pointer ${
+    className={`bg-white rounded-xl ${compact ? 'p-3' : 'p-4'} border border-gray-200 hover:shadow-md transition-shadow select-none cursor-pointer ${
       dragHandleProps ? 'cursor-grab active:cursor-grabbing' : ''
     } ${faded ? 'opacity-50 scale-95' : ''}`}
     {...dragHandleProps}
   >
-    <h3 className="font-medium text-gray-900 text-sm mb-1 hover:text-blue-600 line-clamp-2 leading-snug">
+    <h3 className={`font-medium text-gray-900 ${compact ? 'text-xs' : 'text-sm'} mb-1 hover:text-blue-600 line-clamp-2 leading-snug`}>
       {job.title}
     </h3>
-    <p className="text-xs font-medium text-gray-600 mb-1">{job.company}</p>
-    <p className="text-xs text-gray-400">📍 {job.location}</p>
-    {job.notes && (
+    <p className="text-xs font-medium text-gray-600 mb-1 line-clamp-1">{job.company}</p>
+    <p className="text-xs text-gray-400 line-clamp-1">📍 {job.location}</p>
+    {job.notes && !compact && (
       <p className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100 line-clamp-2 italic">
         "{job.notes}"
       </p>
@@ -165,40 +167,19 @@ const KanbanCardBase = ({ job, onClick, faded, t, locale, dragHandleProps }: Kan
   </div>
 );
 
-/**
- * Memoised card: comparing load-bearing props keeps non-dragged cards quiet
- * while the drag source toggles its `faded` state. dragHandleProps is excluded
- * from comparison — dnd-kit returns a fresh object every render.
- */
-const KanbanCard = memo(KanbanCardBase, (prev, next) => {
-  if (prev.faded !== next.faded) return false;
-  const a = prev.job;
-  const b = next.job;
-  return (
-    a.id === b.id &&
-    a.title === b.title &&
-    a.company === b.company &&
-    a.location === b.location &&
-    a.status === b.status &&
-    a.notes === b.notes &&
-    a.applied_date === b.applied_date &&
-    a.interview_date === b.interview_date &&
-    a.updated_at === b.updated_at &&
-    prev.locale === next.locale
-  );
-});
-
 /** Draggable wrapper that renders a KanbanCard hooked up to dnd-kit. */
 const DraggableKanbanCard = ({
   job,
   onClick,
   t,
   locale,
+  compact = false,
 }: {
   job: Job;
   onClick: () => void;
   t: (key: string) => string;
   locale: string;
+  compact?: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
     id: String(job.id),
@@ -213,6 +194,7 @@ const DraggableKanbanCard = ({
         onClick={onClick}
         t={t}
         locale={locale}
+        compact={compact}
         faded={isDragging}
         dragHandleProps={{
           ...attributes,
@@ -230,17 +212,19 @@ const DroppableColumn = ({
   status,
   children,
   className,
+  style,
   activeHighlight,
 }: {
   status: Job['status'];
   children: React.ReactNode;
   className: string;
+  style?: React.CSSProperties;
   /** Stronger style applied when a draggable is currently over this column. */
   activeHighlight: string;
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
-    <div ref={setNodeRef} className={`${className} ${isOver ? activeHighlight : ''}`}>
+    <div ref={setNodeRef} className={`${className} ${isOver ? activeHighlight : ''}`} style={style}>
       {children}
     </div>
   );
@@ -256,6 +240,10 @@ export const KanbanPage = () => {
   const [error, setError] = useState<Error | null>(null);
   const [activeJob, setActiveJob] = useState<Job | null>(null);
   const [mobileTab, setMobileTab] = useState<Job['status']>('saved');
+  const [zoom, setZoom] = useState<ZoomLevel>(() => {
+    const stored = Number(localStorage.getItem('kanban-zoom'));
+    return ZOOM_LEVELS.includes(stored as ZoomLevel) ? stored as ZoomLevel : 100;
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -266,16 +254,17 @@ export const KanbanPage = () => {
     fetchTrackedJobs();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('kanban-zoom', String(zoom));
+  }, [zoom]);
+
   const fetchTrackedJobs = async () => {
     try {
       setLoading(true);
       setError(null);
       if (import.meta.env.DEV) console.time('[Kanban] fetchTrackedJobs');
-      // Single merged fetch + in-memory filter. The previous implementation
-      // issued one status-filtered call per column (8x) and each call ran
-      // `getMergedJobs()` internally — 24 Supabase round-trips per mount.
-      const all = await jobsService.getAllJobs();
       const trackedStatuses = new Set(COLUMNS.map(col => col.status));
+      const all = await jobsService.getAllJobs();
       setJobs(all.filter(job => !job.is_hidden && trackedStatuses.has(job.status)));
     } catch (e) {
       console.error('Failed to fetch jobs:', e);
@@ -288,6 +277,13 @@ export const KanbanPage = () => {
 
   const getJobsForStatus = (status: Job['status']) =>
     jobs.filter(j => j.status === status);
+
+  const zoomIndex = ZOOM_LEVELS.indexOf(zoom);
+  const zoomOut = () => setZoom(ZOOM_LEVELS[Math.max(0, zoomIndex - 1)]);
+  const zoomIn = () => setZoom(ZOOM_LEVELS[Math.min(ZOOM_LEVELS.length - 1, zoomIndex + 1)]);
+  const columnWidth = Math.round(288 * (zoom / 100));
+  const compactCards = zoom <= 90;
+  const boardGap = zoom <= 90 ? 12 : 16;
 
   const handleUnsave = async (job: Job) => {
     setJobs(prev => prev.filter(j => j.id !== job.id));
@@ -526,6 +522,37 @@ export const KanbanPage = () => {
 
           {/* ── Desktop view: drag-and-drop columns (dnd-kit) ── */}
           <div className="hidden lg:block p-6 overflow-x-auto">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <p className="text-xs text-gray-500">
+                {t('kanbanHint')}
+              </p>
+              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1.5">
+                <button
+                  onClick={zoomOut}
+                  disabled={zoomIndex === 0}
+                  className="w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Zoom out"
+                >
+                  -
+                </button>
+                <button
+                  onClick={() => setZoom(100)}
+                  className="min-w-16 h-8 px-2 rounded-md text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                  title="Reset zoom"
+                >
+                  {zoom}%
+                </button>
+                <button
+                  onClick={zoomIn}
+                  disabled={zoomIndex === ZOOM_LEVELS.length - 1}
+                  className="w-8 h-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Zoom in"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
             <DndContext
               sensors={sensors}
               onDragStart={onDragStart}
@@ -533,7 +560,7 @@ export const KanbanPage = () => {
               onDragCancel={onDragCancel}
               accessibility={{ announcements }}
             >
-              <div className="flex gap-4 min-w-max">
+              <div className="flex min-w-max" style={{ gap: boardGap }}>
                 {COLUMNS.map(col => {
                   const colJobs = getJobsForStatus(col.status);
                   const isDragging = !!activeJob;
@@ -542,11 +569,12 @@ export const KanbanPage = () => {
                     <DroppableColumn
                       key={col.status}
                       status={col.status}
-                      className={`w-72 flex-shrink-0 rounded-2xl border-2 flex flex-col transition-all duration-150 ${
+                      className={`flex-shrink-0 rounded-2xl border-2 flex flex-col transition-all duration-150 ${
                         isPotentialTarget
                           ? 'border-blue-200 bg-blue-50/30'
                           : 'border-gray-200 bg-white'
                       }`}
+                      style={{ width: columnWidth }}
                       activeHighlight="!border-blue-500 !bg-blue-100 shadow-lg"
                     >
                       {/* Column header */}
@@ -560,7 +588,7 @@ export const KanbanPage = () => {
                       </div>
 
                       {/* Cards */}
-                      <div className="p-3 space-y-2.5 min-h-36 flex-1">
+                      <div className={`${compactCards ? 'p-2 space-y-2' : 'p-3 space-y-2.5'} min-h-36 flex-1`}>
                         {colJobs.length === 0 ? (
                           <div
                             className={`text-center py-8 text-sm rounded-xl border-2 border-dashed transition-colors ${
@@ -577,6 +605,7 @@ export const KanbanPage = () => {
                               onClick={() => navigate(`/jobs/${job.id}`)}
                               t={t}
                               locale={locale}
+                              compact={compactCards}
                             />
                           ))
                         )}
@@ -589,21 +618,18 @@ export const KanbanPage = () => {
               {/* Drag preview overlay */}
               <DragOverlay>
                 {activeJob ? (
-                  <div className="w-72">
+                  <div style={{ width: columnWidth }}>
                     <KanbanCard
                       job={activeJob}
                       onClick={() => {}}
                       t={t}
                       locale={locale}
+                      compact={compactCards}
                     />
                   </div>
                 ) : null}
               </DragOverlay>
             </DndContext>
-
-            <p className="text-xs text-gray-400 mt-4 text-center">
-              {t('kanbanHint')}
-            </p>
           </div>
         </>
       )}

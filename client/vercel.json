@@ -1,6 +1,15 @@
 {
+  "installCommand": "npm install --include=optional",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "afavers.online" }],
+      "destination": "https://www.afavers.online/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
