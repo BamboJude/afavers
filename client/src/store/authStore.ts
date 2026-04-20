@@ -34,6 +34,7 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  hasCheckedSession: boolean;
   isDemo: boolean;
   lastActivity: number | null;
   login: (email: string, password: string, adminKey?: string) => Promise<void>;
@@ -151,6 +152,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
+      hasCheckedSession: false,
       isDemo: false,
       lastActivity: null,
 
@@ -167,6 +169,7 @@ export const useAuthStore = create<AuthState>()(
           user,
           token: data.session.access_token,
           isAuthenticated: true,
+          hasCheckedSession: true,
           isDemo: false,
           lastActivity: Date.now(),
         });
@@ -186,6 +189,7 @@ export const useAuthStore = create<AuthState>()(
           user,
           token: data.session.access_token,
           isAuthenticated: true,
+          hasCheckedSession: true,
           isDemo: true,
           lastActivity: Date.now(),
         });
@@ -204,6 +208,7 @@ export const useAuthStore = create<AuthState>()(
           user,
           token: data.session.access_token,
           isAuthenticated: true,
+          hasCheckedSession: true,
           isDemo: false,
           lastActivity: Date.now(),
         });
@@ -211,7 +216,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         await supabase.auth.signOut();
-        set({ user: null, token: null, isAuthenticated: false, isDemo: false, lastActivity: null });
+        set({ user: null, token: null, isAuthenticated: false, hasCheckedSession: true, isDemo: false, lastActivity: null });
       },
 
       updateActivity: () => {
@@ -237,25 +242,29 @@ export const useAuthStore = create<AuthState>()(
 );
 
 supabase.auth.getSession().then(async ({ data }) => {
-  if (!data.session) return;
+  if (!data.session) {
+    useAuthStore.setState({ hasCheckedSession: true });
+    return;
+  }
   try {
     const user = await getCurrentAppUser(data.session.user);
     useAuthStore.setState({
       user,
       token: data.session.access_token,
       isAuthenticated: true,
+      hasCheckedSession: true,
       isDemo: isDemoEmail(user.email),
       lastActivity: Date.now(),
     });
   } catch {
     await supabase.auth.signOut();
-    useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isDemo: false, lastActivity: null });
+    useAuthStore.setState({ user: null, token: null, isAuthenticated: false, hasCheckedSession: true, isDemo: false, lastActivity: null });
   }
 });
 
 supabase.auth.onAuthStateChange((_event, session) => {
   if (!session) {
-    useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isDemo: false, lastActivity: null });
+    useAuthStore.setState({ user: null, token: null, isAuthenticated: false, hasCheckedSession: true, isDemo: false, lastActivity: null });
     return;
   }
 
@@ -267,11 +276,12 @@ supabase.auth.onAuthStateChange((_event, session) => {
         user,
         token: session.access_token,
         isAuthenticated: true,
+        hasCheckedSession: true,
         isDemo: isDemoEmail(user.email),
         lastActivity: Date.now(),
       });
     } catch {
-      useAuthStore.setState({ token: session.access_token, isAuthenticated: false });
+      useAuthStore.setState({ token: session.access_token, isAuthenticated: false, hasCheckedSession: true });
     }
   }, 0);
 });
