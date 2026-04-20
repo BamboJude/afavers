@@ -1,5 +1,7 @@
--- Run after deploying the fetch-jobs Edge Function.
--- Replace YOUR_CRON_SECRET with the same CRON_SECRET configured for the Edge Function.
+-- Run manually after deploying the fetch-jobs Edge Function.
+-- Replace YOUR-PROJECT-REF and YOUR_CRON_SECRET before running in the
+-- Supabase SQL editor. Do not place this file under supabase/migrations
+-- while it contains placeholders.
 
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS pg_net;

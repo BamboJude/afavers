@@ -62,6 +62,7 @@ coverage/
 *.tmp
 *.temp
 .cache/
+afavers.zip
 
 # Extension packaging artefacts (build them locally, do not commit)
 extension.zip

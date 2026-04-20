@@ -431,24 +431,6 @@ export const jobsService = {
     if (error) throw new Error(error.message);
   },
 
-  async fetchJobs(): Promise<{ success: boolean; message: string; inserted: number }> {
-    const { data, error } = await supabase.functions.invoke<{
-      success: boolean;
-      inserted: number;
-      updated?: number;
-      total?: number;
-      error?: string;
-    }>('fetch-jobs', { body: {} });
-    if (error) throw new Error(error.message);
-    if (!data) throw new Error('Fetch failed');
-    if (!data.success) throw new Error(data.error || 'Fetch failed');
-    return {
-      success: true,
-      message: 'Job fetch completed',
-      inserted: data.inserted ?? 0,
-    };
-  },
-
   async updateCoverLetter(id: number, coverLetter: string): Promise<Job> {
     return upsertOverlay(id, { cover_letter: coverLetter });
   },
@@ -494,11 +476,7 @@ export const jobsService = {
         acc[week] = (acc[week] ?? 0) + 1;
         return acc;
       }, {})).map(([week, count]) => ({ week, count })),
-      jobs: jobs.sort((a, b) => {
-        const aDate = a.applied_date ?? a.updated_at ?? a.created_at;
-        const bDate = b.applied_date ?? b.updated_at ?? b.created_at;
-        return String(bDate).localeCompare(String(aDate));
-      }),
+      jobs,
     };
   },
 

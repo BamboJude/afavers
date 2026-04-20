@@ -6,7 +6,7 @@ export const DisclaimerPage = () => {
     <Helmet>
       <title>Disclaimer & Privacy Notice – afavers</title>
       <meta name="description" content="Disclaimer and privacy notice for afavers — a free job application tracker for Germany. Learn how we handle your data and where job listings come from." />
-      <link rel="canonical" href="https://afavers.online/disclaimer" />
+      <link rel="canonical" href="https://afavers.com/disclaimer" />
     </Helmet>
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-3xl mx-auto px-6 py-16">

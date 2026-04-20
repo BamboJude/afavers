@@ -1,28 +1,23 @@
-# afavers Client
+# afavers — Frontend
 
-React + TypeScript + Vite frontend for afavers.
+React 18 + TypeScript + Vite + Tailwind CSS
 
-Most project documentation lives in the root `README.md`.
+See the [root README](../README.md) for full project context, setup instructions, and deployment guide.
 
-## Local Development
+## Quick start
 
 ```bash
 npm install
+cp .env.example .env
+# Set VITE_API_URL=http://localhost:3000
 npm run dev
-```
-
-Required environment variables:
-
-```bash
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
 ```
 
 ## Scripts
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start the Vite dev server |
-| `npm run build` | Build the production frontend |
-| `npm run preview` | Preview the production build locally |
+| `npm run dev` | Start dev server (http://localhost:5173) |
+| `npm run build` | Build for production (output: `dist/`) |
+| `npm run preview` | Preview production build locally |
 | `npm run lint` | Run ESLint |

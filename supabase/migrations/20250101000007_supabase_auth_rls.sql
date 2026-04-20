@@ -88,10 +88,7 @@ CREATE POLICY users_select_own ON public.users
   USING (id = public.current_app_user_id());
 
 DROP POLICY IF EXISTS users_update_own ON public.users;
-CREATE POLICY users_update_own ON public.users
-  FOR UPDATE TO authenticated
-  USING (id = public.current_app_user_id())
-  WITH CHECK (id = public.current_app_user_id());
+REVOKE UPDATE ON public.users FROM anon, authenticated;
 
 DROP POLICY IF EXISTS user_jobs_own_all ON public.user_jobs;
 CREATE POLICY user_jobs_own_all ON public.user_jobs

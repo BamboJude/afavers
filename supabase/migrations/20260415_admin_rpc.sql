@@ -297,6 +297,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_current_id INTEGER;
+  v_target public.users%ROWTYPE;
 BEGIN
   PERFORM public.require_app_admin();
   v_current_id := public.current_app_user_id();
@@ -304,8 +305,26 @@ BEGIN
     RAISE EXCEPTION 'Cannot delete your own account from admin panel' USING ERRCODE = '42501';
   END IF;
 
-  DELETE FROM public.users WHERE id = p_user_id;
-  RETURN FOUND;
+  SELECT * INTO v_target
+  FROM public.users
+  WHERE id = p_user_id;
+
+  IF NOT FOUND THEN
+    RETURN FALSE;
+  END IF;
+
+  IF v_target.auth_user_id IS NOT NULL THEN
+    DELETE FROM auth.users
+    WHERE id = v_target.auth_user_id;
+  ELSE
+    DELETE FROM auth.users
+    WHERE lower(email) = lower(v_target.email);
+  END IF;
+
+  DELETE FROM public.users
+  WHERE id = p_user_id;
+
+  RETURN TRUE;
 END;
 $$;
 

@@ -210,7 +210,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     loadingDemo: 'Loading demo...',
     noAccount: "Don't have an account?",
     createOneFree: 'Create one free',
-    loginFooter: 'afavers.online · Jobs auto-fetched from Bundesagentur für Arbeit every 2h',
+    loginFooter: 'afavers.com · Jobs auto-fetched from Bundesagentur für Arbeit every 2h',
     invalidCredentials: 'Invalid email or password',
     demoUnavailable: 'Demo account unavailable. Try again later.',
 
@@ -539,7 +539,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     loadingDemo: 'Demo wird geladen...',
     noAccount: 'Noch kein Konto?',
     createOneFree: 'Kostenlos registrieren',
-    loginFooter: 'afavers.online · Stellen automatisch von Bundesagentur für Arbeit — alle 2h',
+    loginFooter: 'afavers.com · Stellen automatisch von Bundesagentur für Arbeit — alle 2h',
     invalidCredentials: 'Ungültige E-Mail oder Passwort',
     demoUnavailable: 'Demo-Konto nicht verfügbar. Bitte später erneut versuchen.',
 

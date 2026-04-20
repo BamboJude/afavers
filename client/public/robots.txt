@@ -38,6 +38,15 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
 User-agent: PerplexityBot
 Allow: /
 
@@ -63,4 +72,4 @@ Disallow: /
 User-agent: SemrushBot
 Disallow: /
 
-Sitemap: https://afavers.online/sitemap.xml
+Sitemap: https://afavers.com/sitemap.xml
