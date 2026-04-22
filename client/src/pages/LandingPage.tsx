@@ -345,9 +345,6 @@ export const LandingPage = () => {
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden sm:block">
-              <LanguageToggle />
-            </div>
             {isAuthenticated ? (
               <Link to="/dashboard" className="px-5 py-2 bg-[#0a1a25] hover:bg-gray-800 text-white text-sm font-semibold rounded-full transition">{t('landingDashboardCta')}</Link>
             ) : (
