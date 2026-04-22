@@ -120,8 +120,8 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     { to: '/jobs?language=en', icon: <IconGlobe />,    label: t('englishJobs') },
     { to: '/kanban',       icon: <IconKanban />,      label: t('applicationsBoard') },
     { to: '/analytics',    icon: <IconAnalytics />,   label: t('analytics') },
-    { to: '/reminders',    icon: <IconBell />,        label: 'Reminders' },
-    { to: '/news',         icon: <IconNews />,        label: 'News' },
+    { to: '/reminders',    icon: <IconBell />,        label: t('reminders') },
+    { to: '/news',         icon: <IconNews />,        label: t('news') },
     { to: '/interview-prep', icon: <IconVideo />,     label: t('interviewPrep') },
     { to: '/settings',     icon: <IconSettings />,    label: t('settings') },
   ];
@@ -317,7 +317,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
           { to: '/dashboard',  icon: <IconDashboard />, label: t('home') },
           { to: '/jobs',       icon: <IconJobs />,      label: t('browse') },
           { to: '/kanban',     icon: <IconKanban />,    label: t('board') },
-          { to: '/reminders',  icon: <IconBell />,      label: 'Reminders' },
+          { to: '/reminders',  icon: <IconBell />,      label: t('reminders') },
         ].map(item => (
           <NavLink
             key={item.to}

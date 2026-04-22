@@ -655,6 +655,7 @@ const TodayFocus = ({
   onTracker: () => void;
   onHotPicks: () => void;
 }) => {
+  const { t } = useLanguage();
   const trackerCount = (stats.saved || 0) + (stats.preparing || 0);
   const hasFocus = (stats.new || 0) > 0 || followUps.length > 0 || upcomingInterviews.length > 0 || trackerCount > 0;
 
@@ -662,22 +663,22 @@ const TodayFocus = ({
     <section className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-5">
       <div className="px-5 py-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Today</p>
-          <h2 className="text-[24px] font-black text-[#0a1a25] leading-tight mt-1">What needs your attention?</h2>
-          <p className="text-[13px] text-[#6f839c] mt-1">Start with the next useful action, then move on.</p>
+          <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{t('todayLabel')}</p>
+          <h2 className="text-[24px] font-black text-[#0a1a25] leading-tight mt-1">{t('attentionTitle')}</h2>
+          <p className="text-[13px] text-[#6f839c] mt-1">{t('attentionSubtitle')}</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={onHotPicks}
             className="px-4 py-2 rounded-lg border border-gray-200 text-[13px] font-black text-[#0a1a25] hover:border-green-300 hover:text-[#16a34a] transition"
           >
-            Hot Picks
+            {t('hotPicks')}
           </button>
           <button
             onClick={onTracker}
             className="px-4 py-2 rounded-lg bg-[#0a1a25] text-white text-[13px] font-black hover:bg-[#223a5a] transition"
           >
-            Open tracker
+            {t('openTracker')}
           </button>
         </div>
       </div>
@@ -685,30 +686,30 @@ const TodayFocus = ({
       {hasFocus ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4">
           <TodayAction
-            label="Review jobs"
+            label={t('reviewJobs')}
             value={stats.new || 0}
-            detail={stats.new_today ? `${stats.new_today} new today` : 'Clear unreviewed roles'}
+            detail={stats.new_today ? `${stats.new_today} ${t('newToday')}` : t('clearUnreviewed')}
             tone="green"
             onClick={onReviewJobs}
           />
           <TodayAction
-            label="Send follow-ups"
+            label={t('sendFollowUps')}
             value={followUps.length}
-            detail={followUps.length ? 'Applications waiting for a nudge' : 'No follow-ups due'}
+            detail={followUps.length ? t('followUpsWaiting') : t('noFollowUpsDue')}
             tone="amber"
             onClick={onFollowUps}
           />
           <TodayAction
-            label="Prepare interviews"
+            label={t('prepareInterviews')}
             value={upcomingInterviews.length}
-            detail={upcomingInterviews.length ? 'Upcoming interviews to prepare' : 'No interviews scheduled'}
+            detail={upcomingInterviews.length ? t('interviewsToPrepare') : t('noInterviewsScheduled')}
             tone="purple"
             onClick={onInterviews}
           />
           <TodayAction
-            label="Continue applications"
+            label={t('continueApplications')}
             value={trackerCount}
-            detail="Saved or preparing jobs"
+            detail={t('savedPreparingJobs')}
             tone="blue"
             onClick={onTracker}
           />
@@ -716,12 +717,12 @@ const TodayFocus = ({
       ) : (
         <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <p className="text-[15px] font-black text-[#0a1a25]">You are clear for now.</p>
-            <p className="text-[13px] text-[#6f839c] mt-1">Review new roles or swipe through Hot Picks when you want fresh options.</p>
+            <p className="text-[15px] font-black text-[#0a1a25]">{t('clearForNow')}</p>
+            <p className="text-[13px] text-[#6f839c] mt-1">{t('reviewOrSwipe')}</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={onReviewJobs} className="px-4 py-2 bg-[#16a34a] hover:bg-green-700 text-white text-[13px] font-black rounded-lg transition">Browse jobs</button>
-            <button onClick={onHotPicks} className="px-4 py-2 border border-gray-200 hover:border-gray-300 text-[#0a1a25] text-[13px] font-black rounded-lg transition">Hot Picks</button>
+            <button onClick={onReviewJobs} className="px-4 py-2 bg-[#16a34a] hover:bg-green-700 text-white text-[13px] font-black rounded-lg transition">{t('browseJobs')}</button>
+            <button onClick={onHotPicks} className="px-4 py-2 border border-gray-200 hover:border-gray-300 text-[#0a1a25] text-[13px] font-black rounded-lg transition">{t('hotPicks')}</button>
           </div>
         </div>
       )}
@@ -1372,7 +1373,7 @@ export const DashboardPage = () => {
 
               if (key === 'news') {
                 if (visible.news && newsOnDashboard) content = (
-                  <Module title="News" editMode={editMode} onHide={() => toggle('news')} onMoveUp={moveUp} onMoveDown={moveDown} noPad>
+                  <Module title={t('news')} editMode={editMode} onHide={() => toggle('news')} onMoveUp={moveUp} onMoveDown={moveDown} noPad>
                     <div className="px-[18px] py-[14px]"><NewsCarousel /></div>
                   </Module>
                 );

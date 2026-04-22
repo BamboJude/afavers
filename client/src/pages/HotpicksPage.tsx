@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { jobsService } from '../services/jobs.service';
 import type { Job } from '../types';
 import { usePreferencesStore, jobMatchesFilter } from '../store/preferencesStore';
+import { useLanguage } from '../store/languageStore';
 
 const BATCH_SIZE = 20;
 const SWIPE_THRESHOLD = 80;
@@ -36,6 +37,7 @@ const SOURCE_LABELS: Record<string, { label: string; cls: string }> = {
 
 export const HotpicksPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { filterKeywords, filterEnabled } = usePreferencesStore();
   const [queue, setQueue] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -259,21 +261,21 @@ export const HotpicksPage = () => {
             <polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">All caught up!</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">{t('allCaughtUp')}</h2>
         <p className="text-gray-500 text-sm mb-8">
-          You've seen all the latest jobs.<br />Check back later for fresh picks.
+          {t('freshPicksHint')}
         </p>
         <button
           onClick={handleRefresh}
           className="px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold rounded-2xl shadow-lg transition active:scale-95"
         >
-          <span className="flex items-center gap-2"><IconRefresh size={16} /> Start over</span>
+          <span className="flex items-center gap-2"><IconRefresh size={16} /> {t('startOver')}</span>
         </button>
         <button
           onClick={() => navigate('/jobs')}
           className="mt-4 text-sm text-gray-400 hover:text-gray-600 transition"
         >
-          Browse all jobs →
+          {t('browseAllJobs')}
         </button>
       </div>
     );
@@ -292,31 +294,31 @@ export const HotpicksPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
         <div>
-          <h1 className="text-lg font-bold text-gray-900 flex items-center gap-1.5"><span className="text-rose-500"><IconFire size={20} /></span> Hot Picks</h1>
-          <p className="text-xs text-gray-400">{queue.length} in today's deck</p>
+          <h1 className="text-lg font-bold text-gray-900 flex items-center gap-1.5"><span className="text-rose-500"><IconFire size={20} /></span> {t('hotPicks')}</h1>
+          <p className="text-xs text-gray-400">{queue.length} {t('hotPicksDeck')}</p>
         </div>
         <button
           onClick={handleUndo}
           disabled={!lastSwiped || !!flying}
           className="text-xs font-bold px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-500 disabled:opacity-30 hover:text-gray-900 transition"
         >
-          Undo
+          {t('undo')}
         </button>
         {lastAction && (
           <span className={`text-base font-bold px-4 py-1.5 rounded-full animate-pulse ${
             lastAction === 'saved' ? 'bg-yellow-100 text-yellow-700' : lastAction === 'soon' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
           }`}>
             {lastAction === 'saved'
-              ? <span className="flex items-center gap-1"><IconStar size={14} /> Saved!</span>
+              ? <span className="flex items-center gap-1"><IconStar size={14} /> {t('savedBang')}</span>
               : lastAction === 'soon'
-                ? 'Apply soon'
-                : '✕ Passed'}
+                ? t('applySoon')
+                : `✕ ${t('passed')}`}
           </span>
         )}
       </div>
 
       {/* Swipe hint (shows briefly at first) */}
-      <p className="text-center text-xs text-gray-400 mb-1 shrink-0">← Pass · Save ⭐ → · ↑ Apply soon</p>
+      <p className="text-center text-xs text-gray-400 mb-1 shrink-0">{t('hotPicksHint')}</p>
 
       {/* Card stack */}
       <div className="flex-1 flex items-center justify-center px-5 relative min-h-0">
@@ -378,7 +380,7 @@ export const HotpicksPage = () => {
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${src.cls}`}>
                   {src.label}
                 </span>
-                <span className="text-xs font-black text-green-700">{currentJob.match_score ?? 0}% match</span>
+                <span className="text-xs font-black text-green-700">{currentJob.match_score ?? 0}% {t('match')}</span>
               </div>
 
               {/* Title */}
@@ -395,7 +397,7 @@ export const HotpicksPage = () => {
               )}
 
               <div className="mb-4 rounded-xl bg-green-50 border border-green-100 px-3 py-2">
-                <p className="text-xs font-black text-green-800 mb-1">Why this pick</p>
+                <p className="text-xs font-black text-green-800 mb-1">{t('whyThisPick')}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {(currentJob.match_reasons ?? []).slice(0, 3).map(reason => (
                     <span key={reason} className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white text-green-700 border border-green-100">
@@ -404,7 +406,7 @@ export const HotpicksPage = () => {
                   ))}
                   {(currentJob.match_gaps ?? []).slice(0, 1).map(gap => (
                     <span key={gap} className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white text-amber-700 border border-amber-100">
-                      Missing: {gap}
+                      {t('missing')}: {gap}
                     </span>
                   ))}
                 </div>
@@ -426,7 +428,7 @@ export const HotpicksPage = () => {
                 onClick={() => navigate(`/jobs/${currentJob.id}`)}
                 className="w-full py-2.5 text-sm text-blue-600 bg-blue-50 border border-blue-100 rounded-2xl font-medium hover:bg-blue-100 active:scale-95 transition"
               >
-                View full listing →
+                {t('viewFullListing')}
               </button>
             </div>
           </div>
@@ -446,7 +448,7 @@ export const HotpicksPage = () => {
 
         <div className="text-center">
           <p className="text-xl font-bold text-gray-500 tabular-nums">{queue.length}</p>
-          <p className="text-sm text-gray-300 font-medium">{sessionStats.saved} saved · {sessionStats.soon} soon</p>
+          <p className="text-sm text-gray-300 font-medium">{sessionStats.saved} {t('saved').toLowerCase()} · {sessionStats.soon} {t('soon')}</p>
         </div>
 
         {/* Save */}
@@ -465,7 +467,7 @@ export const HotpicksPage = () => {
           disabled={!!flying}
           className="px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-black hover:bg-blue-100 active:scale-95 transition disabled:opacity-50"
         >
-          Apply soon tomorrow
+          {t('applySoonTomorrow')}
         </button>
       </div>
     </div>

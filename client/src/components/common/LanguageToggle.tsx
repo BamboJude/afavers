@@ -1,7 +1,7 @@
 import { useLanguage } from '../../store/languageStore';
 
 export const LanguageToggle = () => {
-  const { lang, setLang } = useLanguage();
+  const { lang, setLang, t } = useLanguage();
 
   return (
     <div className="flex gap-0 border border-gray-200 rounded-lg overflow-hidden text-xs font-semibold">
@@ -12,7 +12,7 @@ export const LanguageToggle = () => {
             ? 'bg-blue-600 text-white'
             : 'bg-white text-gray-500 hover:bg-gray-50'
         }`}
-        title="Switch to English"
+        title={t('switchEnglish')}
       >
         EN
       </button>
@@ -24,7 +24,7 @@ export const LanguageToggle = () => {
             ? 'bg-blue-600 text-white'
             : 'bg-white text-gray-500 hover:bg-gray-50'
         }`}
-        title="Auf Deutsch wechseln"
+        title={t('switchGerman')}
       >
         DE
       </button>
