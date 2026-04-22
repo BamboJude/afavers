@@ -6,6 +6,7 @@ import { useLanguage } from '../store/languageStore';
 import { useAuthStore } from '../store/authStore';
 import { usePreferencesStore, ALL_NEWS_TOPICS, type NewsTopic } from '../store/preferencesStore';
 import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
+import { refreshAppCache } from '../utils/cacheRecovery';
 
 const FEED_PRESETS = [
   { label: 'Tech / IT',    kw: ['developer', 'software engineer', 'data analyst', 'DevOps', 'IT'] },
@@ -43,6 +44,7 @@ export const SettingsPage = () => {
   const { showPrompt, confirmLeave, cancelLeave } = useUnsavedChangesGuard(isDirty);
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
   const [pwSaving, setPwSaving] = useState(false);
+  const [cacheResetting, setCacheResetting] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   // Feed filter preferences (local, persisted)
@@ -509,6 +511,28 @@ export const SettingsPage = () => {
                 className="px-6 py-2.5 bg-gray-900 hover:bg-black disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition"
               >
                 {pwSaving ? t('saving') : t('updatePassword')}
+              </button>
+            </div>
+          </div>
+
+          {/* App recovery */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">{t('appRecovery')}</h2>
+              <p className="text-xs text-gray-400 mt-0.5">{t('appRecoveryDesc')}</p>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-xs text-gray-500">{t('resetAppCacheNote')}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setCacheResetting(true);
+                  refreshAppCache();
+                }}
+                disabled={cacheResetting}
+                className="px-5 py-2.5 bg-gray-900 hover:bg-black disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition"
+              >
+                {cacheResetting ? t('resettingCache') : t('resetAppCache')}
               </button>
             </div>
           </div>

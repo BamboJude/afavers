@@ -9,6 +9,7 @@ initTheme() // restore saved theme before first paint
 import { SplashScreen } from '@capacitor/splash-screen'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { Capacitor } from '@capacitor/core'
+import { APP_VERSION, isStaleChunkError, refreshAppCache } from './utils/cacheRecovery'
 
 // Hide native Capacitor splash screen
 SplashScreen.hide().catch(() => {});
@@ -19,39 +20,6 @@ if (Capacitor.isNativePlatform()) {
   StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
   StatusBar.setStyle({ style: Style.Default }).catch(() => {});
   StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
-}
-
-const APP_VERSION = '2026-04-17-domain-auth-repair-v3';
-const SUPABASE_AUTH_STORAGE_KEY = 'afavers-supabase-auth-v3';
-const LEGACY_AUTH_STORAGE_KEYS = ['afavers-supabase-auth-v2'];
-
-function clearAuthStorage() {
-  try {
-    localStorage.removeItem('auth-storage');
-    localStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
-    LEGACY_AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
-    Object.keys(localStorage)
-      .filter((key) => key.startsWith('sb-') && key.includes('-auth-token'))
-      .forEach((key) => localStorage.removeItem(key));
-    sessionStorage.clear();
-  } catch {}
-}
-
-// ── Cache refresh — clears SW caches and stale auth without deleting preferences ─
-async function refreshAppCache(reload = true) {
-  try {
-    if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
-    }
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-    }
-  } catch {}
-  clearAuthStorage();
-  localStorage.setItem('app_version', APP_VERSION);
-  if (reload) window.location.reload();
 }
 
 // ── Version check — if app version changed, auto-clear stale app/auth cache ───
@@ -76,10 +44,7 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Er
   componentDidCatch(error: Error) {
     console.error('[ErrorBoundary]', error);
     // ChunkLoadError = stale PWA cache after a new deploy — auto-nuke
-    if (
-      error.name === 'ChunkLoadError' ||
-      /loading chunk|failed to fetch dynamically imported module/i.test(error.message)
-    ) {
+    if (isStaleChunkError(error)) {
       refreshAppCache();
     }
   }
@@ -108,6 +73,13 @@ if ('serviceWorker' in navigator) {
     window.location.reload();
   });
 }
+
+window.addEventListener('unhandledrejection', (event) => {
+  if (isStaleChunkError(event.reason)) {
+    event.preventDefault();
+    refreshAppCache();
+  }
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
