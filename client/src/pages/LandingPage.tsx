@@ -321,7 +321,7 @@ export const LandingPage = () => {
 
       {/* ── Announcement bar + Nav (sticky together) ── */}
       <div className="sticky top-0 z-50">
-      <div className="bg-[#0a1a25] text-white text-xs font-semibold py-2.5 px-4 text-center flex items-center justify-center gap-3">
+      <div className="relative bg-[#0a1a25] text-white text-xs font-semibold py-2.5 px-4 text-center flex items-center justify-center gap-3">
         <span className="hidden sm:flex items-center gap-1.5">
           <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-green-400"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
           {t('landingExtensionBar')}
@@ -329,6 +329,9 @@ export const LandingPage = () => {
         <span className="sm:hidden">{t('landingExtensionBarMobile')}</span>
         <span className="text-white/30">·</span>
         <a href="#extension" className="underline underline-offset-2 text-green-400 hover:text-green-300 transition">{t('landingInstallFree')}</a>
+        <div className="absolute right-3 top-1/2 hidden -translate-y-1/2 lg:block">
+          <LanguageToggle />
+        </div>
       </div>
 
       {/* ── Nav (OVO pill style) ── */}
@@ -342,7 +345,9 @@ export const LandingPage = () => {
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <LanguageToggle />
+            <div className="hidden sm:block">
+              <LanguageToggle />
+            </div>
             {isAuthenticated ? (
               <Link to="/dashboard" className="px-5 py-2 bg-[#0a1a25] hover:bg-gray-800 text-white text-sm font-semibold rounded-full transition">{t('landingDashboardCta')}</Link>
             ) : (
