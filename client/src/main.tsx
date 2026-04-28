@@ -1,4 +1,4 @@
-import { StrictMode, Component } from 'react'
+import { StrictMode, Component, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HelmetProvider } from 'react-helmet-async'
 import './index.css'
@@ -9,7 +9,7 @@ initTheme() // restore saved theme before first paint
 import { SplashScreen } from '@capacitor/splash-screen'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { Capacitor } from '@capacitor/core'
-import { APP_VERSION, isStaleChunkError, refreshAppCache } from './utils/cacheRecovery'
+import { APP_VERSION, isStaleChunkError, migrateAuthStorageSchema, refreshAppCache } from './utils/cacheRecovery'
 
 // Hide native Capacitor splash screen
 SplashScreen.hide().catch(() => {});
@@ -24,6 +24,7 @@ if (Capacitor.isNativePlatform()) {
 
 // ── Version check — if app version changed, auto-clear stale app/auth cache ───
 try {
+  migrateAuthStorageSchema();
   const storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
     refreshAppCache(); // version mismatch: clear stale cache and reload once
@@ -31,6 +32,67 @@ try {
     localStorage.setItem('app_version', APP_VERSION);
   }
 } catch { /* localStorage blocked (private mode etc.) — continue normally */ }
+
+function UpdateBanner() {
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkForUpdate = async () => {
+      try {
+        const response = await fetch(`/version.json?ts=${Date.now()}`, { cache: 'no-store' });
+        if (!response.ok) return;
+
+        const data = await response.json().catch(() => null) as { version?: string } | null;
+        if (!data?.version || cancelled) return;
+
+        if (data.version !== APP_VERSION) {
+          setUpdateAvailable(true);
+        }
+      } catch {
+        // Network/cache checks are best-effort only.
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void checkForUpdate();
+      }
+    };
+
+    void checkForUpdate();
+    const interval = window.setInterval(() => { void checkForUpdate(); }, 5 * 60 * 1000);
+    window.addEventListener('focus', checkForUpdate);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', checkForUpdate);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
+  if (!updateAvailable) return null;
+
+  return (
+    <div className="fixed bottom-4 left-1/2 z-[100] w-[min(92vw,28rem)] -translate-x-1/2 rounded-lg border border-green-200 bg-white px-4 py-3 shadow-lg">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-gray-900">A new version is ready</p>
+          <p className="text-xs text-gray-500">Reload to use the latest fix and clear stale files.</p>
+        </div>
+        <button
+          onClick={() => refreshAppCache()}
+          className="shrink-0 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
+        >
+          Reload
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ── Error boundary ────────────────────────────────────────────────────────────
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
@@ -86,6 +148,7 @@ createRoot(document.getElementById('root')!).render(
     <HelmetProvider>
       <ErrorBoundary>
         <App />
+        <UpdateBanner />
       </ErrorBoundary>
     </HelmetProvider>
   </StrictMode>,
