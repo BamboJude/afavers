@@ -244,6 +244,32 @@ describe('applyFilters (via getJobs)', () => {
     expect(result.jobs[0].title).toBe('React Developer');
   });
 
+  it('finds GIS-family roles through alias expansion', async () => {
+    const { settingsService } = await import('./settings.service');
+    (settingsService.get as ReturnType<typeof vi.fn>).mockResolvedValue({ keywords: '', locations: '' });
+    setupJobsMock([
+      makeJob({ id: 1, title: 'Geoinformatik Werkstudent', description: 'Spatial data and mapping work' }),
+      makeJob({ id: 2, title: 'ArcGIS Analyst', description: 'Maintain geospatial dashboards' }),
+      makeJob({ id: 3, title: 'Backend Engineer', description: 'Node.js services' }),
+    ]);
+    const result = await jobsService.getJobs({ search: 'GIS' });
+    expect(result.jobs.map((job) => job.title)).toEqual([
+      'ArcGIS Analyst',
+      'Geoinformatik Werkstudent',
+    ]);
+  });
+
+  it('ranks title matches ahead of weak description matches for search', async () => {
+    const { settingsService } = await import('./settings.service');
+    (settingsService.get as ReturnType<typeof vi.fn>).mockResolvedValue({ keywords: '', locations: '' });
+    setupJobsMock([
+      makeJob({ id: 1, title: 'GIS Analyst', description: 'Core GIS workflows' }),
+      makeJob({ id: 2, title: 'Data Analyst', description: 'Exposure to GIS and mapping tools' }),
+    ]);
+    const result = await jobsService.getJobs({ search: 'GIS' });
+    expect(result.jobs[0].title).toBe('GIS Analyst');
+  });
+
   it('filters by highMatchOnly (score >= 70)', async () => {
     const { settingsService } = await import('./settings.service');
     (settingsService.get as ReturnType<typeof vi.fn>).mockResolvedValue({ keywords: '', locations: '' });

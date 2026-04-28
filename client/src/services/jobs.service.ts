@@ -25,6 +25,13 @@ export const APPLICATION_CHECKLIST = [
 const STUDENT_TERMS = ['werkstudent', 'working student', 'studentische', 'student assistant', 'praktikum', 'internship'];
 const REMOTE_TERMS = ['remote', 'homeoffice', 'home office', 'hybrid', 'mobiles arbeiten'];
 const SENIOR_TERMS = ['senior', 'lead', 'leiter', 'leitung', 'principal', 'head of'];
+const SEARCH_ALIASES: Record<string, string[]> = {
+  gis: ['gis', 'geoinformatik', 'geospatial', 'geomatics', 'qgis', 'arcgis', 'mapping', 'cartography'],
+  geoinformatik: ['geoinformatik', 'gis', 'geospatial', 'geomatics', 'qgis', 'arcgis'],
+  geospatial: ['geospatial', 'gis', 'geoinformatik', 'geomatics', 'qgis', 'arcgis'],
+  data: ['data', 'analytics', 'analysis', 'analyst', 'bi', 'business intelligence'],
+  werkstudent: ['werkstudent', 'working student', 'studentische', 'student assistant'],
+};
 
 function getUserId(): number {
   const userId = useAuthStore.getState().user?.id;
@@ -74,6 +81,66 @@ function splitTerms(value: string): string[] {
 
 function containsAny(text: string, terms: string[]): boolean {
   return terms.some((term) => text.includes(term));
+}
+
+function normalizeSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function getSearchTerms(query: string): string[] {
+  const normalized = normalizeSearchText(query);
+  const baseTerms = normalized.split(/\s+/).filter(Boolean);
+  const expanded = new Set<string>();
+
+  for (const term of baseTerms) {
+    expanded.add(term);
+    for (const alias of SEARCH_ALIASES[term] ?? []) {
+      expanded.add(alias);
+    }
+  }
+
+  return [...expanded];
+}
+
+function searchScore(job: Job, query: string): number {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return 0;
+
+  const terms = getSearchTerms(query);
+  const title = normalizeSearchText(job.title);
+  const company = normalizeSearchText(job.company);
+  const location = normalizeSearchText(job.location);
+  const description = normalizeSearchText(job.description);
+  const source = normalizeSearchText(job.source);
+  const combined = `${title} ${company} ${location} ${description} ${source}`.trim();
+
+  let score = 0;
+
+  if (title === normalizedQuery) score += 150;
+  if (title.includes(normalizedQuery)) score += 90;
+  if (company.includes(normalizedQuery)) score += 40;
+  if (location.includes(normalizedQuery)) score += 35;
+  if (description.includes(normalizedQuery)) score += 25;
+  if (source.includes(normalizedQuery)) score += 10;
+
+  for (const term of terms) {
+    if (title.includes(term)) score += 45;
+    if (company.includes(term)) score += 20;
+    if (location.includes(term)) score += 15;
+    if (description.includes(term)) score += 12;
+    if (source.includes(term)) score += 5;
+  }
+
+  if (!combined.includes(normalizedQuery) && !terms.some((term) => combined.includes(term))) {
+    return 0;
+  }
+
+  return score;
 }
 
 function scoreJob(job: Job, keywords: string[], locations: string[]): Job {
@@ -197,6 +264,7 @@ function appendHistory(job: Job, label: string, type: JobHistoryEvent['type'] = 
 
 function applyFilters(jobs: Job[], filters?: JobFilters): Job[] {
   let rows = jobs.filter((job) => !job.is_hidden);
+  const searchScores = new Map<number, number>();
 
   if (filters?.status) {
     rows = rows.filter((job) => job.status === filters.status);
@@ -228,16 +296,24 @@ function applyFilters(jobs: Job[], filters?: JobFilters): Job[] {
     rows = rows.filter((job) => job.posted_date ? new Date(job.posted_date).getTime() >= from : false);
   }
   if (filters?.search) {
-    const q = filters.search.toLowerCase();
-    rows = rows.filter((job) =>
-      [job.title, job.company, job.location, job.description, job.source]
-        .some((value) => value?.toLowerCase().includes(q))
-    );
+    rows = rows.filter((job) => {
+      const score = searchScore(job, filters.search as string);
+      if (score > 0) {
+        searchScores.set(job.id, score);
+        return true;
+      }
+      return false;
+    });
   }
 
   const sortBy = filters?.sortBy || 'created_at';
   const sortOrder = filters?.sortOrder || 'DESC';
   rows.sort((a, b) => {
+    if (filters?.search) {
+      const scoreDiff = (searchScores.get(b.id) ?? 0) - (searchScores.get(a.id) ?? 0);
+      if (scoreDiff !== 0) return scoreDiff;
+    }
+
     const av = (a as any)[sortBy] ?? '';
     const bv = (b as any)[sortBy] ?? '';
     if (typeof av === 'number' || typeof bv === 'number') {
