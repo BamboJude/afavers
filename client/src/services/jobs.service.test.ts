@@ -244,18 +244,6 @@ describe('applyFilters (via getJobs)', () => {
     expect(result.jobs[0].title).toBe('React Developer');
   });
 
-  it('filters by englishOnly', async () => {
-    const { settingsService } = await import('./settings.service');
-    (settingsService.get as ReturnType<typeof vi.fn>).mockResolvedValue({ keywords: '', locations: '' });
-    setupJobsMock([
-      makeJob({ id: 1, language: 'en' }),
-      makeJob({ id: 2, language: 'de' }),
-    ]);
-    const result = await jobsService.getJobs({ englishOnly: true });
-    expect(result.jobs.every((j) => j.language === 'en')).toBe(true);
-    expect(result.jobs.length).toBe(1);
-  });
-
   it('filters by highMatchOnly (score >= 70)', async () => {
     const { settingsService } = await import('./settings.service');
     (settingsService.get as ReturnType<typeof vi.fn>).mockResolvedValue({ keywords: '', locations: '' });

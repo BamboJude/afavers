@@ -255,7 +255,6 @@ export const JobsPage = () => {
   const [dateFilter, setDateFilter] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [studentOnly, setStudentOnly] = useState(searchParams.get('type') === 'werkstudent' || searchParams.get('student') === '1');
-  const [englishOnly, setEnglishOnly] = useState(searchParams.get('language') === 'en');
   const [highMatchOnly, setHighMatchOnly] = useState(searchParams.get('type') === 'hot' || searchParams.get('match') === 'high');
   const [locationFilter, setLocationFilter] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
@@ -274,7 +273,6 @@ export const JobsPage = () => {
     const type = searchParams.get('type');
     if (type === 'werkstudent') setStudentOnly(true);
     if (type === 'hot') setHighMatchOnly(true);
-    if (searchParams.get('language') === 'en') setEnglishOnly(true);
   }, [searchParams]);
 
   // Debounce search
@@ -290,7 +288,7 @@ export const JobsPage = () => {
   useEffect(() => {
     fetchJobs();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeTab, search, sortBy, sourceFilter, dateFilter, remoteOnly, studentOnly, englishOnly, highMatchOnly, locationFilter, page]);
+  }, [activeTab, search, sortBy, sourceFilter, dateFilter, remoteOnly, studentOnly, highMatchOnly, locationFilter, page]);
 
   const loadStats = async () => {
     try {
@@ -315,7 +313,6 @@ export const JobsPage = () => {
         dateFrom: dateFilter || undefined,
         remoteOnly: remoteOnly || undefined,
         studentOnly: studentOnly || undefined,
-        englishOnly: englishOnly || undefined,
         highMatchOnly: highMatchOnly || undefined,
         location: locationFilter || undefined,
       };
@@ -440,7 +437,6 @@ export const JobsPage = () => {
     setDateFilter('');
     setRemoteOnly(false);
     setStudentOnly(false);
-    setEnglishOnly(false);
     setHighMatchOnly(false);
     setLocationFilter('');
     setPage(1);
@@ -453,7 +449,6 @@ export const JobsPage = () => {
     setDateFilter('');
     setRemoteOnly(false);
     setStudentOnly(false);
-    setEnglishOnly(false);
     setHighMatchOnly(false);
     setLocationFilter('');
     setPage(1);
@@ -465,7 +460,6 @@ export const JobsPage = () => {
     dateFilter,
     remoteOnly ? 'r' : '',
     studentOnly ? 's' : '',
-    englishOnly ? 'e' : '',
     highMatchOnly ? 'h' : '',
     locationFilter,
   ].filter(Boolean).length;
@@ -732,16 +726,6 @@ export const JobsPage = () => {
             }`}
           >
             {t('remote')}
-          </button>
-          <button
-            onClick={() => { setEnglishOnly(value => !value); setPage(1); }}
-            className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
-              englishOnly
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700'
-            }`}
-          >
-            {t('englishOnly')}
           </button>
           <button
             onClick={() => { setStudentOnly(value => !value); setPage(1); }}

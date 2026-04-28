@@ -13,6 +13,7 @@ type UserJobOverlay = Partial<Pick<Job,
 };
 
 const TRACKED_STATUSES = ['saved', 'preparing', 'applied', 'followup', 'interviewing', 'offered', 'rejected', 'archived'];
+const JOB_FETCH_LIMIT = 5000;
 export const APPLICATION_CHECKLIST = [
   'CV tailored',
   'Cover letter ready',
@@ -206,9 +207,6 @@ function applyFilters(jobs: Job[], filters?: JobFilters): Job[] {
   if (filters?.language) {
     rows = rows.filter((job) => job.language === filters.language);
   }
-  if (filters?.englishOnly) {
-    rows = rows.filter((job) => job.language === 'en');
-  }
   if (filters?.remoteOnly) {
     rows = rows.filter((job) => containsAny(`${job.location} ${job.title} ${job.description}`.toLowerCase(), REMOTE_TERMS));
   }
@@ -256,7 +254,7 @@ function applyFilters(jobs: Job[], filters?: JobFilters): Job[] {
 async function getMergedJobs(): Promise<Job[]> {
   const userId = getUserId();
   const [{ data: jobs, error }, overlays, settings] = await Promise.all([
-    supabase.from('jobs').select('*').order('created_at', { ascending: false }).limit(1000),
+    supabase.from('jobs').select('*').order('created_at', { ascending: false }).limit(JOB_FETCH_LIMIT),
     getUserOverlays(userId),
     settingsService.get().catch(() => ({ keywords: '', locations: '' })),
   ]);

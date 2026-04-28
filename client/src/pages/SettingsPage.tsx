@@ -17,8 +17,16 @@ const FEED_PRESETS = [
   { label: 'Marketing',   kw: ['marketing', 'social media', 'SEO', 'content', 'brand'] },
 ];
 
+function normalizeCommaList(value: string): string {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .join(', ');
+}
+
 export const SettingsPage = () => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const isDemo = useAuthStore((s) => s.isDemo);
   const [settings, setSettings] = useState<Settings>({ keywords: '', locations: '' });
   const [jobAlert, setJobAlert] = useState<JobAlert>(DEFAULT_JOB_ALERT);
@@ -103,18 +111,42 @@ export const SettingsPage = () => {
   }, []);
 
   const handleSave = async () => {
+    const normalizedSettings = {
+      keywords: normalizeCommaList(settings.keywords),
+      locations: normalizeCommaList(settings.locations),
+    };
+    const normalizedAlert = {
+      ...jobAlert,
+      keywords: normalizeCommaList(jobAlert.keywords),
+      locations: normalizeCommaList(jobAlert.locations),
+    };
+
     setSaving(true);
     setError('');
     try {
-      const savedAlertData = await jobAlertsService.save(jobAlert);
-      await settingsService.save(settings);
-      setSavedSnapshot(settings);
-      setJobAlert(savedAlertData);
-      setSavedAlertSnapshot(savedAlertData);
+      await settingsService.save(normalizedSettings);
+      setSettings(normalizedSettings);
+      setSavedSnapshot(normalizedSettings);
+
+      try {
+        const savedAlertData = await jobAlertsService.save(normalizedAlert);
+        setJobAlert(savedAlertData);
+        setSavedAlertSnapshot(savedAlertData);
+      } catch (alertError) {
+        setJobAlert(normalizedAlert);
+        setSavedAlertSnapshot(normalizedAlert);
+        setError(
+          lang === 'de'
+            ? 'Deine Suchbegriffe wurden gespeichert, aber die E-Mail-Benachrichtigungen konnten nicht aktualisiert werden.'
+            : 'Your search settings were saved, but priority email alerts could not be updated.'
+        );
+        console.warn('Priority alerts failed to save:', alertError);
+      }
+
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    } catch {
-      setError(t('failedToSave'));
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : t('failedToSave'));
     } finally {
       setSaving(false);
     }

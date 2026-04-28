@@ -92,6 +92,5 @@ export interface JobFilters {
   remoteOnly?: boolean;
   location?: string;
   studentOnly?: boolean;
-  englishOnly?: boolean;
   highMatchOnly?: boolean;
 }

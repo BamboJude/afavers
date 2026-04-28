@@ -76,13 +76,6 @@ const IconSearch = ({ className = 'w-4 h-4' }: { className?: string }) => (
   </svg>
 );
 
-const IconGlobe = ({ className = 'w-4 h-4' }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <circle cx="12" cy="12" r="10" strokeWidth="1.5"/>
-    <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" strokeWidth="1.5"/>
-  </svg>
-);
-
 const IconBarChart = ({ className = 'w-4 h-4' }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
     <line x1="18" y1="20" x2="18" y2="10" strokeWidth="1.5" strokeLinecap="round"/>
@@ -1519,7 +1512,7 @@ export const DashboardPage = () => {
                 <div className="grid grid-cols-2 gap-2.5">
                   {[
                     { icon: <IconSearch className="w-4 h-4" />, iconBg: 'bg-green-100 text-green-600', label: t('browseJobs'), sub: `${stats?.new || 0} new`, onClick: () => navigate('/jobs') },
-                    { icon: <IconGlobe className="w-4 h-4" />, iconBg: 'bg-blue-100 text-blue-600', label: t('englishJobs'), sub: t('englishJobsDesc'), onClick: () => navigate('/english-jobs') },
+                    { icon: <IconBriefcase className="w-4 h-4" />, iconBg: 'bg-blue-100 text-blue-600', label: t('applicationsBoard'), sub: t('applicationsBoardDesc'), onClick: () => navigate('/kanban') },
                     { icon: <IconBarChart className="w-4 h-4" />, iconBg: 'bg-purple-100 text-purple-600', label: t('analytics'), sub: t('analyticsDesc'), onClick: () => navigate('/analytics') },
                     { icon: <IconRefresh className={`w-4 h-4 ${fetching ? 'animate-spin' : ''}`} />, iconBg: 'bg-amber-100 text-amber-600', label: t('fetchJobs'), sub: fetching ? t('fetching') : t('autoFetchNote'), onClick: isDemo ? undefined : handleFetchJobs, disabled: fetching || isDemo },
                   ].map((card, i) => (

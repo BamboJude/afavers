@@ -54,8 +54,8 @@ export async function getSearchConfig(): Promise<{ keywords: string[]; locations
   }
 
   return {
-    keywords: keywords.size ? [...keywords].slice(0, 24) : DEFAULT_KEYWORDS,
-    locations: locations.size ? [...locations].slice(0, 16) : DEFAULT_LOCATIONS,
+    keywords: keywords.size ? [...keywords].slice(0, 80) : DEFAULT_KEYWORDS,
+    locations: locations.size ? [...locations].slice(0, 32) : DEFAULT_LOCATIONS,
   };
 }
 
@@ -63,8 +63,8 @@ export async function fetchBundesagenturJobs(keywords: string[], locations: stri
   const jobs: ExternalJob[] = [];
   const apiKey = env('BUNDESAGENTUR_API_KEY') || 'jobboerse-jobsuche';
 
-  for (const keyword of keywords.slice(0, 20)) {
-    for (const location of locations.slice(0, 12)) {
+  for (const keyword of keywords.slice(0, 40)) {
+    for (const location of locations.slice(0, 20)) {
       const url = new URL(BA_URL);
       url.searchParams.set('was', keyword);
       url.searchParams.set('wo', location);
