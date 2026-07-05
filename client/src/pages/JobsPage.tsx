@@ -848,6 +848,11 @@ export const JobsPage = () => {
                         <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 flex-wrap">
                           <MatchBadge score={job.match_score} reasons={job.match_reasons} gaps={job.match_gaps} />
                           <SourceBadge source={job.source} />
+                          {job.is_active === false && (
+                            <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
+                              {t('noLongerListed')}
+                            </span>
+                          )}
                           {job.posted_date && (
                             <span>{timeAgo(job.posted_date, lang)}</span>
                           )}

@@ -1128,6 +1128,18 @@ function useGreeting(email: string | undefined) {
   return { greeting, displayName, todayFormatted };
 }
 
+function formatLastUpdated(value: string | null, locale: string, t: (key: string) => string) {
+  if (!value) return t('neverUpdated');
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return t('neverUpdated');
+
+  return `${t('lastUpdated')}: ${new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date)}`;
+}
+
 export const DashboardPage = () => {
   const { isDemo, user } = useAuthStore();
   const navigate = useNavigate();
@@ -1146,6 +1158,7 @@ export const DashboardPage = () => {
   const [statsError, setStatsError] = useState<Error | null>(null);
   const [fetching, setFetching] = useState(false);
   const [fetchMsg, setFetchMsg] = useState('');
+  const [fetchMsgIsError, setFetchMsgIsError] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const { visible, toggle } = useWidgetVisibility();
   const { order: widgetOrder, move: moveWidget, reorder: reorderWidgets } = useWidgetOrder();
@@ -1197,16 +1210,39 @@ export const DashboardPage = () => {
   const handleFetchJobs = async () => {
     setFetching(true);
     setFetchMsg('');
+    setFetchMsgIsError(false);
     try {
       const result = await jobsService.fetchJobs();
-      setFetchMsg(`${result.inserted ?? 0} ${t('fetchComplete')}`);
-      loadStats();
-    } catch {
-      setFetchMsg(t('fetchFailed'));
+      setFetchMsg(`${result.inserted ?? 0} ${t('fetchComplete')} • ${result.updated ?? 0} ${t('refreshedJobs')}`);
+      await loadStats();
+    } catch (error) {
+      setFetchMsgIsError(true);
+      setFetchMsg(error instanceof Error ? error.message : t('fetchFailed'));
     } finally {
       setFetching(false);
     }
   };
+
+  const lastFetchTime = stats?.last_fetch_at ? new Date(stats.last_fetch_at).getTime() : NaN;
+  const fetchIsStale = !Number.isNaN(lastFetchTime) && Date.now() - lastFetchTime > 6 * 3_600_000;
+
+  const fetchCard = user?.isAdmin
+    ? {
+        icon: <IconRefresh className={`w-4 h-4 ${fetching ? 'animate-spin' : ''}`} />,
+        iconBg: 'bg-amber-100 text-amber-600',
+        label: t('fetchJobs'),
+        sub: fetching ? t('fetching') : formatLastUpdated(stats?.last_fetch_at ?? null, locale, t),
+        onClick: isDemo ? undefined : handleFetchJobs,
+        disabled: fetching || isDemo,
+      }
+    : {
+        icon: <IconRefresh className="w-4 h-4" />,
+        iconBg: 'bg-slate-100 text-slate-500',
+        label: t('fetchJobs'),
+        sub: stats?.last_fetch_at ? formatLastUpdated(stats.last_fetch_at, locale, t) : t('autoFetchUsersNote'),
+        onClick: undefined,
+        disabled: true,
+      };
 
   if (loading) return <DashboardSkeleton />;
 
@@ -1514,7 +1550,7 @@ export const DashboardPage = () => {
                     { icon: <IconSearch className="w-4 h-4" />, iconBg: 'bg-green-100 text-green-600', label: t('browseJobs'), sub: `${stats?.new || 0} new`, onClick: () => navigate('/jobs') },
                     { icon: <IconBriefcase className="w-4 h-4" />, iconBg: 'bg-blue-100 text-blue-600', label: t('applicationsBoard'), sub: t('applicationsBoardDesc'), onClick: () => navigate('/kanban') },
                     { icon: <IconBarChart className="w-4 h-4" />, iconBg: 'bg-purple-100 text-purple-600', label: t('analytics'), sub: t('analyticsDesc'), onClick: () => navigate('/analytics') },
-                    { icon: <IconRefresh className={`w-4 h-4 ${fetching ? 'animate-spin' : ''}`} />, iconBg: 'bg-amber-100 text-amber-600', label: t('fetchJobs'), sub: fetching ? t('fetching') : t('autoFetchNote'), onClick: isDemo ? undefined : handleFetchJobs, disabled: fetching || isDemo },
+                    fetchCard,
                   ].map((card, i) => (
                     <button key={i} onClick={card.onClick} disabled={'disabled' in card && card.disabled} className="flex items-center gap-2.5 p-3 bg-gray-50 hover:bg-white border border-gray-200 hover:border-gray-300 rounded-xl transition text-left disabled:opacity-50 hover:shadow-sm group">
                       <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg} transition-transform group-hover:scale-110`}>{card.icon}</span>
@@ -1525,10 +1561,18 @@ export const DashboardPage = () => {
                     </button>
                   ))}
                 </div>
+                {fetchIsStale && (
+                  <p className="text-[12px] mt-3 text-center font-bold text-amber-600">
+                    {t('fetchStaleWarning')}
+                  </p>
+                )}
                 {fetchMsg && (
-                  <p className={`text-[12px] mt-3 text-center font-bold ${fetchMsg.includes('failed') || fetchMsg.includes('fehlgeschlagen') ? 'text-red-500' : 'text-[#16a34a]'}`}>
+                  <p className={`text-[12px] mt-3 text-center font-bold ${fetchMsgIsError ? 'text-red-500' : 'text-[#16a34a]'}`}>
                     {fetchMsg}
                   </p>
+                )}
+                {!user?.isAdmin && (
+                  <p className="text-[11px] mt-3 text-center text-gray-500">{t('manualFetchAdminsOnly')}</p>
                 )}
               </Module>
             )}

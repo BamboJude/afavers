@@ -406,3 +406,89 @@ describe('appendHistory (via updateStatus)', () => {
     expect(upsertArg.history.length).toBeLessThanOrEqual(80);
   });
 });
+
+describe('fetchJobs', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns inserted and updated counts from the edge function', async () => {
+    (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: { success: true, inserted: 12, updated: 34, total: 46 },
+      error: null,
+    });
+
+    await expect(jobsService.fetchJobs()).resolves.toEqual({
+      success: true,
+      message: 'Job refresh completed',
+      inserted: 12,
+      updated: 34,
+      total: 46,
+    });
+  });
+
+  it('surfaces an auth-specific message for unauthorized invocations', async () => {
+    (supabase.functions.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: null,
+      error: { message: 'Unauthorized' },
+    });
+
+    await expect(jobsService.fetchJobs()).rejects.toThrow('Your session expired. Please sign in again and try once more.');
+  });
+});
+
+describe('getMergedJobs tracked-job fallback (via getAllJobs)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('fetches tracked jobs missing from the recent window by id', async () => {
+    const recentJob = makeJob({ id: 1 });
+    const oldTrackedJob = makeJob({ id: 999, title: 'Old saved job' });
+
+    const userJobsChain = {
+      eq: vi.fn().mockResolvedValue({
+        data: [{ job_id: 999, status: 'saved' }],
+        error: null,
+      }),
+    };
+    const jobsChain = {
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [recentJob], error: null }),
+      in: vi.fn().mockResolvedValue({ data: [oldTrackedJob], error: null }),
+    };
+    (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
+      if (table === 'jobs') return { select: vi.fn().mockReturnValue(jobsChain) };
+      if (table === 'user_jobs') return { select: vi.fn().mockReturnValue(userJobsChain) };
+      return { select: vi.fn() };
+    });
+
+    const jobs = await jobsService.getAllJobs();
+
+    expect(jobsChain.in).toHaveBeenCalledWith('id', [999]);
+    expect(jobs.map((job) => job.id)).toEqual(expect.arrayContaining([1, 999]));
+    expect(jobs.find((job) => job.id === 999)?.status).toBe('saved');
+  });
+
+  it('does not issue an extra query when all tracked jobs are in the window', async () => {
+    const trackedJob = makeJob({ id: 7 });
+
+    const userJobsChain = {
+      eq: vi.fn().mockResolvedValue({
+        data: [{ job_id: 7, status: 'applied' }],
+        error: null,
+      }),
+    };
+    const jobsChain = {
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [trackedJob], error: null }),
+      in: vi.fn(),
+    };
+    (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
+      if (table === 'jobs') return { select: vi.fn().mockReturnValue(jobsChain) };
+      if (table === 'user_jobs') return { select: vi.fn().mockReturnValue(userJobsChain) };
+      return { select: vi.fn() };
+    });
+
+    const jobs = await jobsService.getAllJobs();
+
+    expect(jobsChain.in).not.toHaveBeenCalled();
+    expect(jobs.find((job) => job.id === 7)?.status).toBe('applied');
+  });
+});

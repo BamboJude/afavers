@@ -13,7 +13,10 @@ type UserJobOverlay = Partial<Pick<Job,
 };
 
 const TRACKED_STATUSES = ['saved', 'preparing', 'applied', 'followup', 'interviewing', 'offered', 'rejected', 'archived'];
-const JOB_FETCH_LIMIT = 5000;
+// PostgREST caps a single request at 1000 rows, so asking for more is a no-op.
+// Jobs the user has tracked are fetched separately by id in getMergedJobs, so
+// they stay visible however large the jobs table grows.
+const JOB_FETCH_LIMIT = 1000;
 export const APPLICATION_CHECKLIST = [
   'CV tailored',
   'Cover letter ready',
@@ -49,6 +52,7 @@ function defaultJob(job: any): Job {
     follow_up_date: job.follow_up_date ?? null,
     interview_date: job.interview_date ?? null,
     is_hidden: job.is_hidden ?? false,
+    is_active: job.is_active ?? true,
     checklist: job.checklist ?? {},
     history: job.history ?? [],
   };
@@ -336,9 +340,25 @@ async function getMergedJobs(): Promise<Job[]> {
   ]);
 
   if (error) throw new Error(error.message);
+
+  // The recent-jobs window above only covers the newest rows. Jobs the user
+  // has saved/tracked can be older than that window, so fetch them by id —
+  // otherwise they silently disappear from every view once the table grows.
+  const rows = [...(jobs ?? [])];
+  const loadedIds = new Set(rows.map((job) => job.id));
+  const missingIds = [...overlays.keys()].filter((id) => !loadedIds.has(id));
+  if (missingIds.length) {
+    const { data: tracked, error: trackedError } = await supabase
+      .from('jobs')
+      .select('*')
+      .in('id', missingIds);
+    if (trackedError) throw new Error(trackedError.message);
+    rows.push(...(tracked ?? []));
+  }
+
   const keywords = splitTerms(settings.keywords);
   const locations = splitTerms(settings.locations);
-  return (jobs ?? []).map((job) => scoreJob(mergeJob(job, overlays.get(job.id)), keywords, locations));
+  return rows.map((job) => scoreJob(mergeJob(job, overlays.get(job.id)), keywords, locations));
 }
 
 async function upsertOverlay(id: number, values: Partial<UserJobOverlay>): Promise<Job> {
@@ -358,8 +378,21 @@ async function upsertOverlay(id: number, values: Partial<UserJobOverlay>): Promi
 
 export const jobsService = {
   async getStats(): Promise<DashboardStats> {
-    const jobs = await getMergedJobs();
+    // Merged rows carry the user's own overlay updated_at, so the real fetch
+    // time has to come straight from the shared jobs table.
+    const [jobs, lastFetch] = await Promise.all([
+      getMergedJobs(),
+      supabase
+        .from('jobs')
+        .select('updated_at')
+        .neq('source', 'manual')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
     const today = new Date().toISOString().slice(0, 10);
+    const lastFetchAt = lastFetch.error ? null : lastFetch.data?.updated_at ?? null;
+
     return {
       total: jobs.filter((job) => !job.is_hidden).length,
       new: jobs.filter((job) => job.status === 'new').length,
@@ -373,6 +406,7 @@ export const jobsService = {
       archived: jobs.filter((job) => job.status === 'archived').length,
       new_today: jobs.filter((job) => job.created_at?.slice(0, 10) === today).length,
       applied_today: jobs.filter((job) => job.applied_date?.slice(0, 10) === today).length,
+      last_fetch_at: lastFetchAt,
     };
   },
 
@@ -505,7 +539,7 @@ export const jobsService = {
     if (error) throw new Error(error.message);
   },
 
-  async fetchJobs(): Promise<{ success: boolean; message: string; inserted: number }> {
+  async fetchJobs(): Promise<{ success: boolean; message: string; inserted: number; updated: number; total: number }> {
     const { data, error } = await supabase.functions.invoke<{
       success: boolean;
       inserted: number;
@@ -513,13 +547,27 @@ export const jobsService = {
       total?: number;
       error?: string;
     }>('fetch-jobs', { body: {} });
-    if (error) throw new Error(error.message);
-    if (!data) throw new Error('Fetch failed');
-    if (!data.success) throw new Error(data.error || 'Fetch failed');
+
+    if (error) {
+      const message = /unauthorized/i.test(error.message)
+        ? 'Your session expired. Please sign in again and try once more.'
+        : error.message;
+      throw new Error(message);
+    }
+    if (!data) throw new Error('We could not refresh jobs right now. Please try again in a moment.');
+    if (!data.success) {
+      const message = data.error === 'Unauthorized'
+        ? 'Your session expired. Please sign in again and try once more.'
+        : data.error || 'We could not refresh jobs right now. Please try again in a moment.';
+      throw new Error(message);
+    }
+
     return {
       success: true,
-      message: 'Job fetch completed',
+      message: 'Job refresh completed',
       inserted: data.inserted ?? 0,
+      updated: data.updated ?? 0,
+      total: data.total ?? 0,
     };
   },
 
