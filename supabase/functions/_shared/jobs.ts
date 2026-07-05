@@ -32,6 +32,9 @@ export const RUN_BUDGET_MS = 135_000;
 const BA_CONCURRENCY = 6;
 const REQUEST_TIMEOUT_MS = 8_000;
 const WRITE_CHUNK = 500;
+// external_id in() filters travel in the URL; keep chunks small enough to
+// stay under gateway URL-length limits (~30 chars per id).
+const ID_FILTER_CHUNK = 150;
 const SELECT_PAGE = 1000;
 // A job is stale when no fetch has refreshed its updated_at for this long.
 // The cron runs every 2 hours, so 3 days ≈ 36 chances to be re-listed.
@@ -305,8 +308,9 @@ export async function saveJobs(
   }
 
   const existingIds = new Set<string>();
-  for (const ids of chunk(unique.map((job) => job.id), WRITE_CHUNK)) {
-    const { data } = await supabase.from('jobs').select('external_id').in('external_id', ids);
+  for (const ids of chunk(unique.map((job) => job.id), ID_FILTER_CHUNK)) {
+    const { data, error } = await supabase.from('jobs').select('external_id').in('external_id', ids);
+    if (error) throw error;
     for (const row of data ?? []) existingIds.add(row.external_id);
   }
 
